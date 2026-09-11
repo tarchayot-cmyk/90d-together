@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
+import ScoreDetailModal from "@/components/ScoreDetailModal";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -29,6 +30,7 @@ export default function AdminReportsPage() {
   const [rows, setRows] = useState<MemberSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [detailMember, setDetailMember] = useState<MemberSummary | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -118,10 +120,15 @@ export default function AdminReportsPage() {
       </div>
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
+      {!loading && rows.length > 0 && <p className="text-xs text-gray-400 text-center">แตะที่ชื่อเพื่อดูรายละเอียดที่มาของคะแนน</p>}
 
       <div className="space-y-2">
         {filtered.map((r) => (
-          <div key={r.id} className="rounded-card bg-white shadow-sm p-3">
+          <button
+            key={r.id}
+            onClick={() => setDetailMember(r)}
+            className="w-full text-left rounded-card bg-white shadow-sm p-3 active:opacity-80"
+          >
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="font-medium text-gray-800 truncate">{r.full_name}</p>
@@ -144,10 +151,18 @@ export default function AdminReportsPage() {
                 ))}
               </div>
             )}
-          </div>
+          </button>
         ))}
         {!loading && filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-8">ไม่พบข้อมูล</p>}
       </div>
+
+      {detailMember && (
+        <ScoreDetailModal
+          memberId={detailMember.id}
+          memberName={detailMember.full_name}
+          onClose={() => setDetailMember(null)}
+        />
+      )}
     </div>
   );
 }
