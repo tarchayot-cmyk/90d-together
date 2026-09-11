@@ -1,0 +1,57 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { HeartHandshake } from "lucide-react";
+import { useMember } from "@/hooks/useMember";
+import BuddyCard from "@/components/BuddyCard";
+import SquadCard from "@/components/SquadCard";
+import KindnessModal from "@/components/KindnessModal";
+import RewardToast, { type RewardToastData } from "@/components/RewardToast";
+
+export default function HomePage() {
+  const { member, loading } = useMember();
+  const [kindnessOpen, setKindnessOpen] = useState(false);
+  const [toast, setToast] = useState<RewardToastData | null>(null);
+
+  return (
+    <div className="space-y-4 pt-2">
+      <header>
+        <p className="text-sm text-gray-400">🌱 ME → 🌿 WE → 🌳 US</p>
+        <h1 className="text-xl font-bold text-gray-800">
+          {loading ? "..." : member ? `สวัสดี, ${member.full_name}` : "90 Days Growing Together"}
+        </h1>
+      </header>
+
+      {/* Tree summary + weekly missions live here once getDashboard()
+          is wired up. For now, Home surfaces the two team engines
+          (Buddy / Squad) plus quick access into missions & kindness. */}
+      <Link
+        href="/missions"
+        className="block rounded-card bg-us text-white p-5 text-center font-semibold shadow-sm"
+      >
+        🎯 ดูภารกิจสัปดาห์นี้
+      </Link>
+
+      <BuddyCard />
+      <SquadCard />
+
+      <button
+        onClick={() => setKindnessOpen(true)}
+        className="w-full rounded-card bg-kindness/10 border border-kindness/30 text-kindness p-4 flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+      >
+        <HeartHandshake size={18} />
+        ส่ง Kindness ให้เพื่อนร่วมงาน
+      </button>
+
+      {kindnessOpen && (
+        <KindnessModal
+          onClose={() => setKindnessOpen(false)}
+          onSuccess={() => setToast({ points: 0, sticker: null, message: "ส่งความห่วงใยสำเร็จ! 🌈" })}
+        />
+      )}
+
+      <RewardToast reward={toast} onClose={() => setToast(null)} />
+    </div>
+  );
+}
