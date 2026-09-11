@@ -6,7 +6,10 @@ export interface Member {
   id: string;
   employee_code: string;
   full_name: string;
+  nickname: string | null;
+  unit: string | null;
   department: string | null;
+  avatar_url: string | null;
   role: "participant" | "admin" | "super_admin";
   is_active: boolean;
 }

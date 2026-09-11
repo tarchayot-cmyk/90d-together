@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Shuffle, UserPlus } from "lucide-react";
+import { Search, Shuffle, UserPlus, Pencil } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import AdjustPointsModal from "@/components/AdjustPointsModal";
 import AddMemberModal from "@/components/AddMemberModal";
+import EditMemberModal from "@/components/EditMemberModal";
 
 interface MemberRow {
   id: string;
   employee_code: string;
   full_name: string;
+  nickname: string | null;
+  unit: string | null;
   department: string | null;
+  avatar_url: string | null;
   role: string;
   is_active: boolean;
 }
@@ -21,6 +25,7 @@ export default function AdminMembersPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [adjustTarget, setAdjustTarget] = useState<MemberRow | null>(null);
+  const [editTarget, setEditTarget] = useState<MemberRow | null>(null);
   const [assigning, setAssigning] = useState<"buddy" | "squad" | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
@@ -30,7 +35,7 @@ export default function AdminMembersPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("members")
-      .select("id, employee_code, full_name, department, role, is_active")
+      .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active")
       .order("full_name");
     setMembers(data ?? []);
     setLoading(false);
@@ -90,7 +95,13 @@ export default function AdminMembersPage() {
 
   const filtered = members.filter((m) => {
     const q = query.toLowerCase();
-    return m.full_name.toLowerCase().includes(q) || m.employee_code.toLowerCase().includes(q) || (m.department ?? "").toLowerCase().includes(q);
+    return (
+      m.full_name.toLowerCase().includes(q) ||
+      m.employee_code.toLowerCase().includes(q) ||
+      (m.department ?? "").toLowerCase().includes(q) ||
+      (m.unit ?? "").toLowerCase().includes(q) ||
+      (m.nickname ?? "").toLowerCase().includes(q)
+    );
   });
 
   return (
@@ -129,7 +140,7 @@ export default function AdminMembersPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ค้นหาชื่อ, รหัสบุคลากร, แผนก..."
+          placeholder="ค้นหาชื่อ, ชื่อเล่น, รหัสบุคลากร, หน่วย, แผนก..."
           className="w-full rounded-full border border-gray-200 pl-9 pr-3 py-2.5 text-sm bg-white"
         />
       </div>
@@ -140,14 +151,33 @@ export default function AdminMembersPage() {
         <div className="rounded-card bg-white shadow-sm divide-y divide-gray-50">
           {filtered.map((m) => (
             <div key={m.id} className="p-3 space-y-2">
-              <div className="min-w-0">
-                <p className="font-medium text-gray-800 truncate">{m.full_name}</p>
-                <p className="text-xs text-gray-400">
-                  {m.employee_code} · {m.department ?? "-"} · {m.role}
-                  {!m.is_active && " · inactive"}
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-bg overflow-hidden shrink-0 flex items-center justify-center text-sm text-gray-400 border border-gray-100">
+                  {m.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (m.nickname ?? m.full_name).charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 truncate">
+                    {m.full_name}
+                    {m.nickname && <span className="text-gray-400 font-normal"> ({m.nickname})</span>}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {m.employee_code} · {m.unit ?? m.department ?? "-"} · {m.role}
+                    {!m.is_active && " · inactive"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setEditTarget(m)}
+                  className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
+                >
+                  <Pencil size={12} /> แก้ไข
+                </button>
                 <button
                   onClick={() => setAdjustTarget(m)}
                   className="text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[32px]"
@@ -176,6 +206,17 @@ export default function AdminMembersPage() {
           memberName={adjustTarget.full_name}
           onClose={() => setAdjustTarget(null)}
           onSuccess={() => setBanner(`ปรับคะแนนของ ${adjustTarget.full_name} เรียบร้อย`)}
+        />
+      )}
+
+      {editTarget && (
+        <EditMemberModal
+          member={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSuccess={() => {
+            setBanner("แก้ไขข้อมูลสมาชิกเรียบร้อย");
+            loadMembers();
+          }}
         />
       )}
 

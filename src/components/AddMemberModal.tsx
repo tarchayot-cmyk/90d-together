@@ -4,6 +4,8 @@ import { useState } from "react";
 import { X, Loader2, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
+export const UNITS = ["Chemo", "TPN", "IV admixture", "ผลิตยาทั่วไป", "Extem"] as const;
+
 function friendlyError(raw: string): string {
   if (raw.includes("employee_code_already_exists")) return "รหัสบุคลากรนี้มีอยู่แล้ว";
   if (raw.includes("pin_too_short")) return "PIN ต้องมีอย่างน้อย 4 หลัก";
@@ -20,6 +22,8 @@ export default function AddMemberModal({
 }) {
   const [employeeCode, setEmployeeCode] = useState("");
   const [fullName, setFullName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [unit, setUnit] = useState("");
   const [department, setDepartment] = useState("");
   const [pin, setPin] = useState("");
   const [role, setRole] = useState<"participant" | "admin">("participant");
@@ -37,20 +41,33 @@ export default function AddMemberModal({
 
     setLoading(true);
     const supabase = createClient();
-    const { error: rpcError } = await supabase.rpc("admin_create_member", {
+    const { data, error: rpcError } = await supabase.rpc("admin_create_member", {
       p_employee_code: employeeCode.trim(),
       p_full_name: fullName.trim(),
       p_pin: pin,
       p_department: department.trim() || null,
       p_role: role,
     });
-    setLoading(false);
 
     if (rpcError) {
+      setLoading(false);
       setError(friendlyError(rpcError.message));
       return;
     }
 
+    // Nickname/unit go through the same edit RPC Task 6 added for
+    // existing members — one extra call right after creation, only
+    // if the admin actually filled either field in.
+    if ((nickname.trim() || unit) && data?.member_id) {
+      await supabase.rpc("admin_update_member_details", {
+        p_member_id: data.member_id,
+        p_full_name: fullName.trim(),
+        p_nickname: nickname.trim() || null,
+        p_unit: unit || null,
+      });
+    }
+
+    setLoading(false);
     onSuccess();
     onClose();
   }
@@ -70,6 +87,18 @@ export default function AddMemberModal({
         <form onSubmit={handleSubmit} className="space-y-3">
           <Field label="รหัสบุคลากร" value={employeeCode} onChange={setEmployeeCode} placeholder="เช่น EMP002" />
           <Field label="ชื่อ-นามสกุล" value={fullName} onChange={setFullName} placeholder="ชื่อที่แสดงในแอป" />
+          <Field label="ชื่อเล่น (ไม่บังคับ)" value={nickname} onChange={setNickname} placeholder="เช่น เอ" />
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">หน่วย (ไม่บังคับ)</label>
+            <select value={unit} onChange={(e) => setUnit(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base">
+              <option value="">-- ไม่ระบุ --</option>
+              {UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+
           <Field label="แผนก (ไม่บังคับ)" value={department} onChange={setDepartment} placeholder="เช่น เภสัชกรรม" />
           <Field label="PIN เริ่มต้น (4-6 หลัก)" value={pin} onChange={(v) => setPin(v.replace(/[^0-9]/g, ""))} placeholder="1234" type="password" inputMode="numeric" maxLength={6} />
 
