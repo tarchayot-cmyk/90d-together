@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -20,6 +20,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
@@ -55,6 +56,17 @@ export default function NotificationBell() {
     }
     setOpen(false);
     if (n.link_path) router.push(n.link_path);
+  }
+
+  async function handleDelete(e: React.MouseEvent, n: NotificationRow) {
+    e.stopPropagation(); // don't also trigger the row's navigate-on-tap
+    setDeletingId(n.id);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("delete_notification", { p_notification_id: n.id });
+    setDeletingId(null);
+    if (!error) {
+      setItems((prev) => prev.filter((x) => x.id !== n.id));
+    }
   }
 
   async function handleMarkAllRead() {
@@ -102,11 +114,11 @@ export default function NotificationBell() {
 
             <ul>
               {items.map((n) => (
-                <li key={n.id}>
-                  <button
+                <li key={n.id} className="border-b border-gray-50">
+                  <div
                     onClick={() => handleClick(n)}
                     className={clsx(
-                      "w-full text-left px-4 py-3 text-sm border-b border-gray-50 flex gap-2 min-h-[44px]",
+                      "w-full text-left px-4 py-3 text-sm flex gap-2 min-h-[44px] cursor-pointer",
                       !n.is_read && "bg-us/5"
                     )}
                   >
@@ -117,7 +129,15 @@ export default function NotificationBell() {
                         {new Date(n.created_at).toLocaleString("th-TH")}
                       </span>
                     </span>
-                  </button>
+                    <button
+                      onClick={(e) => handleDelete(e, n)}
+                      disabled={deletingId === n.id}
+                      aria-label="ลบการแจ้งเตือน"
+                      className="shrink-0 text-gray-300 hover:text-red-400 p-1.5 min-h-[32px] min-w-[32px] flex items-center justify-center disabled:opacity-40"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
