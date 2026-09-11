@@ -16,10 +16,18 @@ function currentCampaignWeek(startDate: string): number {
   return Math.max(1, Math.ceil(days / 7));
 }
 
+const PHASE_LABEL: Record<string, string> = {
+  me: "🌱 Level 1 · ME",
+  we: "🌿 Level 2 · WE",
+  us: "🌳 Level 3 · US",
+};
+
 export default function MissionsPage() {
   const { member } = useMember(); // shared across pages — no extra fetch here
   const [missions, setMissions] = useState<Mission[]>([]);
   const [checkInsByMission, setCheckInsByMission] = useState<Record<string, CheckIn>>({});
+  const [phase, setPhase] = useState<string | null>(null);
+  const [currentDay, setCurrentDay] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [invitingMission, setInvitingMission] = useState<Mission | null>(null);
@@ -29,26 +37,36 @@ export default function MissionsPage() {
     setLoading(true);
     const supabase = createClient();
 
-    const { data: campaign } = await supabase
-      .from("campaigns")
-      .select("id, start_date")
-      .eq("is_active", true)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .single();
+    // Phase is derived server-side from the campaign's start_date —
+    // this replaces the old hardcoded .eq("level", "me") filter,
+    // which meant WE/US missions never showed up in this page at all
+    // even once their phase had actually started.
+    const { data: phaseInfo } = await supabase.rpc("get_campaign_phase_info");
 
-    if (!campaign) {
+    if (!phaseInfo?.has_campaign) {
+      setPhase(null);
+      setCurrentDay(null);
+      setMissions([]);
       setLoading(false);
       return;
     }
 
-    const week = currentCampaignWeek(campaign.start_date);
+    setCurrentDay(phaseInfo.current_day);
+    setPhase(phaseInfo.current_phase); // null if before day 1 or after day 90
+
+    if (!phaseInfo.current_phase) {
+      setMissions([]);
+      setLoading(false);
+      return;
+    }
+
+    const week = currentCampaignWeek(phaseInfo.start_date);
 
     const { data: missionRows } = await supabase
       .from("missions")
       .select("*")
-      .eq("campaign_id", campaign.id)
-      .eq("level", "me")
+      .eq("campaign_id", phaseInfo.campaign_id)
+      .eq("level", phaseInfo.current_phase)
       .eq("is_active", true);
 
     let myCheckIns: CheckIn[] = [];
@@ -79,14 +97,23 @@ export default function MissionsPage() {
   return (
     <div className="space-y-4">
       <header className="pt-2 pb-1">
-        <p className="text-sm text-gray-400">🌱 Level 1 · ME</p>
+        <p className="text-sm text-gray-400">
+          {phase ? PHASE_LABEL[phase] : "—"}
+          {currentDay !== null && ` · วันที่ ${currentDay}`}
+        </p>
         <h1 className="text-xl font-bold text-gray-800">ภารกิจสัปดาห์นี้</h1>
       </header>
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
-      {!loading && missions.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีภารกิจที่เปิดใช้งานในตอนนี้</p>
+      {!loading && !phase && (
+        <p className="text-sm text-gray-400 text-center py-10">
+          {currentDay === null ? "ยังไม่มีแคมเปญที่เปิดใช้งาน" : "แคมเปญนี้ยังไม่เริ่มหรือสิ้นสุดแล้ว"}
+        </p>
+      )}
+
+      {!loading && phase && missions.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีภารกิจที่เปิดใช้งานในระยะนี้</p>
       )}
 
       <div className="space-y-3">

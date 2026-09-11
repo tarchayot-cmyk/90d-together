@@ -18,16 +18,27 @@ function friendlyError(raw: string): string {
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
 }
 
+const PHASE_LABEL: Record<string, string> = {
+  me: "🌱 ME (วันที่ 1-30)",
+  we: "🌿 WE (วันที่ 31-60)",
+  us: "🌳 US (วันที่ 61-90)",
+};
+
 export default function AdminCampaignPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [phaseInfo, setPhaseInfo] = useState<{ current_day: number; current_phase: string | null } | null>(null);
 
   async function load() {
     setLoading(true);
     const supabase = createClient();
-    const { data } = await supabase.from("campaigns").select("*").order("start_date", { ascending: false });
+    const [{ data }, { data: phase }] = await Promise.all([
+      supabase.from("campaigns").select("*").order("start_date", { ascending: false }),
+      supabase.rpc("get_campaign_phase_info"),
+    ]);
     setCampaigns(data ?? []);
+    setPhaseInfo(phase?.has_campaign ? phase : null);
     setLoading(false);
   }
 
@@ -39,6 +50,16 @@ export default function AdminCampaignPage() {
 
   return (
     <div className="space-y-4">
+      {phaseInfo && (
+        <div className="rounded-card bg-us/5 border border-us/20 p-4 text-center">
+          <p className="text-xs text-gray-400">ระยะปัจจุบันของแคมเปญ (คำนวณจากวันที่อัตโนมัติ)</p>
+          <p className="font-bold text-us text-lg mt-1">
+            {phaseInfo.current_phase ? PHASE_LABEL[phaseInfo.current_phase] : "นอกช่วงแคมเปญ (ก่อนเริ่ม/หลังจบ)"}
+          </p>
+          <p className="text-xs text-gray-400">วันที่ {phaseInfo.current_day} ของ 90 วัน</p>
+        </div>
+      )}
+
       <button
         onClick={() => setCreating(true)}
         className="w-full rounded-card bg-us/10 border border-us/30 text-us p-3 flex items-center justify-center gap-2 text-sm font-semibold min-h-[44px]"

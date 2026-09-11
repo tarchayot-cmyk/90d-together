@@ -22,6 +22,7 @@ function friendlyError(raw: string): string {
   if (raw.includes("already_checked_in_this_week")) return "คุณทำภารกิจนี้ไปแล้วในสัปดาห์นี้ ✓";
   if (raw.includes("target_not_reached")) return "ยังไม่ถึงเป้าหมาย ลองกรอกค่าที่มากขึ้นอีกนิด";
   if (raw.includes("campaign_not_active")) return "แคมเปญนี้ยังไม่เริ่ม หรือสิ้นสุดแล้ว";
+  if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้";
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
