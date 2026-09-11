@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, ThumbsUp, Check } from "lucide-react";
+import { Plus, ThumbsUp, ThumbsDown } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import ProposeActivityModal from "@/components/ProposeActivityModal";
@@ -11,13 +11,12 @@ interface Proposal {
   title: string;
   description: string | null;
   status: "pending" | "approved" | "rejected" | "voting" | "closed";
-  proposed_by: string;
-  proposed_by_name: string;
   created_at: string;
   voting_opened_at: string | null;
   voting_closed_at: string | null;
-  vote_count: number;
-  has_voted: boolean;
+  yes_count: number;
+  no_count: number;
+  my_choice: "yes" | "no" | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -55,16 +54,16 @@ export default function ProposalsPage() {
     load();
   }, []);
 
-  async function handleVote(id: string) {
+  async function handleVote(id: string, choice: "yes" | "no") {
     setVotingId(id);
     const supabase = createClient();
-    const { error } = await supabase.rpc("cast_vote", { p_proposal_id: id });
+    const { error } = await supabase.rpc("cast_vote", { p_proposal_id: id, p_choice: choice });
     setVotingId(null);
     if (error) {
-      setBanner(error.message.includes("already_voted") ? "คุณโหวตให้กิจกรรมนี้ไปแล้ว" : "โหวตไม่สำเร็จ กรุณาลองใหม่");
+      setBanner("โหวตไม่สำเร็จ กรุณาลองใหม่");
       return;
     }
-    setBanner("โหวตสำเร็จ! ขอบคุณครับ 👍");
+    setBanner(choice === "yes" ? "โหวต \"เอา\" แล้ว 👍" : "โหวต \"ไม่เอา\" แล้ว");
     load();
   }
 
@@ -95,40 +94,46 @@ export default function ProposalsPage() {
           <div key={p.id} className="rounded-card bg-white shadow-sm p-4 space-y-2">
             <div>
               <h3 className="font-semibold text-gray-800">{p.title}</h3>
-              <p className="text-xs text-gray-400">เสนอโดย {p.proposed_by_name}</p>
               {p.description && <p className="text-sm text-gray-500 mt-1">{p.description}</p>}
             </div>
 
             <div className="flex items-center justify-between">
               <span className={clsx("text-xs", STATUS_COLOR[p.status])}>{STATUS_LABEL[p.status]}</span>
               {(p.status === "voting" || p.status === "closed") && (
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <ThumbsUp size={12} /> {p.vote_count} โหวต
+                <span className="text-xs text-gray-400 flex items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp size={12} /> {p.yes_count}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown size={12} /> {p.no_count}
+                  </span>
                 </span>
               )}
             </div>
 
             {p.status === "voting" && (
-              <button
-                onClick={() => handleVote(p.id)}
-                disabled={p.has_voted || votingId === p.id}
-                className={clsx(
-                  "w-full rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2",
-                  p.has_voted ? "bg-gray-100 text-gray-400" : "bg-us text-white active:opacity-80"
-                )}
-              >
-                {p.has_voted ? (
-                  <>
-                    <Check size={16} /> คุณโหวตแล้ว
-                  </>
-                ) : votingId === p.id ? (
-                  "กำลังโหวต..."
-                ) : (
-                  <>
-                    <ThumbsUp size={16} /> โหวตให้กิจกรรมนี้
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleVote(p.id, "yes")}
+                  disabled={votingId === p.id}
+                  className={clsx(
+                    "flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50",
+                    p.my_choice === "yes" ? "bg-us text-white" : "border border-us/30 text-us"
+                  )}
+                >
+                  <ThumbsUp size={16} /> เอากิจกรรมนี้
+                </button>
+                <button
+                  onClick={() => handleVote(p.id, "no")}
+                  disabled={votingId === p.id}
+                  className={clsx(
+                    "flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50",
+                    p.my_choice === "no" ? "bg-gray-500 text-white" : "border border-gray-200 text-gray-500"
+                  )}
+                >
+                  <ThumbsDown size={16} /> ไม่เอา
+                </button>
+              </div>
             )}
           </div>
         ))}

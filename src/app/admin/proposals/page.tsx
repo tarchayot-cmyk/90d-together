@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X as XIcon, PlayCircle, StopCircle, ThumbsUp } from "lucide-react";
+import { Check, X as XIcon, PlayCircle, StopCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -12,7 +12,8 @@ interface Proposal {
   status: "pending" | "approved" | "rejected" | "voting" | "closed";
   proposed_by_name: string;
   created_at: string;
-  vote_count: number;
+  yes_count: number;
+  no_count: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -115,8 +116,13 @@ export default function AdminProposalsPage() {
                   {STATUS_LABEL[p.status]}
                 </span>
                 {(p.status === "voting" || p.status === "closed") && (
-                  <span className="text-gray-400 flex items-center gap-1">
-                    <ThumbsUp size={12} /> {p.vote_count} โหวต
+                  <span className="text-gray-400 flex items-center gap-2">
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp size={12} /> {p.yes_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ThumbsDown size={12} /> {p.no_count}
+                    </span>
                   </span>
                 )}
               </div>
