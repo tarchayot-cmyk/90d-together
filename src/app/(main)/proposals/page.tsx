@@ -60,7 +60,8 @@ export default function ProposalsPage() {
     const { error } = await supabase.rpc("cast_vote", { p_proposal_id: id, p_choice: choice });
     setVotingId(null);
     if (error) {
-      setBanner("โหวตไม่สำเร็จ กรุณาลองใหม่");
+      setBanner(error.message.includes("already_voted") ? "คุณโหวตให้กิจกรรมนี้ไปแล้ว" : "โหวตไม่สำเร็จ กรุณาลองใหม่");
+      load();
       return;
     }
     setBanner(choice === "yes" ? "โหวต \"เอา\" แล้ว 👍" : "โหวต \"ไม่เอา\" แล้ว");
@@ -111,28 +112,34 @@ export default function ProposalsPage() {
               )}
             </div>
 
-            {p.status === "voting" && (
+            {p.status === "voting" && !p.my_choice && (
               <div className="flex gap-2">
                 <button
                   onClick={() => handleVote(p.id, "yes")}
                   disabled={votingId === p.id}
-                  className={clsx(
-                    "flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50",
-                    p.my_choice === "yes" ? "bg-us text-white" : "border border-us/30 text-us"
-                  )}
+                  className="flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50 border border-us/30 text-us"
                 >
                   <ThumbsUp size={16} /> เอากิจกรรมนี้
                 </button>
                 <button
                   onClick={() => handleVote(p.id, "no")}
                   disabled={votingId === p.id}
-                  className={clsx(
-                    "flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50",
-                    p.my_choice === "no" ? "bg-gray-500 text-white" : "border border-gray-200 text-gray-500"
-                  )}
+                  className="flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50 border border-gray-200 text-gray-500"
                 >
                   <ThumbsDown size={16} /> ไม่เอา
                 </button>
+              </div>
+            )}
+
+            {p.status === "voting" && p.my_choice && (
+              <div
+                className={clsx(
+                  "w-full rounded-full py-2.5 text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2",
+                  p.my_choice === "yes" ? "bg-us/10 text-us" : "bg-gray-100 text-gray-500"
+                )}
+              >
+                {p.my_choice === "yes" ? <ThumbsUp size={16} /> : <ThumbsDown size={16} />}
+                คุณโหวต &quot;{p.my_choice === "yes" ? "เอา" : "ไม่เอา"}&quot; แล้ว
               </div>
             )}
           </div>
