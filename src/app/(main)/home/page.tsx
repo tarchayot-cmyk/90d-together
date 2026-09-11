@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HeartHandshake, Mail } from "lucide-react";
+import { HeartHandshake, Mail, Megaphone } from "lucide-react";
 import { useMember } from "@/hooks/useMember";
 import BuddyCard from "@/components/BuddyCard";
 import SquadCard from "@/components/SquadCard";
@@ -50,6 +50,14 @@ export default function HomePage() {
       >
         <Mail size={18} />
         คำเชิญกิจกรรม
+      </Link>
+
+      <Link
+        href="/proposals"
+        className="w-full rounded-card bg-white border border-gray-200 text-gray-600 p-4 flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+      >
+        <Megaphone size={18} />
+        เสนอ & โหวตกิจกรรม
       </Link>
 
       {kindnessOpen && (
