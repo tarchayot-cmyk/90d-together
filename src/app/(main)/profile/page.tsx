@@ -3,37 +3,33 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { LogOut } from "lucide-react";
+import { LogOut, Check } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 
-interface Badge {
-  id: string;
+interface BadgeProgress {
   code: string;
   name: string;
   description: string | null;
   icon: string | null;
+  unlocked: boolean;
+  unlocked_at: string | null;
+  current_value: number;
+  target_value: number;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
   const { member, loading: memberLoading } = useMember();
-  const [badges, setBadges] = useState<Badge[]>([]);
-  const [unlockedCodes, setUnlockedCodes] = useState<Set<string>>(new Set());
+  const [badges, setBadges] = useState<BadgeProgress[]>([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-
-      const [{ data: allBadges }, { data: mine }] = await Promise.all([
-        supabase.from("badges").select("*").order("created_at"),
-        supabase.from("member_badges").select("badge_id"), // RLS: own rows only
-      ]);
-
-      setBadges(allBadges ?? []);
-      setUnlockedCodes(new Set((mine ?? []).map((m) => m.badge_id)));
+      const { data } = await supabase.rpc("get_badge_progress");
+      setBadges(data ?? []);
       setLoadingBadges(false);
     }
     load();
@@ -67,25 +63,45 @@ export default function ProfilePage() {
         {loadingBadges ? (
           <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>
         ) : (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-2">
             {badges.map((badge) => {
-              // note: member_badges.badge_id is what we compared against
-              // above, so this check matches by id, not code.
-              const unlocked = unlockedCodes.has(badge.id);
+              const pct = Math.min(100, Math.round((badge.current_value / Math.max(badge.target_value, 1)) * 100));
               return (
                 <div
-                  key={badge.id}
+                  key={badge.code}
                   className={clsx(
-                    "rounded-xl p-3 text-center space-y-1 border",
-                    unlocked ? "bg-us/5 border-us/20" : "bg-gray-50 border-gray-100"
+                    "rounded-xl p-3 flex gap-3 border",
+                    badge.unlocked ? "bg-us/5 border-us/20" : "bg-gray-50 border-gray-100"
                   )}
                 >
-                  <div className={clsx("text-2xl", !unlocked && "grayscale opacity-40")}>
+                  <div className={clsx("text-2xl shrink-0", !badge.unlocked && "grayscale opacity-40")}>
                     {badge.icon ?? "🏅"}
                   </div>
-                  <p className={clsx("text-xs font-semibold", unlocked ? "text-gray-700" : "text-gray-400")}>
-                    {badge.name}
-                  </p>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className={clsx("text-sm font-semibold", badge.unlocked ? "text-gray-800" : "text-gray-500")}>
+                        {badge.name}
+                      </p>
+                      {badge.unlocked && <Check size={14} className="text-us shrink-0" />}
+                    </div>
+                    {badge.description && <p className="text-xs text-gray-400">{badge.description}</p>}
+
+                    {badge.unlocked ? (
+                      <p className="text-xs text-us font-medium">
+                        ปลดล็อกแล้ว
+                        {badge.unlocked_at && ` · ${new Date(badge.unlocked_at).toLocaleDateString("th-TH")}`}
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                          <div className="h-full bg-we rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          ความคืบหน้า {badge.current_value}/{badge.target_value}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
