@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HeartHandshake } from "lucide-react";
+import { HeartHandshake, Mail } from "lucide-react";
 import { useMember } from "@/hooks/useMember";
 import BuddyCard from "@/components/BuddyCard";
 import SquadCard from "@/components/SquadCard";
@@ -43,6 +43,14 @@ export default function HomePage() {
         <HeartHandshake size={18} />
         ส่ง Kindness ให้เพื่อนร่วมงาน
       </button>
+
+      <Link
+        href="/invitations"
+        className="w-full rounded-card bg-we/10 border border-we/30 text-we p-4 flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+      >
+        <Mail size={18} />
+        คำเชิญกิจกรรม
+      </Link>
 
       {kindnessOpen && (
         <KindnessModal

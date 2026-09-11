@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { UserPlus } from "lucide-react";
 import type { Mission, CheckIn } from "@/lib/types";
 
 const STICKER_EMOJI: Record<string, string> = {
@@ -17,10 +18,12 @@ export default function MissionCard({
   mission,
   checkIn,
   onCheckIn,
+  onInvite,
 }: {
   mission: Mission;
   checkIn: CheckIn | null; // this week's check-in for this mission, if any
   onCheckIn: (mission: Mission) => void; // opens the CheckInModal
+  onInvite?: (mission: Mission) => void; // opens the InviteModal — omit to hide the button
 }) {
   const done = !!checkIn?.completed_at;
   const pct = done ? 100 : 0;
@@ -47,16 +50,28 @@ export default function MissionCard({
         </span>
       </div>
 
-      <button
-        onClick={() => onCheckIn(mission)}
-        disabled={done}
-        className={clsx(
-          "w-full rounded-full py-2.5 text-sm font-semibold min-h-[44px]",
-          done ? "bg-gray-100 text-gray-400" : "bg-us text-white active:opacity-80"
+      <div className="flex gap-2">
+        <button
+          onClick={() => onCheckIn(mission)}
+          disabled={done}
+          className={clsx(
+            "flex-1 rounded-full py-2.5 text-sm font-semibold min-h-[44px]",
+            done ? "bg-gray-100 text-gray-400" : "bg-us text-white active:opacity-80"
+          )}
+        >
+          {done ? "✓ สำเร็จแล้วสัปดาห์นี้" : "CHECK-IN"}
+        </button>
+
+        {onInvite && (
+          <button
+            onClick={() => onInvite(mission)}
+            aria-label="ชวนเพื่อนทำภารกิจนี้"
+            className="shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold min-h-[44px] border border-we/30 text-we flex items-center gap-1.5"
+          >
+            <UserPlus size={16} />
+          </button>
         )}
-      >
-        {done ? "✓ สำเร็จแล้วสัปดาห์นี้" : "CHECK-IN"}
-      </button>
+      </div>
     </div>
   );
 }

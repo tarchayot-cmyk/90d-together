@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Trash2, Check, X as XIcon, ImageIcon } from "lucide-react";
+import { Search, Trash2, Check, X as XIcon, ImageIcon, Eraser } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+
+const PROOF_RETENTION_DAYS = 7;
 
 interface CheckinRow {
   id: string;
@@ -13,6 +15,7 @@ interface CheckinRow {
   proof_status: string;
   proof_url: string | null;
   created_at: string;
+  updated_at: string;
   member: { full_name: string; employee_code: string } | { full_name: string; employee_code: string }[] | null;
   mission: { name: string; level: string; requires_proof: boolean } | { name: string; level: string; requires_proof: boolean }[] | null;
 }
@@ -34,6 +37,7 @@ export default function AdminCheckinsPage() {
   const [pendingOnly, setPendingOnly] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [cleaningUp, setCleaningUp] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -41,7 +45,7 @@ export default function AdminCheckinsPage() {
     const { data, error } = await supabase
       .from("check_ins")
       .select(
-        "id, campaign_week, value, completed_at, proof_status, proof_url, created_at, " +
+        "id, campaign_week, value, completed_at, proof_status, proof_url, created_at, updated_at, " +
           "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
           "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof)"
       )
@@ -95,6 +99,60 @@ export default function AdminCheckinsPage() {
     load();
   }
 
+  async function handleCleanupOldProofs() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - PROOF_RETENTION_DAYS);
+
+    // Only reviewed check-ins (approved/rejected) whose photo is
+    // older than the cutoff — pending ones are never touched, the
+    // photo is still needed for review.
+    const candidates = rows.filter(
+      (r) =>
+        r.proof_url &&
+        (r.proof_status === "approved" || r.proof_status === "rejected") &&
+        new Date(r.updated_at) < cutoff
+    );
+
+    if (candidates.length === 0) {
+      setBanner(`ไม่มีรูปหลักฐานที่เก่าเกิน ${PROOF_RETENTION_DAYS} วันให้ล้าง`);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `พบรูปหลักฐานที่ตรวจสอบเสร็จแล้วและเก่าเกิน ${PROOF_RETENTION_DAYS} วัน จำนวน ${candidates.length} รูป\n\n` +
+        "ลบไฟล์รูปเหล่านี้ทิ้งถาวร (คะแนน/สติ๊กเกอร์ที่แจกไปแล้วไม่ถูกกระทบ — ลบแค่ตัวรูปเท่านั้น)?"
+    );
+    if (!confirmed) return;
+
+    setCleaningUp(true);
+    const supabase = createClient();
+
+    // Extract storage paths from the public URLs.
+    const paths = candidates
+      .map((r) => r.proof_url!.split("/storage/v1/object/public/proofs/")[1])
+      .filter(Boolean);
+
+    const { error: removeError } = await supabase.storage.from("proofs").remove(paths);
+    if (removeError) {
+      setCleaningUp(false);
+      setBanner("ลบไฟล์รูปไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+
+    const { data, error: rpcError } = await supabase.rpc("admin_clear_proof_urls", {
+      p_checkin_ids: candidates.map((r) => r.id),
+    });
+    setCleaningUp(false);
+
+    if (rpcError) {
+      setBanner("ลบไฟล์สำเร็จ แต่ล้างลิงก์ในฐานข้อมูลไม่สำเร็จ — ลองใหม่หรือแจ้งผู้ดูแลระบบ");
+      return;
+    }
+
+    setBanner(`ล้างรูปหลักฐานเก่าเรียบร้อย ${data?.cleared_count ?? candidates.length} รายการ`);
+    load();
+  }
+
   const filtered = rows
     .filter((r) => (pendingOnly ? r.proof_status === "pending" : true))
     .filter((r) => {
@@ -127,6 +185,15 @@ export default function AdminCheckinsPage() {
         )}
       >
         🕒 รอตรวจสอบหลักฐาน {pendingCount} รายการ — {pendingOnly ? "แสดงทั้งหมด" : "กรองเฉพาะรายการนี้"}
+      </button>
+
+      <button
+        onClick={handleCleanupOldProofs}
+        disabled={cleaningUp}
+        className="w-full rounded-card p-3 text-sm font-semibold min-h-[44px] border bg-gray-50 text-gray-600 border-gray-200 flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        <Eraser size={16} />
+        {cleaningUp ? "กำลังล้างรูป..." : `ล้างรูปหลักฐานเก่าเกิน ${PROOF_RETENTION_DAYS} วัน (ที่ตรวจแล้วเท่านั้น)`}
       </button>
 
       <div className="relative">

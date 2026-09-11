@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 import MissionCard from "@/components/MissionCard";
 import CheckInModal from "@/components/CheckInModal";
+import InviteModal from "@/components/InviteModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import type { Mission, CheckIn } from "@/lib/types";
 
@@ -21,6 +22,7 @@ export default function MissionsPage() {
   const [checkInsByMission, setCheckInsByMission] = useState<Record<string, CheckIn>>({});
   const [loading, setLoading] = useState(true);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
+  const [invitingMission, setInvitingMission] = useState<Mission | null>(null);
   const [reward, setReward] = useState<RewardToastData | null>(null);
 
   const loadMissions = useCallback(async () => {
@@ -94,6 +96,7 @@ export default function MissionsPage() {
             mission={mission}
             checkIn={checkInsByMission[mission.id] ?? null}
             onCheckIn={setActiveMission}
+            onInvite={setInvitingMission}
           />
         ))}
       </div>
@@ -103,6 +106,14 @@ export default function MissionsPage() {
           mission={activeMission}
           onClose={() => setActiveMission(null)}
           onSuccess={handleSuccess}
+        />
+      )}
+
+      {invitingMission && (
+        <InviteModal
+          mission={invitingMission}
+          onClose={() => setInvitingMission(null)}
+          onSuccess={() => setReward({ points: 0, sticker: null, message: "ส่งคำชวนสำเร็จ! 🤝" })}
         />
       )}
 
