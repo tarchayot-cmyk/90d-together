@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
 
 interface ScoreDetail {
   id: string;
@@ -14,17 +15,6 @@ interface ScoreDetail {
   detail: string | null;
   proof_status: string | null;
   admin_name: string | null;
-}
-
-interface BadgeProgress {
-  code: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  unlocked: boolean;
-  unlocked_at: string | null;
-  current_value: number;
-  target_value: number;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -44,7 +34,7 @@ export default function ScoreDetailModal({
 }) {
   const [tab, setTab] = useState<"score" | "badges">("score");
   const [items, setItems] = useState<ScoreDetail[]>([]);
-  const [badges, setBadges] = useState<BadgeProgress[]>([]);
+  const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -112,42 +102,7 @@ export default function ScoreDetailModal({
           </div>
         )}
 
-        {!loading && tab === "badges" && (
-          <div className="space-y-2">
-            {badges.map((badge) => {
-              const pct = Math.min(100, Math.round((badge.current_value / Math.max(badge.target_value, 1)) * 100));
-              return (
-                <div
-                  key={badge.code}
-                  className={clsx(
-                    "rounded-xl p-3 flex gap-3 border",
-                    badge.unlocked ? "bg-us/5 border-us/20" : "bg-gray-50 border-gray-100"
-                  )}
-                >
-                  <div className={clsx("text-2xl shrink-0", !badge.unlocked && "grayscale opacity-40")}>{badge.icon ?? "🏅"}</div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className={clsx("text-sm font-semibold", badge.unlocked ? "text-gray-800" : "text-gray-500")}>{badge.name}</p>
-                    {badge.unlocked ? (
-                      <p className="text-xs text-us font-medium">
-                        ปลดล็อกแล้ว
-                        {badge.unlocked_at && ` · ${new Date(badge.unlocked_at).toLocaleDateString("th-TH")}`}
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                          <div className="h-full bg-we rounded-full" style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-xs text-gray-400">
-                          {badge.current_value}/{badge.target_value}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {!loading && tab === "badges" && <BadgeFamilyList badges={badges} />}
       </div>
     </div>
   );

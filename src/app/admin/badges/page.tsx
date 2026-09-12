@@ -1,0 +1,317 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import clsx from "clsx";
+import { createClient } from "@/lib/supabaseClient";
+import { getFieldOptions } from "@/lib/badgeFields";
+
+interface Badge {
+  id: string;
+  family_code: string;
+  tier: "bulk" | "lean" | "smart";
+  level: "me" | "we" | "us";
+  name: string;
+  description: string | null;
+  icon: string | null;
+  condition_field: string; // full path e.g. "me.move_me_weeks"
+  target_value: number;
+}
+
+const TIER_LABEL: Record<string, string> = { bulk: "🥉 Bulk", lean: "🥈 Lean", smart: "🥇 Smart" };
+const LEVEL_LABEL: Record<string, string> = { me: "🌱 ME", we: "🌿 WE", us: "🌳 US" };
+
+function emptyForm(level: "me" | "we" | "us" = "me") {
+  return {
+    id: null as string | null,
+    family_code: "",
+    tier: "bulk" as "bulk" | "lean" | "smart",
+    level,
+    name: "",
+    description: "",
+    icon: "🏅",
+    condition_field: "",
+    target_value: "" as string | number,
+  };
+}
+
+export default function AdminBadgesPage() {
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ReturnType<typeof emptyForm> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterLevel, setFilterLevel] = useState<"all" | "me" | "we" | "us">("all");
+
+  async function load() {
+    setLoading(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("badges")
+      .select("id, family_code, tier, level, name, description, icon, condition_field, target_value")
+      .order("level")
+      .order("family_code")
+      .order("target_value");
+    setBadges(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  function openCreate() {
+    setError(null);
+    setEditing(emptyForm(filterLevel === "all" ? "me" : filterLevel));
+  }
+
+  function openEdit(b: Badge) {
+    setError(null);
+    setEditing({
+      id: b.id,
+      family_code: b.family_code,
+      tier: b.tier,
+      level: b.level,
+      name: b.name,
+      description: b.description ?? "",
+      icon: b.icon ?? "🏅",
+      condition_field: `${b.level}.${b.condition_field.split(".")[1]}`,
+      target_value: b.target_value,
+    });
+  }
+
+  async function handleSave() {
+    if (!editing) return;
+    if (!editing.family_code.trim() || !editing.name.trim() || !editing.condition_field || !editing.target_value) {
+      setError("กรอกให้ครบทุกช่องที่จำเป็น");
+      return;
+    }
+
+    setSaving(true);
+    const supabase = createClient();
+    const { error: rpcError } = await supabase.rpc("admin_upsert_badge", {
+      p_id: editing.id,
+      p_family_code: editing.family_code.trim(),
+      p_tier: editing.tier,
+      p_level: editing.level,
+      p_name: editing.name.trim(),
+      p_description: editing.description.trim() || null,
+      p_icon: editing.icon || "🏅",
+      p_condition_field: editing.condition_field,
+      p_target_value: Number(editing.target_value),
+    });
+    setSaving(false);
+
+    if (rpcError) {
+      setError(
+        rpcError.message.includes("invalid_condition_field")
+          ? "เงื่อนไขที่เลือกไม่ตรงกับระดับ"
+          : rpcError.message.includes("not_authorized")
+          ? "คุณไม่มีสิทธิ์ทำรายการนี้"
+          : "บันทึกไม่สำเร็จ กรุณาลองใหม่"
+      );
+      return;
+    }
+
+    setBanner(editing.id ? "แก้ไข Badge เรียบร้อย" : "สร้าง Badge ใหม่เรียบร้อย");
+    setEditing(null);
+    load();
+  }
+
+  async function handleDelete(b: Badge) {
+    const confirmed = window.confirm(`ลบ Badge "${b.name}" ถาวร?\n\nสมาชิกที่เคยปลดล็อกเหรียญนี้จะไม่มีเหรียญนี้อีก`);
+    if (!confirmed) return;
+
+    const supabase = createClient();
+    const { error: rpcError } = await supabase.rpc("admin_delete_badge", { p_id: b.id });
+    if (rpcError) {
+      setBanner("ลบไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+    setBanner("ลบ Badge เรียบร้อย");
+    load();
+  }
+
+  const filtered = filterLevel === "all" ? badges : badges.filter((b) => b.level === filterLevel);
+
+  // Group by family for a compact table-like display
+  const families = new Map<string, Badge[]>();
+  for (const b of filtered) {
+    const key = `${b.level}:${b.family_code}`;
+    if (!families.has(key)) families.set(key, []);
+    families.get(key)!.push(b);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {(["all", "me", "we", "us"] as const).map((lvl) => (
+          <button
+            key={lvl}
+            onClick={() => setFilterLevel(lvl)}
+            className={clsx(
+              "rounded-full px-4 py-2 text-xs font-semibold min-h-[36px] shrink-0",
+              filterLevel === lvl ? "bg-us text-white" : "bg-white text-gray-500 border border-gray-200"
+            )}
+          >
+            {lvl === "all" ? "ทั้งหมด" : LEVEL_LABEL[lvl]}
+          </button>
+        ))}
+      </div>
+
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+
+      <button
+        onClick={openCreate}
+        className="w-full rounded-card bg-us/10 border border-us/30 text-us p-3 flex items-center justify-center gap-2 text-sm font-semibold min-h-[44px]"
+      >
+        <Plus size={16} /> เพิ่ม Badge ใหม่
+      </button>
+
+      {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
+
+      <div className="space-y-3">
+        {Array.from(families.entries()).map(([key, tiers]) => (
+          <div key={key} className="rounded-card bg-white shadow-sm p-3 space-y-2">
+            <p className="text-xs text-gray-400">
+              {LEVEL_LABEL[tiers[0].level]} · {tiers[0].family_code}
+            </p>
+            {tiers.map((b) => (
+              <div key={b.id} className="flex items-center justify-between gap-2 py-1 border-t border-gray-50 first:border-t-0 first:pt-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-800">
+                    {TIER_LABEL[b.tier]} — {b.name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {b.condition_field} ≥ {b.target_value}
+                  </p>
+                </div>
+                <button onClick={() => openEdit(b)} className="text-gray-400 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => handleDelete(b)} className="text-red-400 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+        {!loading && families.size === 0 && <p className="text-sm text-gray-400 text-center py-8">ไม่พบ Badge</p>}
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-t-card sm:rounded-card bg-white p-5 space-y-3 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-800">{editing.id ? "แก้ไข Badge" : "สร้าง Badge ใหม่"}</h2>
+              <button onClick={() => setEditing(null)} className="p-1 text-gray-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">ระดับ</label>
+              <select
+                value={editing.level}
+                onChange={(e) => setEditing({ ...editing, level: e.target.value as "me" | "we" | "us", condition_field: "" })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              >
+                <option value="me">🌱 ME</option>
+                <option value="we">🌿 WE</option>
+                <option value="us">🌳 US</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">ระดับเหรียญ (Tier)</label>
+              <select
+                value={editing.tier}
+                onChange={(e) => setEditing({ ...editing, tier: e.target.value as "bulk" | "lean" | "smart" })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              >
+                <option value="bulk">🥉 Bulk</option>
+                <option value="lean">🥈 Lean</option>
+                <option value="smart">🥇 Smart</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">รหัสชุด Badge (family_code) — ต้องตรงกันทั้ง 3 tier</label>
+              <input
+                value={editing.family_code}
+                onChange={(e) => setEditing({ ...editing, family_code: e.target.value })}
+                placeholder="เช่น me_running"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">ชื่อ Badge</label>
+              <input
+                value={editing.name}
+                onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">คำอธิบาย</label>
+              <input
+                value={editing.description}
+                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">ไอคอน (emoji)</label>
+              <input
+                value={editing.icon}
+                onChange={(e) => setEditing({ ...editing, icon: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">เงื่อนไข (เลือกจากรายการเท่านั้น)</label>
+              <select
+                value={editing.condition_field}
+                onChange={(e) => setEditing({ ...editing, condition_field: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              >
+                <option value="">-- เลือกเงื่อนไข --</option>
+                {getFieldOptions(editing.level).map((opt) => (
+                  <option key={opt.field} value={`${editing.level}.${opt.field}`}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">เกณฑ์ (ตัวเลขที่ต้องถึง)</label>
+              <input
+                type="number"
+                value={editing.target_value}
+                onChange={(e) => setEditing({ ...editing, target_value: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full rounded-full bg-us py-3 text-sm font-semibold text-white min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              {saving ? "กำลังบันทึก..." : "บันทึก"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

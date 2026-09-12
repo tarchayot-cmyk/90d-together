@@ -11,6 +11,7 @@ const TABS = [
   { href: "/admin/members", label: "👥 Members" },
   { href: "/admin/groups", label: "🤝 Groups" },
   { href: "/admin/missions", label: "🎯 Missions" },
+  { href: "/admin/badges", label: "🏅 Badges" },
   { href: "/admin/proposals", label: "📢 Proposals" },
   { href: "/admin/checkins", label: "✅ Check-ins" },
   { href: "/admin/reports", label: "📊 Reports" },

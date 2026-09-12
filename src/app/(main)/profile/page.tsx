@@ -2,26 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import clsx from "clsx";
-import { LogOut, Check, Camera, Loader2 } from "lucide-react";
+import { LogOut, Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
-
-interface BadgeProgress {
-  code: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  unlocked: boolean;
-  unlocked_at: string | null;
-  current_value: number;
-  target_value: number;
-}
+import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { member, loading: memberLoading } = useMember();
-  const [badges, setBadges] = useState<BadgeProgress[]>([]);
+  const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -137,49 +126,7 @@ export default function ProfilePage() {
         {loadingBadges ? (
           <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>
         ) : (
-          <div className="space-y-2">
-            {badges.map((badge) => {
-              const pct = Math.min(100, Math.round((badge.current_value / Math.max(badge.target_value, 1)) * 100));
-              return (
-                <div
-                  key={badge.code}
-                  className={clsx(
-                    "rounded-xl p-3 flex gap-3 border",
-                    badge.unlocked ? "bg-us/5 border-us/20" : "bg-gray-50 border-gray-100"
-                  )}
-                >
-                  <div className={clsx("text-2xl shrink-0", !badge.unlocked && "grayscale opacity-40")}>
-                    {badge.icon ?? "🏅"}
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className={clsx("text-sm font-semibold", badge.unlocked ? "text-gray-800" : "text-gray-500")}>
-                        {badge.name}
-                      </p>
-                      {badge.unlocked && <Check size={14} className="text-us shrink-0" />}
-                    </div>
-                    {badge.description && <p className="text-xs text-gray-400">{badge.description}</p>}
-
-                    {badge.unlocked ? (
-                      <p className="text-xs text-us font-medium">
-                        ปลดล็อกแล้ว
-                        {badge.unlocked_at && ` · ${new Date(badge.unlocked_at).toLocaleDateString("th-TH")}`}
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                          <div className="h-full bg-we rounded-full" style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-xs text-gray-400">
-                          ความคืบหน้า {badge.current_value}/{badge.target_value}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <BadgeFamilyList badges={badges} />
         )}
       </div>
 
