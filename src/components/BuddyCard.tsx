@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
+import AvatarCircle from "@/components/AvatarCircle";
 
 interface BuddyProgress {
   has_group: boolean;
@@ -10,7 +11,7 @@ interface BuddyProgress {
   target?: number;
   total?: number;
   remaining?: number;
-  members?: { name: string; value: number }[];
+  members?: { name: string; avatar_url: string | null; value: number }[];
 }
 
 async function fetchBuddyProgress(): Promise<BuddyProgress | null> {
@@ -58,11 +59,12 @@ export default function BuddyCard() {
       </div>
 
       {!!progress.members?.length && (
-        <ul className="space-y-1 pt-1 border-t border-gray-50">
+        <ul className="space-y-1.5 pt-1 border-t border-gray-50">
           {progress.members.map((m) => (
-            <li key={m.name} className="flex justify-between text-xs text-gray-500">
-              <span>{m.name}</span>
-              <span>{m.value.toLocaleString()}</span>
+            <li key={m.name} className="flex items-center gap-2 text-xs text-gray-500">
+              <AvatarCircle avatarUrl={m.avatar_url} name={m.name} size={20} />
+              <span className="flex-1 min-w-0 truncate">{m.name}</span>
+              <span className="shrink-0">{m.value.toLocaleString()}</span>
             </li>
           ))}
         </ul>

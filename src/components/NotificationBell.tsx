@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Bell, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+import { getNotificationCategory } from "@/lib/notificationCategories";
 
 interface NotificationRow {
   id: string;
@@ -124,6 +126,7 @@ export default function NotificationBell() {
                   >
                     {!n.is_read && <span className="mt-1.5 w-2 h-2 rounded-full bg-us shrink-0" />}
                     <span className={clsx("flex-1", n.is_read ? "text-gray-500" : "text-gray-800 font-medium")}>
+                      <span className="mr-1">{getNotificationCategory(n.type).icon}</span>
                       {n.message}
                       <span className="block text-xs text-gray-300 mt-0.5">
                         {new Date(n.created_at).toLocaleString("th-TH")}
@@ -141,6 +144,14 @@ export default function NotificationBell() {
                 </li>
               ))}
             </ul>
+
+            <Link
+              href="/notifications"
+              onClick={() => setOpen(false)}
+              className="block text-center text-xs font-semibold text-us py-3 border-t border-gray-50"
+            >
+              ดูการแจ้งเตือนทั้งหมด
+            </Link>
           </div>
         </>
       )}

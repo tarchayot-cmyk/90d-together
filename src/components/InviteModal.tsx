@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Send } from "lucide-react";
+import { X, Loader2, Send, Check } from "lucide-react";
+import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
+import AvatarCircle from "@/components/AvatarCircle";
 
 interface Colleague {
   id: string;
   full_name: string;
   department: string | null;
+  avatar_url: string | null;
 }
 
 function friendlyError(raw: string): string {
@@ -89,21 +92,32 @@ export default function InviteModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-gray-500">ชวนใคร</label>
-            <select
-              value={toMemberId}
-              onChange={(e) => setToMemberId(e.target.value)}
-              disabled={loadingList}
-              className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-we/40"
-            >
-              <option value="">{loadingList ? "กำลังโหลดรายชื่อ..." : "-- เลือกเพื่อนร่วมงาน --"}</option>
-              {colleagues.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.full_name}
-                  {c.department ? ` · ${c.department}` : ""}
-                </option>
-              ))}
-            </select>
+            <label className="text-xs font-medium text-gray-500 mb-1.5 block">ชวนใคร</label>
+            {loadingList ? (
+              <p className="text-sm text-gray-400">กำลังโหลดรายชื่อ...</p>
+            ) : (
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-50">
+                {colleagues.map((c) => (
+                  <button
+                    type="button"
+                    key={c.id}
+                    onClick={() => setToMemberId(c.id)}
+                    className={clsx(
+                      "w-full flex items-center gap-3 px-3 py-2.5 text-left min-h-[44px]",
+                      toMemberId === c.id && "bg-we/10"
+                    )}
+                  >
+                    <AvatarCircle avatarUrl={c.avatar_url} name={c.full_name} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-gray-800 truncate">{c.full_name}</p>
+                      {c.department && <p className="text-xs text-gray-400 truncate">{c.department}</p>}
+                    </div>
+                    {toMemberId === c.id && <Check size={16} className="text-we shrink-0" />}
+                  </button>
+                ))}
+                {colleagues.length === 0 && <p className="text-sm text-gray-400 px-3 py-4 text-center">ไม่พบเพื่อนร่วมงาน</p>}
+              </div>
+            )}
           </div>
 
           <div>

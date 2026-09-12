@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+import AvatarCircle from "@/components/AvatarCircle";
 
 type TabType = "me" | "we" | "us";
 
@@ -11,6 +12,7 @@ interface RankRow {
   id: string;
   name: string;
   department?: string | null;
+  avatar_url?: string | null;
   member_count?: number;
   total_points: number;
 }
@@ -74,6 +76,7 @@ export default function RankingPage() {
         {(rows ?? []).map((row, i) => (
           <li key={row.id} className="rounded-card bg-white shadow-sm p-3 flex items-center gap-3">
             <span className="w-8 text-center font-bold text-gray-500">{MEDAL[i] ?? i + 1}</span>
+            {row.avatar_url !== undefined && <AvatarCircle avatarUrl={row.avatar_url} name={row.name} size={32} />}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-800 truncate">{row.name}</p>
               {row.department && <p className="text-xs text-gray-400">{row.department}</p>}
