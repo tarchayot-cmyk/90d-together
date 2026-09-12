@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Upload } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import { getFieldOptions } from "@/lib/badgeFields";
@@ -43,6 +43,7 @@ export default function AdminBadgesPage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [editing, setEditing] = useState<ReturnType<typeof emptyForm> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterLevel, setFilterLevel] = useState<"all" | "me" | "we" | "us">("all");
 
@@ -82,6 +83,33 @@ export default function AdminBadgesPage() {
       condition_field: `${b.level}.${b.condition_field.split(".")[1]}`,
       target_value: b.target_value,
     });
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+
+    setUploading(true);
+    setError(null);
+    const supabase = createClient();
+
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${editing.family_code || "badge"}-${editing.tier}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage.from("badge-icons").upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+    if (uploadError) {
+      setUploading(false);
+      setError("อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+
+    const publicUrl = supabase.storage.from("badge-icons").getPublicUrl(path).data.publicUrl;
+    setEditing({ ...editing, icon_url: publicUrl });
+    setUploading(false);
   }
 
   async function handleSave() {
@@ -278,12 +306,36 @@ export default function AdminBadgesPage() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500">URL รูปภาพ (ไม่บังคับ — ถ้าใส่จะใช้แทน emoji)</label>
+              <label className="text-xs font-medium text-gray-500">รูปไอคอน (ไม่บังคับ — ถ้าใส่จะใช้แทน emoji)</label>
+              <div className="mt-1 flex items-center gap-3">
+                {editing.icon_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={editing.icon_url} alt="" className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-xl">
+                    {editing.icon || "🏅"}
+                  </div>
+                )}
+                <label className="flex-1 rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-sm text-gray-500 text-center cursor-pointer min-h-[44px] flex items-center justify-center gap-2">
+                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                  {uploading ? "กำลังอัปโหลด..." : "อัปโหลดรูป"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+                </label>
+              </div>
+              {editing.icon_url && (
+                <button
+                  type="button"
+                  onClick={() => setEditing({ ...editing, icon_url: "" })}
+                  className="text-xs text-red-400 mt-1"
+                >
+                  ลบรูป (กลับไปใช้ emoji)
+                </button>
+              )}
               <input
                 value={editing.icon_url}
                 onChange={(e) => setEditing({ ...editing, icon_url: e.target.value })}
-                placeholder="https://..."
-                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+                placeholder="หรือวาง URL รูปภายนอกที่นี่"
+                className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-500"
               />
             </div>
 
