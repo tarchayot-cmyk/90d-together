@@ -75,11 +75,11 @@ export default function ProposalsPage() {
         <h1 className="text-xl font-bold text-gray-800">เสนอ & โหวตกิจกรรม</h1>
       </header>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       <button
         onClick={() => setShowPropose(true)}
-        className="w-full rounded-card bg-us text-white p-4 flex items-center justify-center gap-2 font-semibold shadow-sm min-h-[44px]"
+        className="w-full rounded-card bg-us text-white p-4 flex items-center justify-center gap-2 font-semibold shadow-soft min-h-[44px]"
       >
         <Plus size={18} />
         เสนอกิจกรรมใหม่
@@ -92,7 +92,7 @@ export default function ProposalsPage() {
 
       <div className="space-y-3">
         {items.map((p) => (
-          <div key={p.id} className="rounded-card bg-white shadow-sm p-4 space-y-2">
+          <div key={p.id} className="rounded-card bg-white shadow-soft p-4 space-y-2">
             <div>
               <h3 className="font-semibold text-gray-800">{p.title}</h3>
               {p.description && <p className="text-sm text-gray-500 mt-1">{p.description}</p>}

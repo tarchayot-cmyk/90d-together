@@ -139,13 +139,13 @@ export default function AdminSystemPage() {
         </p>
       </div>
 
-      {statusMessage && <p className="text-sm text-center text-gray-600 bg-white rounded-card p-2 shadow-sm">{statusMessage}</p>}
+      {statusMessage && <p className="text-sm text-center text-gray-600 bg-white rounded-card p-2 shadow-soft">{statusMessage}</p>}
 
       {ACTIONS.map((action) => {
         const isMatch = typedConfirm[action.key].trim().toUpperCase() === "RESET";
         const isRunning = runningKey === action.key;
         return (
-          <div key={action.key} className="rounded-card bg-white shadow-sm p-4 space-y-3 border border-red-100">
+          <div key={action.key} className="rounded-card bg-white shadow-soft p-4 space-y-3 border border-red-100">
             <div className="flex items-center gap-2 text-red-600">
               {action.icon}
               <h3 className="font-semibold">{action.title}</h3>

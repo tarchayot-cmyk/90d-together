@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Shuffle, UserPlus, Pencil, KeyRound, AlertCircle } from "lucide-react";
+import { Search, Shuffle, UserPlus, Pencil, KeyRound, AlertCircle, MoreVertical, Power } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+import AvatarCircle from "@/components/AvatarCircle";
 import AdjustPointsModal from "@/components/AdjustPointsModal";
 import AddMemberModal from "@/components/AddMemberModal";
 import EditMemberModal from "@/components/EditMemberModal";
@@ -19,6 +20,7 @@ interface MemberRow {
   avatar_url: string | null;
   role: string;
   is_active: boolean;
+  points: number;
 }
 
 export default function AdminMembersPage() {
@@ -28,6 +30,7 @@ export default function AdminMembersPage() {
   const [adjustTarget, setAdjustTarget] = useState<MemberRow | null>(null);
   const [editTarget, setEditTarget] = useState<MemberRow | null>(null);
   const [resetPinTarget, setResetPinTarget] = useState<MemberRow | null>(null);
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<"buddy" | "squad" | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
@@ -42,11 +45,20 @@ export default function AdminMembersPage() {
   async function loadMembers() {
     setLoading(true);
     const supabase = createClient();
-    const { data } = await supabase
-      .from("members")
-      .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active")
-      .order("full_name");
-    setMembers(data ?? []);
+    const [{ data: memberRows }, { data: pointRows }] = await Promise.all([
+      supabase
+        .from("members")
+        .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active")
+        .order("full_name"),
+      supabase.from("points_transactions").select("member_id, points"),
+    ]);
+
+    const pointsByMember = new Map<string, number>();
+    for (const row of pointRows ?? []) {
+      pointsByMember.set(row.member_id, (pointsByMember.get(row.member_id) ?? 0) + row.points);
+    }
+
+    setMembers((memberRows ?? []).map((m) => ({ ...m, points: pointsByMember.get(m.id) ?? 0 })));
     setLoading(false);
   }
 
@@ -101,6 +113,7 @@ export default function AdminMembersPage() {
       setBanner(error.message.includes("not_authorized") ? "คุณไม่มีสิทธิ์ทำรายการนี้" : "เกิดข้อผิดพลาด กรุณาลองใหม่");
       return;
     }
+    setMenuOpenFor(null);
     loadMembers();
   }
 
@@ -131,7 +144,7 @@ export default function AdminMembersPage() {
         <button
           onClick={() => handleAssign("buddy")}
           disabled={assigning !== null}
-          className="rounded-card bg-white shadow-sm p-3 flex items-center justify-center gap-2 text-sm font-semibold text-we disabled:opacity-50"
+          className="rounded-card bg-white shadow-soft p-3 flex items-center justify-center gap-2 text-sm font-semibold text-we disabled:opacity-50"
         >
           <Shuffle size={16} />
           {assigning === "buddy" ? "กำลังสุ่ม..." : "สุ่มแบ่ง Buddy"}
@@ -139,14 +152,14 @@ export default function AdminMembersPage() {
         <button
           onClick={() => handleAssign("squad")}
           disabled={assigning !== null}
-          className="rounded-card bg-white shadow-sm p-3 flex items-center justify-center gap-2 text-sm font-semibold text-us disabled:opacity-50"
+          className="rounded-card bg-white shadow-soft p-3 flex items-center justify-center gap-2 text-sm font-semibold text-us disabled:opacity-50"
         >
           <Shuffle size={16} />
           {assigning === "squad" ? "กำลังสุ่ม..." : "สุ่มแบ่ง Squad"}
         </button>
       </div>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       <button
         onClick={() => setAddingMember(true)}
@@ -169,58 +182,85 @@ export default function AdminMembersPage() {
       {loading ? (
         <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>
       ) : (
-        <div className="rounded-card bg-white shadow-sm divide-y divide-gray-50">
+        <div className="rounded-card bg-white shadow-soft divide-y divide-gray-50">
           {filtered.map((m) => (
-            <div key={m.id} className="p-3 space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-bg overflow-hidden shrink-0 flex items-center justify-center text-sm text-gray-400 border border-gray-100">
-                  {m.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    (m.nickname ?? m.full_name).charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-800 truncate">
-                    {m.full_name}
-                    {m.nickname && <span className="text-gray-400 font-normal"> ({m.nickname})</span>}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {m.employee_code} · {m.unit ?? m.department ?? "-"} · {m.role}
-                    {!m.is_active && " · inactive"}
-                  </p>
-                </div>
+            <div key={m.id} className="relative p-3 flex items-center gap-3">
+              <AvatarCircle avatarUrl={m.avatar_url} name={m.nickname ?? m.full_name} size={40} />
+
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-gray-800 truncate text-sm">
+                  {m.full_name}
+                  {m.nickname && <span className="text-gray-400 font-normal"> ({m.nickname})</span>}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {m.employee_code}
+                  {(m.unit ?? m.department) && ` · ${m.unit ?? m.department}`}
+                </p>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setEditTarget(m)}
-                  className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
-                >
-                  <Pencil size={12} /> แก้ไข
-                </button>
-                <button
-                  onClick={() => setAdjustTarget(m)}
-                  className="text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[32px]"
-                >
-                  ปรับคะแนน
-                </button>
-                <button
-                  onClick={() => toggleMemberActive(m)}
+
+              <div className="text-right shrink-0">
+                <p className="text-sm font-bold text-us">{m.points.toLocaleString()}</p>
+                <span
                   className={clsx(
-                    "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
-                    m.is_active ? "text-red-500 border border-red-200" : "text-us border border-us/30"
+                    "inline-block rounded-pill px-2 py-0.5 text-[10px] font-semibold mt-0.5",
+                    m.is_active ? "bg-pastel-green text-us" : "bg-gray-100 text-gray-400"
                   )}
                 >
-                  {m.is_active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
-                </button>
-                <button
-                  onClick={() => setResetPinTarget(m)}
-                  className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
-                >
-                  <KeyRound size={12} /> รีเซ็ต PIN
-                </button>
+                  {m.is_active ? "ปกติ" : "ปิดใช้งาน"}
+                </span>
               </div>
+
+              <button
+                onClick={() => setMenuOpenFor(menuOpenFor === m.id ? null : m.id)}
+                aria-label="ตัวเลือกเพิ่มเติม"
+                className="shrink-0 p-2 text-gray-400 min-h-[36px] min-w-[36px] flex items-center justify-center"
+              >
+                <MoreVertical size={18} />
+              </button>
+
+              {menuOpenFor === m.id && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setMenuOpenFor(null)} />
+                  <div className="absolute right-3 top-12 z-40 w-44 rounded-xl bg-white shadow-soft border border-gray-100 py-1.5 divide-y divide-gray-50">
+                    <button
+                      onClick={() => {
+                        setEditTarget(m);
+                        setMenuOpenFor(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 text-left min-h-[40px]"
+                    >
+                      <Pencil size={14} /> แก้ไขข้อมูล
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAdjustTarget(m);
+                        setMenuOpenFor(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-us text-left min-h-[40px]"
+                    >
+                      <span className="w-3.5 text-center">✦</span> ปรับคะแนน
+                    </button>
+                    <button
+                      onClick={() => {
+                        setResetPinTarget(m);
+                        setMenuOpenFor(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 text-left min-h-[40px]"
+                    >
+                      <KeyRound size={14} /> รีเซ็ต PIN
+                    </button>
+                    <button
+                      onClick={() => toggleMemberActive(m)}
+                      className={clsx(
+                        "w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left min-h-[40px]",
+                        m.is_active ? "text-red-500" : "text-us"
+                      )}
+                    >
+                      <Power size={14} /> {m.is_active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-8">ไม่พบสมาชิก</p>}
@@ -232,7 +272,10 @@ export default function AdminMembersPage() {
           memberId={adjustTarget.id}
           memberName={adjustTarget.full_name}
           onClose={() => setAdjustTarget(null)}
-          onSuccess={() => setBanner(`ปรับคะแนนของ ${adjustTarget.full_name} เรียบร้อย`)}
+          onSuccess={() => {
+            setBanner(`ปรับคะแนนของ ${adjustTarget.full_name} เรียบร้อย`);
+            loadMembers();
+          }}
         />
       )}
 

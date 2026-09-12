@@ -63,7 +63,7 @@ export default function TreePage() {
 
       <TreeVisual tree={tree} />
 
-      <div className="rounded-card bg-white shadow-sm p-4 space-y-3">
+      <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">⭐ Growth Points สะสม</span>
           <span className="text-lg font-bold text-us">{totalPoints.toLocaleString()}</span>
@@ -88,7 +88,7 @@ export default function TreePage() {
 
       <a
         href="/final-tree"
-        className="block rounded-card bg-white shadow-sm p-4 text-center text-sm font-semibold text-us border border-us/20"
+        className="block rounded-card bg-white shadow-soft p-4 text-center text-sm font-semibold text-us border border-us/20"
       >
         🌳 ดูต้นไม้ใหญ่ของทั้งแผนก (Final Tree)
       </a>

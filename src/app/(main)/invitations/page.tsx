@@ -122,23 +122,23 @@ export default function InvitationsPage() {
 
       <button
         onClick={() => setShowInviteModal(true)}
-        className="w-full rounded-card bg-we text-white p-4 flex items-center justify-center gap-2 font-semibold shadow-sm min-h-[44px]"
+        className="w-full rounded-card bg-we text-white p-4 flex items-center justify-center gap-2 font-semibold shadow-soft min-h-[44px]"
       >
         <UserPlus size={18} />
         ส่งคำเชิญใหม่
       </button>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
       {!loading && (
         <>
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-500">คำเชิญที่ได้รับ ({received.length})</h2>
-            {received.length === 0 && <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-sm">ยังไม่มีใครชวนคุณ</p>}
+            {received.length === 0 && <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">ยังไม่มีใครชวนคุณ</p>}
 
             {received.map((inv) => (
-              <div key={inv.id} className="rounded-card bg-white shadow-sm p-3 space-y-2">
+              <div key={inv.id} className="rounded-card bg-white shadow-soft p-3 space-y-2">
                 <div>
                   <p className="font-medium text-gray-800 text-sm">
                     {inv.from_name} ชวนทำ &quot;{inv.mission_name}&quot;
@@ -219,10 +219,10 @@ export default function InvitationsPage() {
 
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-500">คำเชิญที่คุณส่ง ({sent.length})</h2>
-            {sent.length === 0 && <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-sm">ยังไม่ได้ชวนใคร</p>}
+            {sent.length === 0 && <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">ยังไม่ได้ชวนใคร</p>}
 
             {sent.map((inv) => (
-              <div key={inv.id} className="rounded-card bg-white shadow-sm p-3 space-y-2">
+              <div key={inv.id} className="rounded-card bg-white shadow-soft p-3 space-y-2">
                 <div>
                   <p className="font-medium text-gray-800 text-sm">
                     ชวน {inv.to_name} ทำ &quot;{inv.mission_name}&quot;

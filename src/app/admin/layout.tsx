@@ -8,6 +8,7 @@ import { useSession } from "@/hooks/useSession";
 import { useMember } from "@/hooks/useMember";
 
 const TABS = [
+  { href: "/admin", label: "🏠 Dashboard" },
   { href: "/admin/members", label: "👥 Members" },
   { href: "/admin/groups", label: "🤝 Groups" },
   { href: "/admin/missions", label: "🎯 Missions" },
@@ -54,19 +55,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         <h1 className="text-lg font-bold text-gray-800">⚙️ Admin</h1>
 
-        <div className="flex gap-1 rounded-full bg-white shadow-sm p-1 overflow-x-auto">
-          {TABS.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className={clsx(
-                "rounded-full px-3.5 py-2 text-xs sm:text-sm font-semibold min-h-[40px] flex items-center whitespace-nowrap shrink-0",
-                pathname?.startsWith(t.href) ? "bg-us text-white" : "text-gray-400"
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
+        <div className="flex gap-1 rounded-full bg-white shadow-soft p-1 overflow-x-auto">
+          {TABS.map((t) => {
+            const isActive = t.href === "/admin" ? pathname === "/admin" : pathname?.startsWith(t.href);
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                className={clsx(
+                  "rounded-full px-3.5 py-2 text-xs sm:text-sm font-semibold min-h-[40px] flex items-center whitespace-nowrap shrink-0",
+                  isActive ? "bg-us text-white" : "text-gray-400"
+                )}
+              >
+                {t.label}
+              </Link>
+            );
+          })}
         </div>
 
         {children}

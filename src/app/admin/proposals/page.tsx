@@ -94,7 +94,7 @@ export default function AdminProposalsPage() {
         กิจกรรมที่โหวตผ่านเป็นแค่ผลโพล — ถ้าจะเปิดให้เช็คอินจริง ต้องไปสร้างภารกิจเองที่แท็บ Missions
       </p>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
       {!loading && items.length === 0 && <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีข้อเสนอ</p>}
@@ -103,7 +103,7 @@ export default function AdminProposalsPage() {
         {items.map((p) => {
           const busy = busyId === p.id;
           return (
-            <div key={p.id} className="rounded-card bg-white shadow-sm p-4 space-y-2">
+            <div key={p.id} className="rounded-card bg-white shadow-soft p-4 space-y-2">
               <div>
                 <h3 className="font-semibold text-gray-800">{p.title}</h3>
                 <p className="text-xs text-gray-400">เสนอโดย {p.proposed_by_name}</p>

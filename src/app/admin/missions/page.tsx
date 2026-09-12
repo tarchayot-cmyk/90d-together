@@ -87,7 +87,7 @@ export default function AdminMissionsPage() {
         เพิ่มภารกิจใหม่
       </button>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       {LEVELS.map((lvl) => {
         const group = missions.filter((m) => m.level === lvl.value);
@@ -96,7 +96,7 @@ export default function AdminMissionsPage() {
           <div key={lvl.value} className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-500">{lvl.label}</h2>
             {group.map((m) => (
-              <div key={m.id} className="rounded-card bg-white shadow-sm p-3 flex items-center gap-3">
+              <div key={m.id} className="rounded-card bg-white shadow-soft p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 truncate">{m.name}</p>
                   <p className="text-xs text-gray-400">

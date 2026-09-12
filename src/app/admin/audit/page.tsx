@@ -62,7 +62,7 @@ export default function AdminAuditPage() {
 
       <div className="space-y-2">
         {rows.map((row) => (
-          <div key={row.id} className="rounded-card bg-white shadow-sm p-3 space-y-1.5">
+          <div key={row.id} className="rounded-card bg-white shadow-soft p-3 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-800">{ACTION_LABEL[row.action] ?? row.action}</span>
               <span className="text-xs text-gray-400">{new Date(row.created_at).toLocaleString("th-TH")}</span>

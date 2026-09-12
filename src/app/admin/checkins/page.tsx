@@ -181,7 +181,7 @@ export default function AdminCheckinsPage() {
         แสดง 150 รายการล่าสุด — ลบแล้วคะแนน/สติ๊กเกอร์ของรายการนั้นจะถูกดึงคืนอัตโนมัติ และบันทึกลง Audit Log ทุกการกระทำ
       </p>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       <button
         onClick={() => setPendingOnly((v) => !v)}
@@ -222,7 +222,7 @@ export default function AdminCheckinsPage() {
           const isPending = row.proof_status === "pending";
           const busy = busyId === row.id;
           return (
-            <div key={row.id} className="rounded-card bg-white shadow-sm p-3 space-y-2">
+            <div key={row.id} className="rounded-card bg-white shadow-soft p-3 space-y-2">
               <div className="min-w-0">
                 <p className="font-medium text-gray-800 truncate">
                   {member?.full_name ?? "-"} <span className="text-gray-400 font-normal">· {member?.employee_code}</span>

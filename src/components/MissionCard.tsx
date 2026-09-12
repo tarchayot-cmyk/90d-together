@@ -29,7 +29,7 @@ export default function MissionCard({
   const pct = done ? 100 : 0;
 
   return (
-    <div className="rounded-card bg-white shadow-sm p-4 space-y-3">
+    <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-lg">{STICKER_EMOJI[mission.sticker_color ?? ""] ?? "⭐"}</span>
         <h3 className="font-semibold text-gray-800">{mission.name}</h3>

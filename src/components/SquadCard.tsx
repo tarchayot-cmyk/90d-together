@@ -29,12 +29,12 @@ export default function SquadCard() {
   const [showMembers, setShowMembers] = useState(false);
 
   if (loading) {
-    return <div className="rounded-card bg-white shadow-sm p-4 h-28 animate-pulse" />;
+    return <div className="rounded-card bg-white shadow-soft p-4 h-28 animate-pulse" />;
   }
 
   if (!progress?.has_group) {
     return (
-      <div className="rounded-card bg-white shadow-sm p-4 text-sm text-gray-400 text-center">
+      <div className="rounded-card bg-white shadow-soft p-4 text-sm text-gray-400 text-center">
         ยังไม่ได้จับกลุ่ม Squad — รอ Admin จัดกลุ่มให้นะ 🌳
       </div>
     );
@@ -43,7 +43,7 @@ export default function SquadCard() {
   const pct = Math.min(100, Math.round(((progress.total ?? 0) / (progress.target ?? 1)) * 100));
 
   return (
-    <div className="rounded-card bg-white shadow-sm p-4 space-y-3">
+    <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
       <div className="flex items-center gap-2">
         <TreePine size={18} className="text-us" />
         <h3 className="font-semibold text-gray-800">{progress.group_name}</h3>

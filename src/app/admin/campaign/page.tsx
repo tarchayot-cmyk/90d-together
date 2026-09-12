@@ -132,7 +132,7 @@ function CampaignCard({
   }
 
   return (
-    <div className="rounded-card bg-white shadow-sm p-4 space-y-3">
+    <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-gray-800 text-sm">{campaign ? "แก้ไข Campaign" : "Campaign ใหม่"}</h3>
         {campaign && (

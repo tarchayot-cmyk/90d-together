@@ -81,13 +81,13 @@ export default function AdminGroupsPage() {
           <Users size={16} /> Buddy Groups ({buddyGroups.length})
         </h2>
         {buddyGroups.length === 0 && (
-          <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-sm">
+          <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">
             ยังไม่มีการจับคู่ — ไปที่แท็บ Members กด "สุ่มแบ่ง Buddy"
           </p>
         )}
         <div className="space-y-2">
           {buddyGroups.map((g) => (
-            <div key={g.name} className="rounded-card bg-white shadow-sm p-3">
+            <div key={g.name} className="rounded-card bg-white shadow-soft p-3">
               <p className="font-medium text-gray-800 text-sm mb-1">{g.name}</p>
               <ul className="text-xs text-gray-500 space-y-0.5">
                 {g.members.map((m) => (
@@ -106,13 +106,13 @@ export default function AdminGroupsPage() {
           <TreePine size={16} /> Squads ({squads.length})
         </h2>
         {squads.length === 0 && (
-          <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-sm">
+          <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">
             ยังไม่มีการจัดกลุ่ม — ไปที่แท็บ Members กด "สุ่มแบ่ง Squad"
           </p>
         )}
         <div className="space-y-2">
           {squads.map((g) => (
-            <div key={g.name} className="rounded-card bg-white shadow-sm p-3">
+            <div key={g.name} className="rounded-card bg-white shadow-soft p-3">
               <p className="font-medium text-gray-800 text-sm mb-1">{g.name}</p>
               <ul className="text-xs text-gray-500 space-y-0.5">
                 {g.members.map((m) => (

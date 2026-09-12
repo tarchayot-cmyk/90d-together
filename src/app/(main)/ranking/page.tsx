@@ -71,7 +71,7 @@ export default function RankingPage() {
         </p>
       </header>
 
-      <div className="flex rounded-full bg-white shadow-sm p-1">
+      <div className="flex rounded-full bg-white shadow-soft p-1">
         {visibleTabs.map((t) => (
           <button
             key={t.value}
@@ -95,7 +95,7 @@ export default function RankingPage() {
 
       <ol className="space-y-2">
         {(rows ?? []).map((row, i) => (
-          <li key={row.id} className="rounded-card bg-white shadow-sm p-3 flex items-center gap-3">
+          <li key={row.id} className="rounded-card bg-white shadow-soft p-3 flex items-center gap-3">
             <span className="w-8 text-center font-bold text-gray-500">{MEDAL[i] ?? i + 1}</span>
             {row.avatar_url !== undefined && <AvatarCircle avatarUrl={row.avatar_url} name={row.name} size={32} />}
             <div className="flex-1 min-w-0">

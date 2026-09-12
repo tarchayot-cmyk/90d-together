@@ -160,7 +160,7 @@ export default function AdminBadgesPage() {
         ))}
       </div>
 
-      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
+      {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
       <button
         onClick={openCreate}
@@ -173,7 +173,7 @@ export default function AdminBadgesPage() {
 
       <div className="space-y-3">
         {Array.from(families.entries()).map(([key, tiers]) => (
-          <div key={key} className="rounded-card bg-white shadow-sm p-3 space-y-2">
+          <div key={key} className="rounded-card bg-white shadow-soft p-3 space-y-2">
             <p className="text-xs text-gray-400">
               {LEVEL_LABEL[tiers[0].level]} · {tiers[0].family_code}
             </p>

@@ -14,7 +14,7 @@ export default function TreeVisual({ tree }: { tree: TreeState }) {
   const levelLabel = tree.level === 1 ? "🌱 ME" : tree.level === 2 ? "🌿 WE" : "🌳 US";
 
   return (
-    <div className="rounded-card bg-white shadow-sm p-5 text-center space-y-3">
+    <div className="rounded-card bg-white shadow-soft p-5 text-center space-y-3">
       <div className="text-6xl leading-none">{stageForProgress(tree.progress)}</div>
       <div className="font-semibold text-gray-700">{levelLabel}</div>
 

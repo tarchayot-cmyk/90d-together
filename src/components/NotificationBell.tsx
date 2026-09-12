@@ -88,7 +88,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="การแจ้งเตือน"
-        className="relative w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center min-h-[44px] min-w-[44px]"
+        className="relative w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center min-h-[44px] min-w-[44px]"
       >
         <Bell size={18} className="text-gray-600" />
         {unreadCount > 0 && (

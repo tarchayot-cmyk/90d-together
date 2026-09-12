@@ -97,7 +97,7 @@ export default function ProfilePage() {
               (member?.nickname ?? member?.full_name ?? "?").charAt(0).toUpperCase()
             )}
           </div>
-          <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-us text-white flex items-center justify-center cursor-pointer shadow-sm">
+          <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-us text-white flex items-center justify-center cursor-pointer shadow-soft">
             {uploadingAvatar ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={uploadingAvatar} />
           </label>
@@ -112,7 +112,7 @@ export default function ProfilePage() {
 
       {avatarError && <p className="text-xs text-red-500 text-center">{avatarError}</p>}
 
-      <div className="rounded-card bg-white shadow-sm p-4 space-y-1.5 text-sm">
+      <div className="rounded-card bg-white shadow-soft p-4 space-y-1.5 text-sm">
         <Row label="รหัสบุคลากร" value={member?.employee_code} />
         <Row label="ชื่อเล่น" value={member?.nickname ?? "-"} />
         <Row label="หน่วย" value={member?.unit ?? "-"} />
@@ -120,7 +120,7 @@ export default function ProfilePage() {
         <Row label="สถานะ" value={member?.is_active ? "Active" : "Inactive"} />
       </div>
 
-      <div className="rounded-card bg-white shadow-sm p-4 space-y-3">
+      <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
         <h2 className="font-semibold text-gray-800 text-sm">🏅 Badge ของฉัน</h2>
 
         {loadingBadges ? (
@@ -133,7 +133,7 @@ export default function ProfilePage() {
       <button
         onClick={handleSignOut}
         disabled={signingOut}
-        className="w-full rounded-card bg-white shadow-sm p-4 flex items-center justify-center gap-2 text-sm font-semibold text-red-500 min-h-[44px] disabled:opacity-60"
+        className="w-full rounded-card bg-white shadow-soft p-4 flex items-center justify-center gap-2 text-sm font-semibold text-red-500 min-h-[44px] disabled:opacity-60"
       >
         <LogOut size={16} />
         {signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}

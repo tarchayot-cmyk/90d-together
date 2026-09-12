@@ -91,7 +91,7 @@ export default function AllNotificationsPage() {
         )}
       </header>
 
-      {actionError && <p className="text-sm text-red-500 text-center bg-white rounded-card p-2 shadow-sm">{actionError}</p>}
+      {actionError && <p className="text-sm text-red-500 text-center bg-white rounded-card p-2 shadow-soft">{actionError}</p>}
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
@@ -110,7 +110,7 @@ export default function AllNotificationsPage() {
               key={n.id}
               onClick={() => handleClick(n)}
               className={clsx(
-                "rounded-card bg-white shadow-sm p-3 flex gap-3 cursor-pointer min-h-[44px]",
+                "rounded-card bg-white shadow-soft p-3 flex gap-3 cursor-pointer min-h-[44px]",
                 !n.is_read && "border border-us/20"
               )}
             >

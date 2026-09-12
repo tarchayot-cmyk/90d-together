@@ -69,7 +69,7 @@ export default function FinalTreePage() {
       {/* Big combined tree — every person's stickers, kindness, and
           badges feed the same tree. Spec section 23 ASCII art,
           rendered as an emoji block so it needs no image assets. */}
-      <div className="rounded-card bg-white shadow-sm py-6 px-2">
+      <div className="rounded-card bg-white shadow-soft py-6 px-2">
         <pre className="font-sans leading-[1.35] text-2xl sm:text-3xl whitespace-pre-wrap">
 {`      🍎 🌈 🍎
  🌿 🌿 🌿 🌿 🌿 🌿
@@ -97,7 +97,7 @@ export default function FinalTreePage() {
       </div>
 
       {!!summary.stickers_by_color && Object.keys(summary.stickers_by_color).length > 0 && (
-        <div className="rounded-card bg-white shadow-sm p-4">
+        <div className="rounded-card bg-white shadow-soft p-4">
           <h2 className="text-sm font-semibold text-gray-500 mb-3">
             สติ๊กเกอร์รวมทั้งหมด · {(summary.stickers_total ?? 0).toLocaleString()}
           </h2>
@@ -121,7 +121,7 @@ export default function FinalTreePage() {
 
 function StatCard({ emoji, label, value }: { emoji: string; label: string; value: number }) {
   return (
-    <div className="rounded-card bg-white shadow-sm p-4">
+    <div className="rounded-card bg-white shadow-soft p-4">
       <div className="text-2xl">{emoji}</div>
       <div className="text-lg font-bold text-gray-800">{value.toLocaleString()}</div>
       <div className="text-xs text-gray-400">{label}</div>
