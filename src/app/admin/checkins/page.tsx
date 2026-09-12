@@ -279,10 +279,10 @@ export default function AdminCheckinsPage() {
                 <button
                   onClick={() => handleDelete(row)}
                   disabled={busy}
-                  className="text-xs font-semibold text-red-500 border border-red-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1 disabled:opacity-50 ml-auto"
+                  aria-label="ลบ"
+                  className="text-red-400 border border-red-100 rounded-full p-2 min-h-[32px] min-w-[32px] flex items-center justify-center disabled:opacity-50 ml-auto"
                 >
                   <Trash2 size={14} />
-                  ลบ
                 </button>
               </div>
             </div>
