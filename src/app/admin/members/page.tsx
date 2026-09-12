@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Shuffle, UserPlus, Pencil } from "lucide-react";
+import { Search, Shuffle, UserPlus, Pencil, KeyRound } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import AdjustPointsModal from "@/components/AdjustPointsModal";
 import AddMemberModal from "@/components/AddMemberModal";
 import EditMemberModal from "@/components/EditMemberModal";
+import ResetPinModal from "@/components/ResetPinModal";
 
 interface MemberRow {
   id: string;
@@ -26,6 +27,7 @@ export default function AdminMembersPage() {
   const [loading, setLoading] = useState(true);
   const [adjustTarget, setAdjustTarget] = useState<MemberRow | null>(null);
   const [editTarget, setEditTarget] = useState<MemberRow | null>(null);
+  const [resetPinTarget, setResetPinTarget] = useState<MemberRow | null>(null);
   const [assigning, setAssigning] = useState<"buddy" | "squad" | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
@@ -193,6 +195,12 @@ export default function AdminMembersPage() {
                 >
                   {m.is_active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
                 </button>
+                <button
+                  onClick={() => setResetPinTarget(m)}
+                  className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
+                >
+                  <KeyRound size={12} /> รีเซ็ต PIN
+                </button>
               </div>
             </div>
           ))}
@@ -217,6 +225,15 @@ export default function AdminMembersPage() {
             setBanner("แก้ไขข้อมูลสมาชิกเรียบร้อย");
             loadMembers();
           }}
+        />
+      )}
+
+      {resetPinTarget && (
+        <ResetPinModal
+          memberId={resetPinTarget.id}
+          memberName={resetPinTarget.full_name}
+          onClose={() => setResetPinTarget(null)}
+          onSuccess={() => setBanner(`รีเซ็ต PIN ของ ${resetPinTarget.full_name} เรียบร้อย`)}
         />
       )}
 
