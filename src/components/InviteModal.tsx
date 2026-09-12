@@ -44,20 +44,11 @@ export default function InviteModal({
     async function load() {
       const supabase = createClient();
 
-      const requests: Promise<unknown>[] = [supabase.rpc("list_colleagues")];
-      if (!presetMission) {
-        requests.push(supabase.rpc("get_campaign_phase_info"));
-      }
-      const results = await Promise.all(requests);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const colleaguesResult = results[0] as any;
-      setColleagues(colleaguesResult.data ?? []);
+      const { data: colleaguesData } = await supabase.rpc("list_colleagues");
+      setColleagues(colleaguesData ?? []);
 
       if (!presetMission) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const phaseResult = results[1] as any;
-        const phaseInfo = phaseResult.data;
+        const { data: phaseInfo } = await supabase.rpc("get_campaign_phase_info");
         if (phaseInfo?.has_campaign && phaseInfo.unlocked_levels?.length) {
           const { data: missions } = await supabase
             .from("missions")
