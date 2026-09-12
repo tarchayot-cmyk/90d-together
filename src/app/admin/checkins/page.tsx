@@ -92,7 +92,13 @@ export default function AdminCheckinsPage() {
     setBusyId(null);
 
     if (error) {
-      setBanner(error.message.includes("not_authorized") ? "คุณไม่มีสิทธิ์ทำรายการนี้" : "ทำรายการไม่สำเร็จ กรุณาลองใหม่");
+      setBanner(
+        error.message.includes("not_authorized")
+          ? "คุณไม่มีสิทธิ์ทำรายการนี้"
+          : error.message.includes("cannot_approve_own_submission")
+          ? "ไม่สามารถอนุมัติ Check-in ของตัวเองได้ — ให้ Admin คนอื่นตรวจสอบแทน"
+          : "ทำรายการไม่สำเร็จ กรุณาลองใหม่"
+      );
       return;
     }
     setBanner(approve ? "อนุมัติแล้ว — แจกคะแนน/สติ๊กเกอร์เรียบร้อย" : "ปฏิเสธรายการนี้แล้ว");

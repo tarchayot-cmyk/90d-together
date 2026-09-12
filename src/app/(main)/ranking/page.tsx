@@ -57,7 +57,7 @@ export default function RankingPage() {
             key={t.value}
             onClick={() => setTab(t.value)}
             className={clsx(
-              "flex-1 rounded-full py-2 text-sm font-semibold min-h-[40px]",
+              "flex-1 rounded-full py-2 text-sm font-semibold min-h-[44px]",
               tab === t.value ? "bg-us text-white" : "text-gray-400"
             )}
           >

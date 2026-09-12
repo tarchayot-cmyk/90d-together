@@ -127,7 +127,7 @@ export default function AdminReportsPage() {
           <button
             key={r.id}
             onClick={() => setDetailMember(r)}
-            className="w-full text-left rounded-card bg-white shadow-sm p-3 active:opacity-80"
+            className="w-full text-left rounded-card bg-white shadow-sm p-3 active:opacity-80 min-h-[44px]"
           >
             <div className="flex items-center justify-between">
               <div className="min-w-0">

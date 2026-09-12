@@ -57,7 +57,7 @@ export default function ResetPinModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm rounded-t-card sm:rounded-card bg-white p-5 space-y-4">
+      <div className="w-full max-w-sm rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-gray-800 flex items-center gap-2">
             <KeyRound size={18} /> รีเซ็ต PIN — {memberName}

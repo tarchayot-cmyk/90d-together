@@ -48,7 +48,11 @@ export default function AdminProposalsPage() {
     const { error } = await supabase.rpc("admin_review_proposal", { p_proposal_id: id, p_approved: approve });
     setBusyId(null);
     if (error) {
-      setBanner("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
+      setBanner(
+        error.message.includes("cannot_approve_own_submission")
+          ? "ไม่สามารถอนุมัติข้อเสนอของตัวเองได้ — ให้ Admin คนอื่นพิจารณาแทน"
+          : "ทำรายการไม่สำเร็จ กรุณาลองใหม่"
+      );
       return;
     }
     setBanner(approve ? "อนุมัติแล้ว" : "ปฏิเสธแล้ว");
