@@ -81,12 +81,18 @@ export default function KindnessModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-gray-800">🌈 ส่ง Kindness</h2>
           <button onClick={onClose} aria-label="close" className="p-1 text-gray-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <X size={20} />
           </button>
+        </div>
+
+        <div className="rounded-xl bg-kindness/5 border border-kindness/15 p-3 text-xs text-gray-500 space-y-0.5">
+          <p>🔸 ส่งให้คนเดิมซ้ำได้อีกทีตอนขึ้นสัปดาห์ใหม่ (1 คน/สัปดาห์)</p>
+          <p>🔸 แต่ละคนรับ Kindness ได้สูงสุด 3 ครั้งต่อสัปดาห์</p>
+          <p>🔸 ผู้รับจะไม่เห็นว่าใครเป็นคนส่งให้</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,7 +101,7 @@ export default function KindnessModal({
             {loadingList ? (
               <p className="text-sm text-gray-400">กำลังโหลดรายชื่อ...</p>
             ) : (
-              <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-50">
+              <div className="max-h-52 overflow-y-auto overscroll-contain rounded-xl border border-gray-200 divide-y divide-gray-50" style={{ WebkitOverflowScrolling: "touch" }}>
                 {colleagues.map((c) => (
                   <button
                     type="button"

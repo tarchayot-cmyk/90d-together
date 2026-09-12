@@ -21,6 +21,7 @@ export default function AllNotificationsPage() {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
@@ -56,12 +57,15 @@ export default function AllNotificationsPage() {
 
   async function handleDelete(e: React.MouseEvent, n: NotificationRow) {
     e.stopPropagation();
+    setActionError(null);
     setDeletingId(n.id);
     const supabase = createClient();
     const { error } = await supabase.rpc("delete_notification", { p_notification_id: n.id });
     setDeletingId(null);
     if (!error) {
       setItems((prev) => prev.filter((x) => x.id !== n.id));
+    } else {
+      setActionError("ลบไม่สำเร็จ กรุณาลองใหม่");
     }
   }
 
@@ -86,6 +90,8 @@ export default function AllNotificationsPage() {
           </button>
         )}
       </header>
+
+      {actionError && <p className="text-sm text-red-500 text-center bg-white rounded-card p-2 shadow-sm">{actionError}</p>}
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 

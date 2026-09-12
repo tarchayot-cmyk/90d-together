@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 import MissionCard from "@/components/MissionCard";
 import CheckInModal from "@/components/CheckInModal";
-import InviteModal from "@/components/InviteModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import type { Mission, CheckIn } from "@/lib/types";
 
@@ -17,45 +16,44 @@ function currentCampaignWeek(startDate: string): number {
 }
 
 const PHASE_LABEL: Record<string, string> = {
-  me: "🌱 Level 1 · ME",
-  we: "🌿 Level 2 · WE",
-  us: "🌳 Level 3 · US",
+  me: "🌱 ME",
+  we: "🌿 WE",
+  us: "🌳 US",
 };
 
 export default function MissionsPage() {
   const { member } = useMember(); // shared across pages — no extra fetch here
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionsByLevel, setMissionsByLevel] = useState<Record<string, Mission[]>>({});
   const [checkInsByMission, setCheckInsByMission] = useState<Record<string, CheckIn>>({});
-  const [phase, setPhase] = useState<string | null>(null);
+  const [unlockedLevels, setUnlockedLevels] = useState<string[]>([]);
   const [currentDay, setCurrentDay] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
-  const [invitingMission, setInvitingMission] = useState<Mission | null>(null);
   const [reward, setReward] = useState<RewardToastData | null>(null);
 
   const loadMissions = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
 
-    // Phase is derived server-side from the campaign's start_date —
-    // this replaces the old hardcoded .eq("level", "me") filter,
-    // which meant WE/US missions never showed up in this page at all
-    // even once their phase had actually started.
+    // ME is unlocked the whole 90 days; WE/US only unlock in their
+    // own month — a member can see more than one level's missions
+    // at once now (e.g. ME + US during month 3).
     const { data: phaseInfo } = await supabase.rpc("get_campaign_phase_info");
 
     if (!phaseInfo?.has_campaign) {
-      setPhase(null);
+      setUnlockedLevels([]);
       setCurrentDay(null);
-      setMissions([]);
+      setMissionsByLevel({});
       setLoading(false);
       return;
     }
 
     setCurrentDay(phaseInfo.current_day);
-    setPhase(phaseInfo.current_phase); // null if before day 1 or after day 90
+    const levels: string[] = phaseInfo.unlocked_levels ?? [];
+    setUnlockedLevels(levels);
 
-    if (!phaseInfo.current_phase) {
-      setMissions([]);
+    if (levels.length === 0) {
+      setMissionsByLevel({});
       setLoading(false);
       return;
     }
@@ -66,7 +64,7 @@ export default function MissionsPage() {
       .from("missions")
       .select("*")
       .eq("campaign_id", phaseInfo.campaign_id)
-      .eq("level", phaseInfo.current_phase)
+      .in("level", levels)
       .eq("is_active", true);
 
     let myCheckIns: CheckIn[] = [];
@@ -80,7 +78,13 @@ export default function MissionsPage() {
       myCheckIns = checkins ?? [];
     }
 
-    setMissions(missionRows ?? []);
+    const grouped: Record<string, Mission[]> = {};
+    for (const m of missionRows ?? []) {
+      if (!grouped[m.level]) grouped[m.level] = [];
+      grouped[m.level].push(m);
+    }
+
+    setMissionsByLevel(grouped);
     setCheckInsByMission(Object.fromEntries(myCheckIns.map((c) => [c.mission_id, c])));
     setLoading(false);
   }, [member?.id]);
@@ -94,11 +98,13 @@ export default function MissionsPage() {
     loadMissions(); // refresh so the completed card flips to "done"
   }
 
+  const levelOrder = ["me", "we", "us"].filter((lvl) => unlockedLevels.includes(lvl));
+
   return (
     <div className="space-y-4">
       <header className="pt-2 pb-1">
         <p className="text-sm text-gray-400">
-          {phase ? PHASE_LABEL[phase] : "—"}
+          {levelOrder.map((l) => PHASE_LABEL[l]).join(" + ") || "—"}
           {currentDay !== null && ` · วันที่ ${currentDay}`}
         </p>
         <h1 className="text-xl font-bold text-gray-800">ภารกิจสัปดาห์นี้</h1>
@@ -106,41 +112,41 @@ export default function MissionsPage() {
 
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
-      {!loading && !phase && (
+      {!loading && unlockedLevels.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-10">
           {currentDay === null ? "ยังไม่มีแคมเปญที่เปิดใช้งาน" : "แคมเปญนี้ยังไม่เริ่มหรือสิ้นสุดแล้ว"}
         </p>
       )}
 
-      {!loading && phase && missions.length === 0 && (
+      {levelOrder.map((level) => {
+        const missions = missionsByLevel[level] ?? [];
+        if (missions.length === 0) return null;
+        return (
+          <section key={level} className="space-y-2">
+            <h2 className="text-sm font-semibold text-gray-500">{PHASE_LABEL[level]}</h2>
+            <div className="space-y-3">
+              {missions.map((mission) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  checkIn={checkInsByMission[mission.id] ?? null}
+                  onCheckIn={setActiveMission}
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      {!loading && unlockedLevels.length > 0 && levelOrder.every((l) => (missionsByLevel[l] ?? []).length === 0) && (
         <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีภารกิจที่เปิดใช้งานในระยะนี้</p>
       )}
-
-      <div className="space-y-3">
-        {missions.map((mission) => (
-          <MissionCard
-            key={mission.id}
-            mission={mission}
-            checkIn={checkInsByMission[mission.id] ?? null}
-            onCheckIn={setActiveMission}
-            onInvite={setInvitingMission}
-          />
-        ))}
-      </div>
 
       {activeMission && (
         <CheckInModal
           mission={activeMission}
           onClose={() => setActiveMission(null)}
           onSuccess={handleSuccess}
-        />
-      )}
-
-      {invitingMission && (
-        <InviteModal
-          mission={invitingMission}
-          onClose={() => setInvitingMission(null)}
-          onSuccess={() => setReward({ points: 0, sticker: null, message: "ส่งคำชวนสำเร็จ! 🤝" })}
         />
       )}
 

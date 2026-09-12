@@ -8,6 +8,7 @@ import BuddyCard from "@/components/BuddyCard";
 import SquadCard from "@/components/SquadCard";
 import KindnessModal from "@/components/KindnessModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
+import AvatarCircle from "@/components/AvatarCircle";
 
 export default function HomePage() {
   const { member, loading } = useMember();
@@ -16,11 +17,16 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4 pt-2">
-      <header>
-        <p className="text-sm text-gray-400">🌱 ME → 🌿 WE → 🌳 US</p>
-        <h1 className="text-xl font-bold text-gray-800">
-          {loading ? "..." : member ? `สวัสดี, ${member.full_name}` : "90 Days Growing Together"}
-        </h1>
+      <header className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-gray-400">🌱 ME → 🌿 WE → 🌳 US</p>
+          <h1 className="text-xl font-bold text-gray-800 truncate">
+            {loading ? "..." : member ? `สวัสดี, ${member.nickname ?? member.full_name}` : "90 Days Growing Together"}
+          </h1>
+        </div>
+        <Link href="/profile" className="shrink-0">
+          <AvatarCircle avatarUrl={member?.avatar_url} name={member?.nickname ?? member?.full_name} size={44} />
+        </Link>
       </header>
 
       {/* Tree summary + weekly missions live here once getDashboard()

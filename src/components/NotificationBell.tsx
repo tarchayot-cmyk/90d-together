@@ -23,6 +23,7 @@ export default function NotificationBell() {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
@@ -62,12 +63,15 @@ export default function NotificationBell() {
 
   async function handleDelete(e: React.MouseEvent, n: NotificationRow) {
     e.stopPropagation(); // don't also trigger the row's navigate-on-tap
+    setActionError(null);
     setDeletingId(n.id);
     const supabase = createClient();
     const { error } = await supabase.rpc("delete_notification", { p_notification_id: n.id });
     setDeletingId(null);
     if (!error) {
       setItems((prev) => prev.filter((x) => x.id !== n.id));
+    } else {
+      setActionError("ลบไม่สำเร็จ กรุณาลองใหม่");
     }
   }
 
@@ -108,6 +112,8 @@ export default function NotificationBell() {
                 </button>
               )}
             </div>
+
+            {actionError && <p className="text-xs text-red-500 text-center py-2 border-b border-gray-50">{actionError}</p>}
 
             {loading && <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>}
             {!loading && items.length === 0 && (

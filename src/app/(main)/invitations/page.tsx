@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X as XIcon, Clock, RefreshCw } from "lucide-react";
+import { Check, X as XIcon, Clock, RefreshCw, UserPlus } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
+import InviteModal from "@/components/InviteModal";
 
 interface InvitationRow {
   id: string;
@@ -39,6 +40,7 @@ export default function InvitationsPage() {
   const [items, setItems] = useState<InvitationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [counteringId, setCounteringId] = useState<string | null>(null);
   const [counterTime, setCounterTime] = useState("");
@@ -117,6 +119,14 @@ export default function InvitationsPage() {
         <p className="text-sm text-gray-400">🤝 นัดกันทำภารกิจ</p>
         <h1 className="text-xl font-bold text-gray-800">คำเชิญกิจกรรม</h1>
       </header>
+
+      <button
+        onClick={() => setShowInviteModal(true)}
+        className="w-full rounded-card bg-we text-white p-4 flex items-center justify-center gap-2 font-semibold shadow-sm min-h-[44px]"
+      >
+        <UserPlus size={18} />
+        ส่งคำเชิญใหม่
+      </button>
 
       {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-sm">{banner}</p>}
       {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
@@ -268,6 +278,16 @@ export default function InvitationsPage() {
             ))}
           </section>
         </>
+      )}
+
+      {showInviteModal && (
+        <InviteModal
+          onClose={() => setShowInviteModal(false)}
+          onSuccess={() => {
+            setBanner("ส่งคำเชิญสำเร็จ! 🤝");
+            load();
+          }}
+        />
       )}
     </div>
   );
