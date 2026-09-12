@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import clsx from "clsx";
+import BadgeArtwork, { type BadgeState } from "@/components/BadgeArtwork";
+import BadgeDetailModal from "@/components/BadgeDetailModal";
 
 export interface BadgeRow {
   code: string;
@@ -17,7 +20,6 @@ export interface BadgeRow {
 }
 
 const TIER_ORDER = { bulk: 0, lean: 1, smart: 2 } as const;
-const TIER_MEDAL = { bulk: "🥉", lean: "🥈", smart: "🥇" } as const;
 const LEVEL_LABEL: Record<string, string> = { me: "🌱 ME", we: "🌿 WE", us: "🌳 US" };
 
 function stripMedal(name: string) {
@@ -39,64 +41,88 @@ function groupByFamily(rows: BadgeRow[]) {
 }
 
 export default function BadgeFamilyList({ badges, groupByLevel = true }: { badges: BadgeRow[]; groupByLevel?: boolean }) {
+  const [detailBadge, setDetailBadge] = useState<BadgeRow | null>(null);
   const families = groupByFamily(badges);
 
-  if (!groupByLevel) {
-    return <FamilyGrid families={families} />;
-  }
-
-  const levels: ("me" | "we" | "us")[] = ["me", "we", "us"];
-  return (
+  const content = groupByLevel ? (
     <div className="space-y-5">
-      {levels.map((lvl) => {
+      {(["me", "we", "us"] as const).map((lvl) => {
         const levelFamilies = families.filter((f) => f.level === lvl);
         if (levelFamilies.length === 0) return null;
         return (
           <div key={lvl}>
             <h3 className="text-xs font-semibold text-gray-500 mb-2">{LEVEL_LABEL[lvl]}</h3>
-            <FamilyGrid families={levelFamilies} />
+            <FamilyGrid families={levelFamilies} onSelect={setDetailBadge} />
           </div>
         );
       })}
     </div>
+  ) : (
+    <FamilyGrid families={families} onSelect={setDetailBadge} />
+  );
+
+  return (
+    <>
+      {content}
+      {detailBadge && (
+        <BadgeDetailModal
+          badge={{
+            code: detailBadge.code,
+            name: detailBadge.name,
+            description: detailBadge.description,
+            icon: detailBadge.icon,
+            tier: detailBadge.tier,
+            unlocked: detailBadge.unlocked,
+            unlocked_at: detailBadge.unlocked_at,
+            current_value: detailBadge.current_value,
+            target_value: detailBadge.target_value,
+          }}
+          onClose={() => setDetailBadge(null)}
+        />
+      )}
+    </>
   );
 }
 
-function FamilyGrid({ families }: { families: ReturnType<typeof groupByFamily> }) {
+function FamilyGrid({
+  families,
+  onSelect,
+}: {
+  families: ReturnType<typeof groupByFamily>;
+  onSelect: (b: BadgeRow) => void;
+}) {
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {families.map((family) => {
         // The tier currently being worked toward: first not-yet-unlocked
-        // tier, or the last (smart) one if all are unlocked.
+        // tier, or the last (smart, or the only tier for 1-tier badges) if all unlocked.
         const activeTier = family.tiers.find((t) => !t.unlocked) ?? family.tiers[family.tiers.length - 1];
+        const state: BadgeState = activeTier.unlocked ? "earned" : activeTier.current_value > 0 ? "in_progress" : "locked";
         const pct = Math.min(100, Math.round((activeTier.current_value / Math.max(activeTier.target_value, 1)) * 100));
 
         return (
-          <div key={family.familyCode} className="rounded-xl bg-white border border-gray-100 p-3 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-800">{family.familyName}</p>
-              <div className="flex gap-1 text-base">
+          <button
+            key={family.familyCode}
+            onClick={() => onSelect(activeTier)}
+            className="rounded-xl bg-white border border-gray-100 p-3 flex flex-col items-center gap-1.5 text-center min-h-[44px]"
+          >
+            <BadgeArtwork icon={activeTier.icon ?? "🏅"} tier={activeTier.tier} state={state} size={64} />
+            <p className="text-xs font-medium text-gray-800 leading-tight mt-1">{family.familyName}</p>
+
+            {family.tiers.length > 1 && (
+              <div className="flex gap-1">
                 {family.tiers.map((t) => (
-                  <span key={t.code} className={clsx(!t.unlocked && "grayscale opacity-30")} title={t.description ?? ""}>
-                    {TIER_MEDAL[t.tier]}
-                  </span>
+                  <span key={t.code} className={clsx("w-1.5 h-1.5 rounded-full", t.unlocked ? "bg-us" : "bg-gray-200")} />
                 ))}
               </div>
-            </div>
-
-            {activeTier.unlocked ? (
-              <p className="text-xs text-us font-medium">ปลดล็อกครบทุกระดับแล้ว 🎉</p>
-            ) : (
-              <div className="space-y-1">
-                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                  <div className="h-full bg-we rounded-full" style={{ width: `${pct}%` }} />
-                </div>
-                <p className="text-xs text-gray-400">
-                  {TIER_MEDAL[activeTier.tier]} {activeTier.description} — {activeTier.current_value}/{activeTier.target_value}
-                </p>
-              </div>
             )}
-          </div>
+
+            {!activeTier.unlocked && (
+              <p className="text-[10px] text-gray-400">
+                {activeTier.current_value}/{activeTier.target_value}
+              </p>
+            )}
+          </button>
         );
       })}
     </div>
