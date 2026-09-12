@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, Camera } from "lucide-react";
+import { X, Loader2, Camera, Check } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
+import LinkifiedText from "@/components/LinkifiedText";
 
 interface Props {
   mission: Mission;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 // Human-readable messages for the exceptions raised by complete_mission()
-// (see supabase/migrations/0005_sprint5_admin_audit.sql for the current version).
+// (see supabase/migrations/0039_mission_window_change.sql for the current version).
 function friendlyError(raw: string): string {
   if (raw.includes("already_checked_in_this_week")) return "คุณทำภารกิจนี้ไปแล้วในสัปดาห์นี้ ✓";
   if (raw.includes("target_not_reached")) return "ยังไม่ถึงเป้าหมาย ลองกรอกค่าที่มากขึ้นอีกนิด";
@@ -29,7 +30,9 @@ function friendlyError(raw: string): string {
 }
 
 export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
+  const isCheckbox = mission.input_type === "checkbox";
   const [value, setValue] = useState("");
+  const [checked, setChecked] = useState(false);
   const [note, setNote] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,11 +42,21 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
     e.preventDefault();
     setError(null);
 
-    const numericValue = Number(value);
-    if (!value || Number.isNaN(numericValue) || numericValue < 0) {
-      setError("กรุณากรอกตัวเลขที่ถูกต้อง");
-      return;
+    let numericValue: number;
+    if (isCheckbox) {
+      if (!checked) {
+        setError("ติ๊กยืนยันว่าทำแล้วก่อนนะ");
+        return;
+      }
+      numericValue = mission.target_value; // checkbox missions always submit their own target as-is
+    } else {
+      numericValue = Number(value);
+      if (!value || Number.isNaN(numericValue) || numericValue < 0) {
+        setError("กรุณากรอกตัวเลขที่ถูกต้อง");
+        return;
+      }
     }
+
     if (mission.requires_proof && !proofFile) {
       setError("ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
       return;
@@ -109,9 +122,13 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        <p className="text-sm text-gray-500">
-          เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / สัปดาห์
-        </p>
+        {mission.description && <LinkifiedText text={mission.description} className="text-sm text-gray-500" />}
+
+        {!isCheckbox && (
+          <p className="text-sm text-gray-400">
+            เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / สัปดาห์
+          </p>
+        )}
 
         {mission.requires_proof && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
@@ -120,19 +137,36 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500">
-              ค่าที่ทำได้ ({mission.unit})
-            </label>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={`เช่น ${mission.target_value}`}
-              className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-us/40"
-            />
-          </div>
+          {isCheckbox ? (
+            <button
+              type="button"
+              onClick={() => setChecked((v) => !v)}
+              className={`w-full flex items-center gap-3 rounded-xl border p-4 min-h-[44px] text-left ${
+                checked ? "border-us bg-us/5" : "border-gray-200"
+              }`}
+            >
+              <span
+                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 ${
+                  checked ? "bg-us border-us" : "border-gray-300"
+                }`}
+              >
+                {checked && <Check size={16} className="text-white" />}
+              </span>
+              <span className={`text-sm font-medium ${checked ? "text-us" : "text-gray-600"}`}>ทำแล้ว</span>
+            </button>
+          ) : (
+            <div>
+              <label className="text-xs font-medium text-gray-500">ค่าที่ทำได้ ({mission.unit})</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={`เช่น ${mission.target_value}`}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-us/40"
+              />
+            </div>
+          )}
 
           <div>
             <label className="text-xs font-medium text-gray-500">โน้ต (ไม่บังคับ)</label>

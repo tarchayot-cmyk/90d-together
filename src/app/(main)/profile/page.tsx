@@ -116,7 +116,6 @@ export default function ProfilePage() {
         <Row label="รหัสบุคลากร" value={member?.employee_code} />
         <Row label="ชื่อเล่น" value={member?.nickname ?? "-"} />
         <Row label="หน่วย" value={member?.unit ?? "-"} />
-        <Row label="แผนก" value={member?.department ?? "-"} />
         <Row label="สถานะ" value={member?.is_active ? "Active" : "Inactive"} />
       </div>
 

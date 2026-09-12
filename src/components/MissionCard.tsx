@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { UserPlus } from "lucide-react";
 import type { Mission, CheckIn } from "@/lib/types";
+import LinkifiedText from "@/components/LinkifiedText";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -35,7 +36,7 @@ export default function MissionCard({
         <h3 className="font-semibold text-gray-800">{mission.name}</h3>
       </div>
 
-      {mission.description && <p className="text-sm text-gray-500">{mission.description}</p>}
+      {mission.description && <LinkifiedText text={mission.description} className="text-sm text-gray-500" />}
 
       <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
         <div className={clsx("h-full rounded-full", done ? "bg-us" : "bg-we")} style={{ width: `${pct}%` }} />

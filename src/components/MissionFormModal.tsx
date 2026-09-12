@@ -30,6 +30,7 @@ export default function MissionFormModal({
   const [description, setDescription] = useState(mission?.description ?? "");
   const [targetValue, setTargetValue] = useState(String(mission?.target_value ?? ""));
   const [unit, setUnit] = useState(mission?.unit ?? "");
+  const [inputType, setInputType] = useState<"numeric" | "checkbox">(mission?.input_type ?? "numeric");
   const [points, setPoints] = useState(String(mission?.points ?? 10));
   const [stickerColor, setStickerColor] = useState(mission?.sticker_color ?? "");
   const [stickerAmount, setStickerAmount] = useState(String(mission?.sticker_amount ?? 1));
@@ -42,7 +43,10 @@ export default function MissionFormModal({
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || !unit.trim() || !targetValue) {
+    const finalTargetValue = inputType === "checkbox" ? "1" : targetValue;
+    const finalUnit = inputType === "checkbox" ? "ครั้ง" : unit;
+
+    if (!name.trim() || !finalUnit.trim() || !finalTargetValue) {
       setError("กรอกชื่อ, หน่วย, และเป้าหมายให้ครบ");
       return;
     }
@@ -56,13 +60,14 @@ export default function MissionFormModal({
       p_category: category,
       p_name: name.trim(),
       p_description: description.trim() || null,
-      p_target_value: Number(targetValue),
-      p_unit: unit.trim(),
+      p_target_value: Number(finalTargetValue),
+      p_unit: finalUnit.trim(),
       p_points: Number(points) || 0,
       p_sticker_color: stickerColor || null,
       p_sticker_amount: Number(stickerAmount) || 0,
       p_requires_proof: requiresProof,
       p_is_active: isActive,
+      p_input_type: inputType,
     });
     setLoading(false);
 
@@ -90,12 +95,38 @@ export default function MissionFormModal({
           <SelectField label="Category" value={category} onChange={setCategory} options={MISSION_CATEGORIES} />
 
           <TextField label="ชื่อภารกิจ" value={name} onChange={setName} placeholder="เช่น Move Me" />
-          <TextField label="รายละเอียด (ไม่บังคับ)" value={description} onChange={setDescription} placeholder="เช่น สะสม 50,000 steps/สัปดาห์" />
+          <TextField label="รายละเอียด (ไม่บังคับ)" value={description} onChange={setDescription} placeholder="เช่น สะสม 50,000 steps/สัปดาห์ หรือใส่ลิงก์ให้กดประเมิน" />
 
-          <div className="grid grid-cols-2 gap-2">
-            <TextField label="เป้าหมาย" value={targetValue} onChange={setTargetValue} type="number" placeholder="50000" />
-            <TextField label="หน่วย" value={unit} onChange={setUnit} placeholder="steps" />
+          <div>
+            <label className="text-xs font-medium text-gray-500">รูปแบบการบันทึก</label>
+            <div className="mt-1 flex rounded-full bg-bg p-1">
+              <button
+                type="button"
+                onClick={() => setInputType("numeric")}
+                className={`flex-1 rounded-full py-2 text-xs font-semibold min-h-[36px] ${
+                  inputType === "numeric" ? "bg-us text-white" : "text-gray-500"
+                }`}
+              >
+                กรอกตัวเลข (เช่น จำนวนก้าว)
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputType("checkbox")}
+                className={`flex-1 rounded-full py-2 text-xs font-semibold min-h-[36px] ${
+                  inputType === "checkbox" ? "bg-us text-white" : "text-gray-500"
+                }`}
+              >
+                ติ๊กว่าทำแล้ว
+              </button>
+            </div>
           </div>
+
+          {inputType === "numeric" && (
+            <div className="grid grid-cols-2 gap-2">
+              <TextField label="เป้าหมาย" value={targetValue} onChange={setTargetValue} type="number" placeholder="50000" />
+              <TextField label="หน่วย" value={unit} onChange={setUnit} placeholder="steps" />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <TextField label="คะแนน" value={points} onChange={setPoints} type="number" />

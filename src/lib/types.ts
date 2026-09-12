@@ -28,6 +28,7 @@ export interface Mission {
   sticker_amount: number;
   requires_proof: boolean;
   is_active: boolean;
+  input_type: "numeric" | "checkbox";
 }
 
 export interface CheckIn {
