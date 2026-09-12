@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Send, Check } from "lucide-react";
+import { X, Loader2, Send } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import { KINDNESS_CATEGORIES, type KindnessCategoryValue } from "@/lib/kindness";
@@ -101,27 +101,34 @@ export default function KindnessModal({
             {loadingList ? (
               <p className="text-sm text-gray-400">กำลังโหลดรายชื่อ...</p>
             ) : (
-              <div className="max-h-52 overflow-y-auto overscroll-contain rounded-xl border border-gray-200 divide-y divide-gray-50" style={{ WebkitOverflowScrolling: "touch" }}>
-                {colleagues.map((c) => (
-                  <button
-                    type="button"
-                    key={c.id}
-                    onClick={() => setToMemberId(c.id)}
-                    className={clsx(
-                      "w-full flex items-center gap-3 px-3 py-2.5 text-left min-h-[44px]",
-                      toMemberId === c.id && "bg-kindness/10"
-                    )}
-                  >
-                    <AvatarCircle avatarUrl={c.avatar_url} name={c.full_name} size={32} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-800 truncate">{c.full_name}</p>
-                      {c.department && <p className="text-xs text-gray-400 truncate">{c.department}</p>}
-                    </div>
-                    {toMemberId === c.id && <Check size={16} className="text-kindness shrink-0" />}
-                  </button>
-                ))}
-                {colleagues.length === 0 && <p className="text-sm text-gray-400 px-3 py-4 text-center">ไม่พบเพื่อนร่วมงาน</p>}
-              </div>
+              <>
+                <select
+                  value={toMemberId}
+                  onChange={(e) => setToMemberId(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-kindness/40"
+                >
+                  <option value="">-- เลือกเพื่อนร่วมงาน --</option>
+                  {colleagues.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.full_name}
+                      {c.department ? ` · ${c.department}` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {toMemberId && (
+                  <div className="flex items-center gap-2 mt-2 px-1">
+                    <AvatarCircle
+                      avatarUrl={colleagues.find((c) => c.id === toMemberId)?.avatar_url}
+                      name={colleagues.find((c) => c.id === toMemberId)?.full_name}
+                      size={28}
+                    />
+                    <span className="text-sm text-gray-600">
+                      {colleagues.find((c) => c.id === toMemberId)?.full_name}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

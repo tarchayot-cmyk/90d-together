@@ -11,6 +11,7 @@ export const MISSION_CATEGORIES = [
   { value: "zero_sugar_squad", label: "🧃 Zero Sugar Squad", level: "us" },
   { value: "lunch_walk_talk", label: "🍽️ Lunch Walk & Talk", level: "us" },
   { value: "gratitude", label: "🌈 Gratitude", level: "us" },
+  { value: "other", label: "✨ อื่นๆ (ภารกิจที่สร้างเอง)", level: "any" },
 ] as const;
 
 export const STICKER_COLORS = [

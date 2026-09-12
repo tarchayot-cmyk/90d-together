@@ -25,7 +25,7 @@ export default function MissionFormModal({
   onSuccess: () => void;
 }) {
   const [level, setLevel] = useState(mission?.level ?? "me");
-  const [category, setCategory] = useState(mission?.category ?? MISSION_CATEGORIES[0].value);
+  const [category, setCategory] = useState(mission?.category ?? "other");
   const [name, setName] = useState(mission?.name ?? "");
   const [description, setDescription] = useState(mission?.description ?? "");
   const [targetValue, setTargetValue] = useState(String(mission?.target_value ?? ""));
