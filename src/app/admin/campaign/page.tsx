@@ -28,7 +28,7 @@ export default function AdminCampaignPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [phaseInfo, setPhaseInfo] = useState<{ current_day: number; current_phase: string | null } | null>(null);
+  const [phaseInfo, setPhaseInfo] = useState<{ current_day: number; primary_phase: string | null } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -54,7 +54,7 @@ export default function AdminCampaignPage() {
         <div className="rounded-card bg-us/5 border border-us/20 p-4 text-center">
           <p className="text-xs text-gray-400">ระยะปัจจุบันของแคมเปญ (คำนวณจากวันที่อัตโนมัติ)</p>
           <p className="font-bold text-us text-lg mt-1">
-            {phaseInfo.current_phase ? PHASE_LABEL[phaseInfo.current_phase] : "นอกช่วงแคมเปญ (ก่อนเริ่ม/หลังจบ)"}
+            {phaseInfo.primary_phase ? PHASE_LABEL[phaseInfo.primary_phase] : "นอกช่วงแคมเปญ (ก่อนเริ่ม/หลังจบ)"}
           </p>
           <p className="text-xs text-gray-400">วันที่ {phaseInfo.current_day} ของ 90 วัน</p>
         </div>
