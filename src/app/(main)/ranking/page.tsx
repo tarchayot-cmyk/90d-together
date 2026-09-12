@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
@@ -33,6 +33,26 @@ async function fetchLeaderboard(_key: string, tab: TabType): Promise<RankRow[]> 
 
 export default function RankingPage() {
   const [tab, setTab] = useState<TabType>("me");
+  const [visibleLevels, setVisibleLevels] = useState<TabType[]>(["me"]);
+
+  useEffect(() => {
+    async function loadVisibility() {
+      const supabase = createClient();
+      const { data } = await supabase.rpc("get_campaign_phase_info");
+      if (data?.has_campaign && data.visible_levels?.length) {
+        setVisibleLevels(data.visible_levels as TabType[]);
+      }
+    }
+    loadVisibility();
+  }, []);
+
+  // If the currently-selected tab isn't visible yet (e.g. deep link,
+  // or phase regressed in test data), fall back to ME.
+  useEffect(() => {
+    if (!visibleLevels.includes(tab)) setTab("me");
+  }, [visibleLevels, tab]);
+
+  const visibleTabs = TABS.filter((t) => visibleLevels.includes(t.value));
 
   // Keyed by tab, so switching ME/WE/US and back shows each tab's
   // last-known ranking instantly instead of a fresh spinner every time.
@@ -52,7 +72,7 @@ export default function RankingPage() {
       </header>
 
       <div className="flex rounded-full bg-white shadow-sm p-1">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.value}
             onClick={() => setTab(t.value)}
@@ -67,6 +87,7 @@ export default function RankingPage() {
       </div>
 
       {loading && !rows && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
+
 
       {!loading && rows?.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีข้อมูลอันดับ</p>

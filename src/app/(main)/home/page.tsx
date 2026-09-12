@@ -25,15 +25,15 @@ interface NotificationPreview {
 const QUICK_ACTIONS = [
   { href: "/missions", icon: CheckCircle2, label: "เช็คอิน", sub: "ทำกิจกรรมวันนี้", bg: "bg-pastel-green", fg: "text-us" },
   { href: "#kindness", icon: HeartHandshake, label: "ส่ง Kindness", sub: "มอบกำลังใจให้เพื่อน", bg: "bg-pastel-pink", fg: "text-kindness" },
-  { href: "/invitations", icon: Users, label: "เพื่อน & กลุ่ม", sub: "เชื่อมต่อกัน", bg: "bg-pastel-blue", fg: "text-blue-500" },
-  { href: "/proposals", icon: Megaphone, label: "กิจกรรม", sub: "ดูและเข้าร่วม", bg: "bg-pastel-orange", fg: "text-orange-500" },
+  { href: "/invitations", icon: Users, label: "เชิญเพื่อนทำกิจกรรม", sub: "นัดกันไว้", bg: "bg-pastel-blue", fg: "text-blue-500" },
+  { href: "/proposals", icon: Megaphone, label: "เสนอกิจกรรม", sub: "เสนอ & โหวต", bg: "bg-pastel-orange", fg: "text-orange-500" },
 ];
 
 export default function HomePage() {
   const { member, loading } = useMember();
   const [kindnessOpen, setKindnessOpen] = useState(false);
   const [toast, setToast] = useState<RewardToastData | null>(null);
-  const [phaseInfo, setPhaseInfo] = useState<{ primary_phase: string | null; current_day: number; start_date: string; end_date: string } | null>(null);
+  const [phaseInfo, setPhaseInfo] = useState<{ primary_phase: string | null; current_day: number; start_date: string; end_date: string; visible_levels: string[] } | null>(null);
   const [notifPreview, setNotifPreview] = useState<NotificationPreview[]>([]);
   const [todayMission, setTodayMission] = useState<Mission | null>(null);
 
@@ -177,8 +177,8 @@ export default function HomePage() {
         </div>
       )}
 
-      <BuddyCard />
-      <SquadCard />
+      {phaseInfo?.visible_levels?.includes("we") && <BuddyCard />}
+      {phaseInfo?.visible_levels?.includes("us") && <SquadCard />}
 
       {kindnessOpen && (
         <KindnessModal
