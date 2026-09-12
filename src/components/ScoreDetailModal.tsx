@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 
 interface ScoreDetail {
@@ -13,6 +14,17 @@ interface ScoreDetail {
   detail: string | null;
   proof_status: string | null;
   admin_name: string | null;
+}
+
+interface BadgeProgress {
+  code: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  unlocked: boolean;
+  unlocked_at: string | null;
+  current_value: number;
+  target_value: number;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -30,14 +42,20 @@ export default function ScoreDetailModal({
   memberName: string;
   onClose: () => void;
 }) {
+  const [tab, setTab] = useState<"score" | "badges">("score");
   const [items, setItems] = useState<ScoreDetail[]>([]);
+  const [badges, setBadges] = useState<BadgeProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data } = await supabase.rpc("get_member_score_details", { p_member_id: memberId });
-      setItems(data ?? []);
+      const [{ data: scoreData }, { data: badgeData }] = await Promise.all([
+        supabase.rpc("get_member_score_details", { p_member_id: memberId }),
+        supabase.rpc("get_badge_progress", { p_member_id: memberId }),
+      ]);
+      setItems(scoreData ?? []);
+      setBadges(badgeData ?? []);
       setLoading(false);
     }
     load();
@@ -47,35 +65,89 @@ export default function ScoreDetailModal({
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-800">รายละเอียดคะแนน — {memberName}</h2>
+          <h2 className="font-semibold text-gray-800">{memberName}</h2>
           <button onClick={onClose} aria-label="close" className="p-1 text-gray-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <X size={20} />
           </button>
         </div>
 
-        {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
-        {!loading && items.length === 0 && <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีประวัติคะแนน</p>}
-
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-xl bg-bg p-3 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-600">{SOURCE_LABEL[item.source] ?? item.source}</span>
-                <span className={item.points >= 0 ? "text-us font-bold text-sm" : "text-red-500 font-bold text-sm"}>
-                  {item.points >= 0 ? "+" : ""}
-                  {item.points}
-                </span>
-              </div>
-              <p className="text-sm text-gray-800">{item.activity}</p>
-              {item.detail && <p className="text-xs text-gray-500">{item.detail}</p>}
-              {item.proof_status && item.proof_status !== "not_required" && (
-                <p className="text-xs text-amber-600">สถานะหลักฐาน: {item.proof_status}</p>
+        <div className="flex rounded-full bg-bg p-1 w-fit">
+          {(["score", "badges"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={clsx(
+                "rounded-full px-4 py-2 text-xs font-semibold min-h-[36px]",
+                tab === t ? "bg-us text-white" : "text-gray-400"
               )}
-              {item.admin_name && <p className="text-xs text-gray-400">โดย Admin: {item.admin_name}</p>}
-              <p className="text-xs text-gray-300">{new Date(item.created_at).toLocaleString("th-TH")}</p>
-            </div>
+            >
+              {t === "score" ? "ประวัติคะแนน" : "🏅 Badge"}
+            </button>
           ))}
         </div>
+
+        {loading && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
+
+        {!loading && tab === "score" && (
+          <div className="space-y-2">
+            {items.length === 0 && <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีประวัติคะแนน</p>}
+            {items.map((item) => (
+              <div key={item.id} className="rounded-xl bg-bg p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-600">{SOURCE_LABEL[item.source] ?? item.source}</span>
+                  <span className={item.points >= 0 ? "text-us font-bold text-sm" : "text-red-500 font-bold text-sm"}>
+                    {item.points >= 0 ? "+" : ""}
+                    {item.points}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-800">{item.activity}</p>
+                {item.detail && <p className="text-xs text-gray-500">{item.detail}</p>}
+                {item.proof_status && item.proof_status !== "not_required" && (
+                  <p className="text-xs text-amber-600">สถานะหลักฐาน: {item.proof_status}</p>
+                )}
+                {item.admin_name && <p className="text-xs text-gray-400">โดย Admin: {item.admin_name}</p>}
+                <p className="text-xs text-gray-300">{new Date(item.created_at).toLocaleString("th-TH")}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && tab === "badges" && (
+          <div className="space-y-2">
+            {badges.map((badge) => {
+              const pct = Math.min(100, Math.round((badge.current_value / Math.max(badge.target_value, 1)) * 100));
+              return (
+                <div
+                  key={badge.code}
+                  className={clsx(
+                    "rounded-xl p-3 flex gap-3 border",
+                    badge.unlocked ? "bg-us/5 border-us/20" : "bg-gray-50 border-gray-100"
+                  )}
+                >
+                  <div className={clsx("text-2xl shrink-0", !badge.unlocked && "grayscale opacity-40")}>{badge.icon ?? "🏅"}</div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className={clsx("text-sm font-semibold", badge.unlocked ? "text-gray-800" : "text-gray-500")}>{badge.name}</p>
+                    {badge.unlocked ? (
+                      <p className="text-xs text-us font-medium">
+                        ปลดล็อกแล้ว
+                        {badge.unlocked_at && ` · ${new Date(badge.unlocked_at).toLocaleDateString("th-TH")}`}
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                          <div className="h-full bg-we rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          {badge.current_value}/{badge.target_value}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

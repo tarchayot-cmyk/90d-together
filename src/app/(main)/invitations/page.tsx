@@ -222,31 +222,40 @@ export default function InvitationsPage() {
                   </p>
                 </div>
 
-                {inv.status === "countered" && (
-                  <>
-                    <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5">
-                      {inv.to_name} เสนอเวลาใหม่: {inv.counter_scheduled_at && fmt(inv.counter_scheduled_at)}
-                      {inv.counter_message && ` — "${inv.counter_message}"`}
-                      {inv.counter_expires_at && ` (ตอบรับภายใน ${fmt(inv.counter_expires_at)})`}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => respondCounter(inv.id, true)}
-                        disabled={busyId === inv.id}
-                        className="flex-1 rounded-full bg-us text-white text-xs font-semibold py-2 min-h-[36px] disabled:opacity-50"
-                      >
-                        รับเวลาใหม่
-                      </button>
-                      <button
-                        onClick={() => respondCounter(inv.id, false)}
-                        disabled={busyId === inv.id}
-                        className="flex-1 rounded-full border border-gray-200 text-gray-600 text-xs font-semibold py-2 min-h-[36px] disabled:opacity-50"
-                      >
-                        ไม่รับ
-                      </button>
-                    </div>
-                  </>
-                )}
+                {inv.status === "countered" && (() => {
+                  const isExpired = inv.counter_expires_at ? new Date(inv.counter_expires_at) < new Date() : false;
+                  return (
+                    <>
+                      <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5">
+                        {inv.to_name} เสนอเวลาใหม่: {inv.counter_scheduled_at && fmt(inv.counter_scheduled_at)}
+                        {inv.counter_message && ` — "${inv.counter_message}"`}
+                        {inv.counter_expires_at && ` (ตอบรับภายใน ${fmt(inv.counter_expires_at)})`}
+                      </p>
+                      {isExpired ? (
+                        <p className="text-xs text-gray-400 text-center py-1">
+                          หมดอายุแล้ว — ไม่สามารถตอบรับข้อเสนอนี้ได้อีก
+                        </p>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => respondCounter(inv.id, true)}
+                            disabled={busyId === inv.id}
+                            className="flex-1 rounded-full bg-us text-white text-xs font-semibold py-2 min-h-[36px] disabled:opacity-50"
+                          >
+                            รับเวลาใหม่
+                          </button>
+                          <button
+                            onClick={() => respondCounter(inv.id, false)}
+                            disabled={busyId === inv.id}
+                            className="flex-1 rounded-full border border-gray-200 text-gray-600 text-xs font-semibold py-2 min-h-[36px] disabled:opacity-50"
+                          >
+                            ไม่รับ
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {inv.status === "pending" && <p className="text-xs text-gray-400">รอ {inv.to_name} ตอบรับ</p>}
 
