@@ -17,7 +17,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-black/5 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-black/5 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)] shadow-soft">
       <ul className="flex justify-around">
         {TABS.map(({ href, icon: Icon, label }) => {
           const active = pathname?.startsWith(href);
@@ -26,11 +26,13 @@ export default function BottomNav() {
               <Link
                 href={href}
                 className={clsx(
-                  "flex flex-col items-center gap-0.5 py-2 text-xs font-medium min-h-[44px] justify-center",
+                  "flex flex-col items-center gap-0.5 py-2 text-xs font-medium min-h-[44px] justify-center transition-colors",
                   active ? "text-us" : "text-gray-400"
                 )}
               >
-                <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+                <span className={clsx("rounded-pill px-3 py-0.5", active && "bg-pastel-green")}>
+                  <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+                </span>
                 {label}
               </Link>
             </li>

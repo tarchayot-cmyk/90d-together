@@ -18,9 +18,20 @@ const config: Config = {
           rainbow: "#26C6DA",
         },
         bg: "#F7FBF5",
+        pastel: {
+          green: "#E8F5E9",
+          blue: "#E3F2FD",
+          orange: "#FFF3E0",
+          pink: "#FCE4EC",
+          purple: "#F3E5F5",
+        },
       },
       borderRadius: {
         card: "18px",
+        pill: "999px",
+      },
+      boxShadow: {
+        soft: "0 2px 12px rgba(46, 125, 50, 0.06)",
       },
     },
   },
