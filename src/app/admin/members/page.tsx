@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Shuffle, UserPlus, Pencil, KeyRound } from "lucide-react";
+import { Search, Shuffle, UserPlus, Pencil, KeyRound, AlertCircle } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import AdjustPointsModal from "@/components/AdjustPointsModal";
@@ -31,6 +31,13 @@ export default function AdminMembersPage() {
   const [assigning, setAssigning] = useState<"buddy" | "squad" | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
+  const [reminders, setReminders] = useState<{ needs_buddy_assignment: boolean; needs_squad_assignment: boolean } | null>(null);
+
+  async function loadReminders() {
+    const supabase = createClient();
+    const { data } = await supabase.rpc("get_admin_reminders");
+    setReminders(data ?? null);
+  }
 
   async function loadMembers() {
     setLoading(true);
@@ -45,6 +52,7 @@ export default function AdminMembersPage() {
 
   useEffect(() => {
     loadMembers();
+    loadReminders();
   }, []);
 
   async function handleAssign(kind: "buddy" | "squad") {
@@ -80,6 +88,7 @@ export default function AdminMembersPage() {
       return;
     }
     setBanner(`สุ่มแบ่ง ${kind === "buddy" ? "Buddy" : "Squad"} สำเร็จ — สร้าง ${data.groups_created} กลุ่ม`);
+    loadReminders();
   }
 
   async function toggleMemberActive(member: MemberRow) {
@@ -108,6 +117,16 @@ export default function AdminMembersPage() {
 
   return (
     <div className="space-y-4">
+      {(reminders?.needs_buddy_assignment || reminders?.needs_squad_assignment) && (
+        <div className="rounded-card bg-amber-50 border border-amber-200 p-4 flex gap-3">
+          <AlertCircle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-800 space-y-0.5">
+            {reminders.needs_buddy_assignment && <p>ถึงช่วง WE แล้ว แต่ยังไม่ได้สุ่มจับคู่ Buddy — กดปุ่มด้านล่างได้เลย</p>}
+            {reminders.needs_squad_assignment && <p>ถึงช่วง US แล้ว แต่ยังไม่ได้สุ่มจัดกลุ่ม Squad — กดปุ่มด้านล่างได้เลย</p>}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleAssign("buddy")}
