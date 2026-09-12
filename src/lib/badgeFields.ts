@@ -30,6 +30,8 @@ export const GENERIC_FIELDS: { field: string; label: string }[] = [
   { field: "total_completions", label: "จำนวนครั้งที่ทำสำเร็จรวมทั้งหมดในระดับนี้" },
   { field: "distinct_types", label: "จำนวนประเภทภารกิจที่ทำสำเร็จอย่างน้อย 1 ครั้ง" },
   { field: "total_points", label: "คะแนนรวมที่ได้ในระดับนี้" },
+  { field: "first_week_done", label: "ทำสำเร็จในสัปดาห์แรกของระดับนี้ (1 = ใช่)" },
+  { field: "last_week_done", label: "ทำสำเร็จในสัปดาห์สุดท้ายของระดับนี้ (1 = ใช่)" },
 ];
 
 export function getFieldOptions(level: string) {

@@ -10,6 +10,7 @@ export interface BadgeDetailData {
   name: string;
   description: string | null;
   icon: string | null;
+  icon_url?: string | null;
   tier: BadgeTier;
   unlocked: boolean;
   unlocked_at: string | null;
@@ -30,7 +31,7 @@ export default function BadgeDetailModal({ badge, onClose }: { badge: BadgeDetai
         </button>
 
         <div className="flex justify-center pt-2">
-          <BadgeArtwork icon={badge.icon ?? "🏅"} tier={badge.tier} state={state} size={120} />
+          <BadgeArtwork icon={badge.icon ?? "🏅"} iconUrl={badge.icon_url} tier={badge.tier} state={state} size={120} />
         </div>
 
         <div>

@@ -14,6 +14,7 @@ interface Badge {
   name: string;
   description: string | null;
   icon: string | null;
+  icon_url?: string | null;
   condition_field: string; // full path e.g. "me.move_me_weeks"
   target_value: number;
 }
@@ -30,6 +31,7 @@ function emptyForm(level: "me" | "we" | "us" = "me") {
     name: "",
     description: "",
     icon: "🏅",
+    icon_url: "",
     condition_field: "",
     target_value: "" as string | number,
   };
@@ -49,7 +51,7 @@ export default function AdminBadgesPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("badges")
-      .select("id, family_code, tier, level, name, description, icon, condition_field, target_value")
+      .select("id, family_code, tier, level, name, description, icon, icon_url, condition_field, target_value")
       .order("level")
       .order("family_code")
       .order("target_value");
@@ -76,6 +78,7 @@ export default function AdminBadgesPage() {
       name: b.name,
       description: b.description ?? "",
       icon: b.icon ?? "🏅",
+      icon_url: b.icon_url ?? "",
       condition_field: `${b.level}.${b.condition_field.split(".")[1]}`,
       target_value: b.target_value,
     });
@@ -98,6 +101,7 @@ export default function AdminBadgesPage() {
       p_name: editing.name.trim(),
       p_description: editing.description.trim() || null,
       p_icon: editing.icon || "🏅",
+      p_icon_url: editing.icon_url?.trim() || null,
       p_condition_field: editing.condition_field,
       p_target_value: Number(editing.target_value),
     });
@@ -269,6 +273,16 @@ export default function AdminBadgesPage() {
               <input
                 value={editing.icon}
                 onChange={(e) => setEditing({ ...editing, icon: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">URL รูปภาพ (ไม่บังคับ — ถ้าใส่จะใช้แทน emoji)</label>
+              <input
+                value={editing.icon_url}
+                onChange={(e) => setEditing({ ...editing, icon_url: e.target.value })}
+                placeholder="https://..."
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
               />
             </div>

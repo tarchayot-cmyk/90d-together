@@ -57,11 +57,13 @@ function roundedPolygonPath(points: Point[], radius: number): string {
 
 export default function BadgeArtwork({
   icon,
+  iconUrl,
   tier,
   state,
   size = 84,
 }: {
   icon: string;
+  iconUrl?: string | null;
   tier: BadgeTier;
   state: BadgeState;
   size?: number;
@@ -111,9 +113,27 @@ export default function BadgeArtwork({
           )}
         </g>
 
-        <text x="50" y="54" textAnchor="middle" dominantBaseline="central" fontSize="34" style={{ filter: state === "locked" ? "grayscale(1)" : "none" }}>
-          {icon}
-        </text>
+        {iconUrl ? (
+          <>
+            <clipPath id={`badge-clip-${tier}`}>
+              <circle cx="50" cy="46" r="30" />
+            </clipPath>
+            <image
+              href={iconUrl}
+              x="20"
+              y="16"
+              width="60"
+              height="60"
+              clipPath={`url(#badge-clip-${tier})`}
+              preserveAspectRatio="xMidYMid slice"
+              style={{ filter: state === "locked" ? "grayscale(1)" : "none" }}
+            />
+          </>
+        ) : (
+          <text x="50" y="54" textAnchor="middle" dominantBaseline="central" fontSize="34" style={{ filter: state === "locked" ? "grayscale(1)" : "none" }}>
+            {icon}
+          </text>
+        )}
 
         {state === "locked" && (
           <>

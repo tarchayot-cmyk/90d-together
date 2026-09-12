@@ -13,6 +13,7 @@ export interface BadgeRow {
   name: string;
   description: string | null;
   icon: string | null;
+  icon_url?: string | null;
   unlocked: boolean;
   unlocked_at: string | null;
   current_value: number;
@@ -71,6 +72,7 @@ export default function BadgeFamilyList({ badges, groupByLevel = true }: { badge
             name: detailBadge.name,
             description: detailBadge.description,
             icon: detailBadge.icon,
+            icon_url: detailBadge.icon_url,
             tier: detailBadge.tier,
             unlocked: detailBadge.unlocked,
             unlocked_at: detailBadge.unlocked_at,
@@ -106,7 +108,7 @@ function FamilyGrid({
             onClick={() => onSelect(activeTier)}
             className="rounded-xl bg-white border border-gray-100 p-3 flex flex-col items-center gap-1.5 text-center min-h-[44px]"
           >
-            <BadgeArtwork icon={activeTier.icon ?? "🏅"} tier={activeTier.tier} state={state} size={64} />
+            <BadgeArtwork icon={activeTier.icon ?? "🏅"} iconUrl={activeTier.icon_url} tier={activeTier.tier} state={state} size={64} />
             <p className="text-xs font-medium text-gray-800 leading-tight mt-1">{family.familyName}</p>
 
             {family.tiers.length > 1 && (
