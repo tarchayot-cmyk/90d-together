@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Loader2, Send, MessageCircle } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
@@ -14,12 +14,13 @@ interface FeedbackRow {
   created_at: string;
 }
 
-export default function FeedbackModal({ onClose }: { onClose: () => void }) {
+export default function FeedbackModal({ onClose, highlightId }: { onClose: () => void; highlightId?: string | null }) {
   const [history, setHistory] = useState<FeedbackRow[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoadingHistory(true);
@@ -32,6 +33,12 @@ export default function FeedbackModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (!loadingHistory && highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [loadingHistory, highlightId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -97,7 +104,14 @@ export default function FeedbackModal({ onClose }: { onClose: () => void }) {
 
           <div className="space-y-2">
             {history.map((f) => (
-              <div key={f.id} className="rounded-xl bg-bg p-3 space-y-1.5">
+              <div
+                key={f.id}
+                ref={f.id === highlightId ? highlightRef : undefined}
+                className={clsx(
+                  "rounded-xl p-3 space-y-1.5 transition-colors",
+                  f.id === highlightId ? "bg-pastel-green ring-2 ring-us" : "bg-bg"
+                )}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm text-gray-700">{f.message}</p>
                   <span

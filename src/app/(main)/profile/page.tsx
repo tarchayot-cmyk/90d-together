@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [highlightFeedbackId, setHighlightFeedbackId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -22,6 +23,14 @@ export default function ProfilePage() {
   useEffect(() => {
     setAvatarUrl(member?.avatar_url ?? null);
   }, [member?.avatar_url]);
+
+  useEffect(() => {
+    const feedbackId = new URLSearchParams(window.location.search).get("feedback");
+    if (feedbackId) {
+      setHighlightFeedbackId(feedbackId);
+      setFeedbackOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -148,7 +157,16 @@ export default function ProfilePage() {
         {signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
       </button>
 
-      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
+      {feedbackOpen && (
+        <FeedbackModal
+          highlightId={highlightFeedbackId}
+          onClose={() => {
+            setFeedbackOpen(false);
+            setHighlightFeedbackId(null);
+            if (new URLSearchParams(window.location.search).get("feedback")) router.replace("/profile");
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -20,17 +20,20 @@ interface Overview {
 export default function AdminDashboardPage() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [reminders, setReminders] = useState<{ needs_buddy_assignment: boolean; needs_squad_assignment: boolean } | null>(null);
+  const [pendingCounts, setPendingCounts] = useState<{ pending_checkins: number; pending_proposals: number; open_feedback: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const [{ data: ov }, { data: rem }] = await Promise.all([
+      const [{ data: ov }, { data: rem }, { data: counts }] = await Promise.all([
         supabase.rpc("admin_get_overview"),
         supabase.rpc("get_admin_reminders"),
+        supabase.rpc("admin_get_pending_counts"),
       ]);
       setOverview(ov ?? null);
       setReminders(rem ?? null);
+      setPendingCounts(counts ?? null);
       setLoading(false);
     }
     load();
@@ -113,15 +116,20 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-2 gap-2">
         {[
-          { href: "/admin/members", label: "👥 สมาชิก" },
-          { href: "/admin/checkins", label: "✅ ตรวจ Check-in" },
-          { href: "/admin/proposals", label: "📢 กิจกรรมที่สมาชิกเสนอ" },
-          { href: "/admin/missions", label: "🎯 ภารกิจ" },
-          { href: "/admin/badges", label: "🏅 Badges" },
-          { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ" },
+          { href: "/admin/members", label: "👥 สมาชิก", count: 0 },
+          { href: "/admin/checkins", label: "✅ ตรวจ Check-in", count: pendingCounts?.pending_checkins ?? 0 },
+          { href: "/admin/proposals", label: "📢 กิจกรรมที่สมาชิกเสนอ", count: pendingCounts?.pending_proposals ?? 0 },
+          { href: "/admin/missions", label: "🎯 ภารกิจ", count: 0 },
+          { href: "/admin/badges", label: "🏅 Badges", count: 0 },
+          { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ", count: pendingCounts?.open_feedback ?? 0 },
         ].map((l) => (
-          <Link key={l.href} href={l.href} className="rounded-card bg-white shadow-soft p-3 text-sm font-medium text-gray-700 text-center min-h-[44px] flex items-center justify-center">
+          <Link key={l.href} href={l.href} className="rounded-card bg-white shadow-soft p-3 text-sm font-medium text-gray-700 text-center min-h-[44px] flex items-center justify-center gap-1.5">
             {l.label}
+            {l.count > 0 && (
+              <span className="shrink-0 bg-kindness text-white text-[11px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {l.count > 99 ? "99+" : l.count}
+              </span>
+            )}
           </Link>
         ))}
       </div>
