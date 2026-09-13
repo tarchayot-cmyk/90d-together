@@ -4,30 +4,30 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, X, Loader2, Upload } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
-import { getFieldOptions } from "@/lib/badgeFields";
+import { getFieldOptions, THEMES } from "@/lib/badgeFields";
 
 interface Badge {
   id: string;
   family_code: string;
   tier: "bulk" | "lean" | "smart";
-  level: "me" | "we" | "us";
+  theme: "move" | "fuel" | "rest" | "mind" | "connect";
   name: string;
   description: string | null;
   icon: string | null;
   icon_url?: string | null;
-  condition_field: string; // full path e.g. "me.move_me_weeks"
+  condition_field: string; // full path e.g. "move.streak_weeks"
   target_value: number;
 }
 
 const TIER_LABEL: Record<string, string> = { bulk: "🥉 Bulk", lean: "🥈 Lean", smart: "🥇 Smart" };
-const LEVEL_LABEL: Record<string, string> = { me: "🌱 ME", we: "🌿 WE", us: "🌳 US" };
+const THEME_LABEL: Record<string, string> = Object.fromEntries(THEMES.map((t) => [t.value, t.label]));
 
-function emptyForm(level: "me" | "we" | "us" = "me") {
+function emptyForm(theme: string = "move") {
   return {
     id: null as string | null,
     family_code: "",
     tier: "bulk" as "bulk" | "lean" | "smart",
-    level,
+    theme,
     name: "",
     description: "",
     icon: "🏅",
@@ -45,15 +45,15 @@ export default function AdminBadgesPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterLevel, setFilterLevel] = useState<"all" | "me" | "we" | "us">("all");
+  const [filterTheme, setFilterTheme] = useState<string>("all");
 
   async function load() {
     setLoading(true);
     const supabase = createClient();
     const { data } = await supabase
       .from("badges")
-      .select("id, family_code, tier, level, name, description, icon, icon_url, condition_field, target_value")
-      .order("level")
+      .select("id, family_code, tier, theme, name, description, icon, icon_url, condition_field, target_value")
+      .order("theme")
       .order("family_code")
       .order("target_value");
     setBadges(data ?? []);
@@ -66,7 +66,7 @@ export default function AdminBadgesPage() {
 
   function openCreate() {
     setError(null);
-    setEditing(emptyForm(filterLevel === "all" ? "me" : filterLevel));
+    setEditing(emptyForm(filterTheme === "all" ? "move" : filterTheme));
   }
 
   function openEdit(b: Badge) {
@@ -75,12 +75,12 @@ export default function AdminBadgesPage() {
       id: b.id,
       family_code: b.family_code,
       tier: b.tier,
-      level: b.level,
+      theme: b.theme,
       name: b.name,
       description: b.description ?? "",
       icon: b.icon ?? "🏅",
       icon_url: b.icon_url ?? "",
-      condition_field: `${b.level}.${b.condition_field.split(".")[1]}`,
+      condition_field: `${b.theme}.${b.condition_field.split(".")[1]}`,
       target_value: b.target_value,
     });
   }
@@ -125,7 +125,7 @@ export default function AdminBadgesPage() {
       p_id: editing.id,
       p_family_code: editing.family_code.trim(),
       p_tier: editing.tier,
-      p_level: editing.level,
+      p_theme: editing.theme,
       p_name: editing.name.trim(),
       p_description: editing.description.trim() || null,
       p_icon: editing.icon || "🏅",
@@ -138,7 +138,7 @@ export default function AdminBadgesPage() {
     if (rpcError) {
       setError(
         rpcError.message.includes("invalid_condition_field")
-          ? "เงื่อนไขที่เลือกไม่ตรงกับระดับ"
+          ? "เงื่อนไขที่เลือกไม่ตรงกับธีม"
           : rpcError.message.includes("not_authorized")
           ? "คุณไม่มีสิทธิ์ทำรายการนี้"
           : "บันทึกไม่สำเร็จ กรุณาลองใหม่"
@@ -165,12 +165,12 @@ export default function AdminBadgesPage() {
     load();
   }
 
-  const filtered = filterLevel === "all" ? badges : badges.filter((b) => b.level === filterLevel);
+  const filtered = filterTheme === "all" ? badges : badges.filter((b) => b.theme === filterTheme);
 
   // Group by family for a compact table-like display
   const families = new Map<string, Badge[]>();
   for (const b of filtered) {
-    const key = `${b.level}:${b.family_code}`;
+    const key = `${b.theme}:${b.family_code}`;
     if (!families.has(key)) families.set(key, []);
     families.get(key)!.push(b);
   }
@@ -178,16 +178,16 @@ export default function AdminBadgesPage() {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(["all", "me", "we", "us"] as const).map((lvl) => (
+        {(["all", ...THEMES.map((t) => t.value)] as const).map((th) => (
           <button
-            key={lvl}
-            onClick={() => setFilterLevel(lvl)}
+            key={th}
+            onClick={() => setFilterTheme(th)}
             className={clsx(
               "rounded-full px-4 py-2 text-xs font-semibold min-h-[36px] shrink-0",
-              filterLevel === lvl ? "bg-us text-white" : "bg-white text-gray-500 border border-gray-200"
+              filterTheme === th ? "bg-us text-white" : "bg-white text-gray-500 border border-gray-200"
             )}
           >
-            {lvl === "all" ? "ทั้งหมด" : LEVEL_LABEL[lvl]}
+            {th === "all" ? "ทั้งหมด" : THEME_LABEL[th]}
           </button>
         ))}
       </div>
@@ -207,7 +207,7 @@ export default function AdminBadgesPage() {
         {Array.from(families.entries()).map(([key, tiers]) => (
           <div key={key} className="rounded-card bg-white shadow-soft p-3 space-y-2">
             <p className="text-xs text-gray-400">
-              {LEVEL_LABEL[tiers[0].level]} · {tiers[0].family_code}
+              {THEME_LABEL[tiers[0].theme]} · {tiers[0].family_code}
             </p>
             {tiers.map((b) => (
               <div key={b.id} className="flex items-center justify-between gap-2 py-1 border-t border-gray-50 first:border-t-0 first:pt-0">
@@ -243,15 +243,17 @@ export default function AdminBadgesPage() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500">ระดับ</label>
+              <label className="text-xs font-medium text-gray-500">ธีม</label>
               <select
-                value={editing.level}
-                onChange={(e) => setEditing({ ...editing, level: e.target.value as "me" | "we" | "us", condition_field: "" })}
+                value={editing.theme}
+                onChange={(e) => setEditing({ ...editing, theme: e.target.value, condition_field: "" })}
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
               >
-                <option value="me">🌱 ME</option>
-                <option value="we">🌿 WE</option>
-                <option value="us">🌳 US</option>
+                {THEMES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -273,7 +275,7 @@ export default function AdminBadgesPage() {
               <input
                 value={editing.family_code}
                 onChange={(e) => setEditing({ ...editing, family_code: e.target.value })}
-                placeholder="เช่น me_running"
+                placeholder="เช่น move_extra"
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
               />
             </div>
@@ -347,8 +349,8 @@ export default function AdminBadgesPage() {
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base"
               >
                 <option value="">-- เลือกเงื่อนไข --</option>
-                {getFieldOptions(editing.level).map((opt) => (
-                  <option key={opt.field} value={`${editing.level}.${opt.field}`}>
+                {getFieldOptions(editing.theme).map((opt) => (
+                  <option key={opt.field} value={`${editing.theme}.${opt.field}`}>
                     {opt.label}
                   </option>
                 ))}

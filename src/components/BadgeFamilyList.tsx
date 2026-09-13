@@ -9,7 +9,7 @@ export interface BadgeRow {
   code: string;
   family_code: string;
   tier: "bulk" | "lean" | "smart";
-  level: "me" | "we" | "us";
+  theme: "move" | "fuel" | "rest" | "mind" | "connect";
   name: string;
   description: string | null;
   icon: string | null;
@@ -21,7 +21,13 @@ export interface BadgeRow {
 }
 
 const TIER_ORDER = { bulk: 0, lean: 1, smart: 2 } as const;
-const LEVEL_LABEL: Record<string, string> = { me: "🌱 ME", we: "🌿 WE", us: "🌳 US" };
+const THEME_LABEL: Record<string, string> = {
+  move: "🏃 กาย",
+  fuel: "🍽️ กิน",
+  rest: "😴 พัก",
+  mind: "🧠 ใจ",
+  connect: "🤝 สังคม",
+};
 
 function stripMedal(name: string) {
   return name.replace(/[🥉🥈🥇]/g, "").trim();
@@ -35,7 +41,7 @@ function groupByFamily(rows: BadgeRow[]) {
   }
   return Array.from(families.entries()).map(([familyCode, tiers]) => ({
     familyCode,
-    level: tiers[0].level,
+    theme: tiers[0].theme,
     familyName: stripMedal(tiers[0].name),
     tiers: tiers.sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier]),
   }));
@@ -47,13 +53,13 @@ export default function BadgeFamilyList({ badges, groupByLevel = true }: { badge
 
   const content = groupByLevel ? (
     <div className="space-y-5">
-      {(["me", "we", "us"] as const).map((lvl) => {
-        const levelFamilies = families.filter((f) => f.level === lvl);
-        if (levelFamilies.length === 0) return null;
+      {(["move", "fuel", "rest", "mind", "connect"] as const).map((th) => {
+        const themeFamilies = families.filter((f) => f.theme === th);
+        if (themeFamilies.length === 0) return null;
         return (
-          <div key={lvl}>
-            <h3 className="text-xs font-semibold text-gray-500 mb-2">{LEVEL_LABEL[lvl]}</h3>
-            <FamilyGrid families={levelFamilies} onSelect={setDetailBadge} />
+          <div key={th}>
+            <h3 className="text-xs font-semibold text-gray-500 mb-2">{THEME_LABEL[th]}</h3>
+            <FamilyGrid families={themeFamilies} onSelect={setDetailBadge} />
           </div>
         );
       })}
