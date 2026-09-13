@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Camera, Loader2 } from "lucide-react";
+import { LogOut, Camera, Loader2, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
+import FeedbackModal from "@/components/FeedbackModal";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -130,6 +132,14 @@ export default function ProfilePage() {
       </div>
 
       <button
+        onClick={() => setFeedbackOpen(true)}
+        className="w-full rounded-card bg-white shadow-soft p-4 flex items-center justify-center gap-2 text-sm font-semibold text-us min-h-[44px]"
+      >
+        <MessageCircle size={16} />
+        สอบถามแอดมิน / ข้อเสนอแนะ
+      </button>
+
+      <button
         onClick={handleSignOut}
         disabled={signingOut}
         className="w-full rounded-card bg-white shadow-soft p-4 flex items-center justify-center gap-2 text-sm font-semibold text-red-500 min-h-[44px] disabled:opacity-60"
@@ -137,6 +147,8 @@ export default function ProfilePage() {
         <LogOut size={16} />
         {signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
       </button>
+
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }

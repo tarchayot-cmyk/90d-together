@@ -13,6 +13,7 @@ const TABS = [
   { href: "/admin/groups", label: "🤝 Groups" },
   { href: "/admin/missions", label: "🎯 Missions" },
   { href: "/admin/badges", label: "🏅 Badges" },
+  { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ" },
   { href: "/admin/proposals", label: "📢 Proposals" },
   { href: "/admin/checkins", label: "✅ Check-ins" },
   { href: "/admin/reports", label: "📊 Reports" },

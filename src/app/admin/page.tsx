@@ -118,6 +118,7 @@ export default function AdminDashboardPage() {
           { href: "/admin/proposals", label: "📢 กิจกรรมที่สมาชิกเสนอ" },
           { href: "/admin/missions", label: "🎯 ภารกิจ" },
           { href: "/admin/badges", label: "🏅 Badges" },
+          { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ" },
         ].map((l) => (
           <Link key={l.href} href={l.href} className="rounded-card bg-white shadow-soft p-3 text-sm font-medium text-gray-700 text-center min-h-[44px] flex items-center justify-center">
             {l.label}
