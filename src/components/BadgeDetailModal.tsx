@@ -24,8 +24,8 @@ export default function BadgeDetailModal({ badge, onClose }: { badge: BadgeDetai
   const remaining = Math.max(0, badge.target_value - badge.current_value);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4">
-      <div className="relative w-full max-w-sm rounded-t-card sm:rounded-card bg-white p-6 space-y-4 max-h-[85vh] overflow-y-auto text-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="relative w-full max-w-sm rounded-t-card sm:rounded-card bg-white p-6 space-y-4 max-h-[85vh] overflow-y-auto text-center" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} aria-label="close" className="absolute right-4 top-4 p-1 text-gray-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
           <X size={20} />
         </button>

@@ -103,8 +103,8 @@ export default function InviteModal({
   const missionName = presetMission?.name ?? availableMissions.find((m) => m.id === missionId)?.name;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain">
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-5 space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-gray-800">
             🤝 {missionName ? `ชวนทำ "${missionName}"` : "ชวนทำกิจกรรม"}
