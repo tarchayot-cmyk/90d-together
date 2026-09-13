@@ -31,6 +31,7 @@ export interface Mission {
   input_type: "numeric" | "checkbox";
   max_per_week: number;
   max_per_day: number | null;
+  theme: "move" | "fuel" | "rest" | "mind" | "connect";
 }
 
 export interface CheckIn {

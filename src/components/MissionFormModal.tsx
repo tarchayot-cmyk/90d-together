@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { MISSION_CATEGORIES, STICKER_COLORS, LEVELS } from "@/lib/missionOptions";
+import { THEMES } from "@/lib/badgeFields";
 import type { Mission } from "@/lib/types";
 
 function friendlyError(raw: string): string {
@@ -35,6 +36,7 @@ export default function MissionFormModal({
   const [inputType, setInputType] = useState<"numeric" | "checkbox">(mission?.input_type ?? "numeric");
   const [maxPerWeek, setMaxPerWeek] = useState(String(mission?.max_per_week ?? 1));
   const [maxPerDay, setMaxPerDay] = useState(mission?.max_per_day ? String(mission.max_per_day) : "");
+  const [theme, setTheme] = useState(mission?.theme ?? "move");
   const [points, setPoints] = useState(String(mission?.points ?? 10));
   const [stickerColor, setStickerColor] = useState(mission?.sticker_color ?? "");
   const [stickerAmount, setStickerAmount] = useState(String(mission?.sticker_amount ?? 1));
@@ -74,6 +76,7 @@ export default function MissionFormModal({
       p_input_type: inputType,
       p_max_per_week: Number(maxPerWeek) || 1,
       p_max_per_day: maxPerDay ? Number(maxPerDay) : null,
+      p_theme: theme,
     });
     setLoading(false);
 
@@ -99,6 +102,16 @@ export default function MissionFormModal({
         <form onSubmit={handleSubmit} className="space-y-3">
           <SelectField label="Level" value={level} onChange={setLevel} options={LEVELS} />
           <SelectField label="Category" value={category} onChange={setCategory} options={MISSION_CATEGORIES} />
+
+          <div>
+            <SelectField
+              label="ธีม (ใช้นับ Badge)"
+              value={theme}
+              onChange={setTheme}
+              options={THEMES.map((t) => ({ value: t.value, label: t.label }))}
+            />
+            <p className="text-xs text-gray-400 mt-1">ภารกิจนี้จะนับเข้า Badge ของธีมที่เลือก</p>
+          </div>
 
           <TextField label="ชื่อภารกิจ" value={name} onChange={setName} placeholder="เช่น Move Me" />
           <TextField label="รายละเอียด (ไม่บังคับ)" value={description} onChange={setDescription} placeholder="เช่น สะสม 50,000 steps/สัปดาห์ หรือใส่ลิงก์ให้กดประเมิน" />
