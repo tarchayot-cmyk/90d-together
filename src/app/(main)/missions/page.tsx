@@ -85,12 +85,12 @@ export default function MissionsPage() {
     }
 
     setMissionsByLevel(grouped);
-    const grouped: Record<string, CheckIn[]> = {};
+    const groupedCheckIns: Record<string, CheckIn[]> = {};
     for (const c of myCheckIns) {
-      if (!grouped[c.mission_id]) grouped[c.mission_id] = [];
-      grouped[c.mission_id].push(c);
+      if (!groupedCheckIns[c.mission_id]) groupedCheckIns[c.mission_id] = [];
+      groupedCheckIns[c.mission_id].push(c);
     }
-    setCheckInsByMission(grouped);
+    setCheckInsByMission(groupedCheckIns);
     setLoading(false);
   }, [member?.id]);
 
