@@ -24,7 +24,7 @@ const PHASE_LABEL: Record<string, string> = {
 export default function MissionsPage() {
   const { member } = useMember(); // shared across pages — no extra fetch here
   const [missionsByLevel, setMissionsByLevel] = useState<Record<string, Mission[]>>({});
-  const [checkInsByMission, setCheckInsByMission] = useState<Record<string, CheckIn>>({});
+  const [checkInsByMission, setCheckInsByMission] = useState<Record<string, CheckIn[]>>({});
   const [unlockedLevels, setUnlockedLevels] = useState<string[]>([]);
   const [currentDay, setCurrentDay] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +85,12 @@ export default function MissionsPage() {
     }
 
     setMissionsByLevel(grouped);
-    setCheckInsByMission(Object.fromEntries(myCheckIns.map((c) => [c.mission_id, c])));
+    const grouped: Record<string, CheckIn[]> = {};
+    for (const c of myCheckIns) {
+      if (!grouped[c.mission_id]) grouped[c.mission_id] = [];
+      grouped[c.mission_id].push(c);
+    }
+    setCheckInsByMission(grouped);
     setLoading(false);
   }, [member?.id]);
 
@@ -129,7 +134,7 @@ export default function MissionsPage() {
                 <MissionCard
                   key={mission.id}
                   mission={mission}
-                  checkIn={checkInsByMission[mission.id] ?? null}
+                  checkIns={checkInsByMission[mission.id] ?? []}
                   onCheckIn={setActiveMission}
                 />
               ))}

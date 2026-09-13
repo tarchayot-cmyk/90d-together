@@ -21,6 +21,8 @@ interface Props {
 // (see supabase/migrations/0039_mission_window_change.sql for the current version).
 function friendlyError(raw: string): string {
   if (raw.includes("already_checked_in_this_week")) return "คุณทำภารกิจนี้ไปแล้วในสัปดาห์นี้ ✓";
+  if (raw.includes("weekly_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของสัปดาห์นี้แล้ว";
+  if (raw.includes("daily_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของวันนี้แล้ว ลองใหม่พรุ่งนี้นะ";
   if (raw.includes("target_not_reached")) return "ยังไม่ถึงเป้าหมาย ลองกรอกค่าที่มากขึ้นอีกนิด";
   if (raw.includes("campaign_not_active")) return "แคมเปญนี้ยังไม่เริ่ม หรือสิ้นสุดแล้ว";
   if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";

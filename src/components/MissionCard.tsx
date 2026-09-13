@@ -17,17 +17,21 @@ const STICKER_EMOJI: Record<string, string> = {
 
 export default function MissionCard({
   mission,
-  checkIn,
+  checkIns,
   onCheckIn,
   onInvite,
 }: {
   mission: Mission;
-  checkIn: CheckIn | null; // this week's check-in for this mission, if any
+  checkIns: CheckIn[]; // this week's check-ins for this mission (can be more than 1 if max_per_week > 1)
   onCheckIn: (mission: Mission) => void; // opens the CheckInModal
   onInvite?: (mission: Mission) => void; // opens the InviteModal — omit to hide the button
 }) {
-  const done = !!checkIn?.completed_at;
-  const pct = done ? 100 : 0;
+  // Rejected submissions never count toward the weekly limit — same
+  // rule complete_mission() itself enforces server-side.
+  const completedCount = checkIns.filter((c) => c.proof_status !== "rejected").length;
+  const done = completedCount >= mission.max_per_week;
+  const pct = Math.min(100, Math.round((completedCount / mission.max_per_week) * 100));
+  const showsCount = mission.max_per_week > 1;
 
   return (
     <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
@@ -45,6 +49,7 @@ export default function MissionCard({
       <div className="flex items-center justify-between text-sm text-gray-500">
         <span>
           เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit}/สัปดาห์
+          {showsCount && ` · สูงสุด ${mission.max_per_week} ครั้ง/สัปดาห์`}
         </span>
         <span>
           ⭐ +{mission.points} {mission.sticker_color && `${STICKER_EMOJI[mission.sticker_color]} +${mission.sticker_amount}`}
@@ -60,7 +65,13 @@ export default function MissionCard({
             done ? "bg-gray-100 text-gray-400" : "bg-us text-white active:opacity-80"
           )}
         >
-          {done ? "✓ สำเร็จแล้วสัปดาห์นี้" : "CHECK-IN"}
+          {done
+            ? showsCount
+              ? `✓ ครบ ${mission.max_per_week} ครั้งแล้วสัปดาห์นี้`
+              : "✓ สำเร็จแล้วสัปดาห์นี้"
+            : showsCount
+            ? `CHECK-IN (${completedCount}/${mission.max_per_week})`
+            : "CHECK-IN"}
         </button>
 
         {onInvite && (

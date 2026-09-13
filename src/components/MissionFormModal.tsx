@@ -8,6 +8,8 @@ import type { Mission } from "@/lib/types";
 
 function friendlyError(raw: string): string {
   if (raw.includes("target_value_must_be_positive")) return "เป้าหมายต้องมากกว่า 0";
+  if (raw.includes("max_per_week_must_be_positive")) return "จำนวนครั้งสูงสุดต่อสัปดาห์ต้องมากกว่า 0";
+  if (raw.includes("max_per_day_must_be_positive")) return "จำนวนครั้งสูงสุดต่อวันต้องมากกว่า 0";
   if (raw.includes("not_authorized")) return "คุณไม่มีสิทธิ์ทำรายการนี้";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้ อาจถูกลบไปแล้ว";
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
@@ -31,6 +33,8 @@ export default function MissionFormModal({
   const [targetValue, setTargetValue] = useState(String(mission?.target_value ?? ""));
   const [unit, setUnit] = useState(mission?.unit ?? "");
   const [inputType, setInputType] = useState<"numeric" | "checkbox">(mission?.input_type ?? "numeric");
+  const [maxPerWeek, setMaxPerWeek] = useState(String(mission?.max_per_week ?? 1));
+  const [maxPerDay, setMaxPerDay] = useState(mission?.max_per_day ? String(mission.max_per_day) : "");
   const [points, setPoints] = useState(String(mission?.points ?? 10));
   const [stickerColor, setStickerColor] = useState(mission?.sticker_color ?? "");
   const [stickerAmount, setStickerAmount] = useState(String(mission?.sticker_amount ?? 1));
@@ -68,6 +72,8 @@ export default function MissionFormModal({
       p_requires_proof: requiresProof,
       p_is_active: isActive,
       p_input_type: inputType,
+      p_max_per_week: Number(maxPerWeek) || 1,
+      p_max_per_day: maxPerDay ? Number(maxPerDay) : null,
     });
     setLoading(false);
 
@@ -127,6 +133,11 @@ export default function MissionFormModal({
               <TextField label="หน่วย" value={unit} onChange={setUnit} placeholder="steps" />
             </div>
           )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <TextField label="ทำได้สูงสุด (ครั้ง/สัปดาห์)" value={maxPerWeek} onChange={setMaxPerWeek} type="number" placeholder="1" />
+            <TextField label="ทำได้สูงสุด (ครั้ง/วัน) — เว้นว่างถ้าไม่จำกัด" value={maxPerDay} onChange={setMaxPerDay} type="number" placeholder="ไม่จำกัด" />
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <TextField label="คะแนน" value={points} onChange={setPoints} type="number" />

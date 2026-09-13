@@ -29,6 +29,8 @@ export interface Mission {
   requires_proof: boolean;
   is_active: boolean;
   input_type: "numeric" | "checkbox";
+  max_per_week: number;
+  max_per_day: number | null;
 }
 
 export interface CheckIn {
