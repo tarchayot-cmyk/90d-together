@@ -5,7 +5,7 @@ import { Sparkles, PartyPopper } from "lucide-react";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
-  pink: "🩷",
+  pink: "💗",
   yellow: "🟡",
   red: "🔴",
   purple: "🟣",

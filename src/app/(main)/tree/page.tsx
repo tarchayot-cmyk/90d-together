@@ -7,7 +7,7 @@ import type { TreeState } from "@/lib/types";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
-  pink: "🩷",
+  pink: "💗",
   yellow: "🟡",
   red: "🔴",
   purple: "🟣",

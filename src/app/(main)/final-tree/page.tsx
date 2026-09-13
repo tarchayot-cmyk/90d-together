@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
-  pink: "🩷",
+  pink: "💗",
   yellow: "🟡",
   red: "🔴",
   purple: "🟣",

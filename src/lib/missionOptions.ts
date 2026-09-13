@@ -1,6 +1,6 @@
 export const MISSION_CATEGORIES = [
   { value: "know_me", label: "🟢 Know Me", level: "me" },
-  { value: "sleep_me", label: "🩷 Sleep Me", level: "me" },
+  { value: "sleep_me", label: "💗 Sleep Me", level: "me" },
   { value: "move_me", label: "🟡 Move Me", level: "me" },
   { value: "eat_me", label: "🔴 Eat Me", level: "me" },
   { value: "buddy_walk", label: "🚶 Buddy Walk", level: "we" },
@@ -17,7 +17,7 @@ export const MISSION_CATEGORIES = [
 export const STICKER_COLORS = [
   { value: "", label: "— ไม่มีสติ๊กเกอร์ —" },
   { value: "green", label: "🟢 Green" },
-  { value: "pink", label: "🩷 Pink" },
+  { value: "pink", label: "💗 Pink" },
   { value: "yellow", label: "🟡 Yellow" },
   { value: "red", label: "🔴 Red" },
   { value: "purple", label: "🟣 Purple" },
