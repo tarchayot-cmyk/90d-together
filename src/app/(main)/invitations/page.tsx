@@ -14,7 +14,7 @@ interface InvitationRow {
   from_name: string;
   to_member_id: string;
   to_name: string;
-  scheduled_at: string;
+  scheduled_at: string | null;
   message: string | null;
   status: "pending" | "countered" | "accepted" | "declined" | "expired";
   counter_scheduled_at: string | null;
@@ -32,7 +32,8 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "หมดอายุ",
 };
 
-function fmt(dt: string) {
+function fmt(dt: string | null) {
+  if (!dt) return "ไม่ระบุเวลา — นัดกันเองภายหลัง";
   return new Date(dt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
 }
 

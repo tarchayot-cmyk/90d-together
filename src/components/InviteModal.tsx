@@ -76,17 +76,13 @@ export default function InviteModal({
       setError("เลือกเพื่อนร่วมงานก่อนนะ");
       return;
     }
-    if (!scheduledAt) {
-      setError("เลือกวันและเวลาก่อนนะ");
-      return;
-    }
 
     setSubmitting(true);
     const supabase = createClient();
     const { error: rpcError } = await supabase.rpc("create_invitation", {
       p_to_member_id: toMemberId,
       p_mission_id: missionId,
-      p_scheduled_at: new Date(scheduledAt).toISOString(),
+      p_scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       p_message: message || null,
     });
     setSubmitting(false);
@@ -170,7 +166,7 @@ export default function InviteModal({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500">วันและเวลานัด</label>
+              <label className="text-xs font-medium text-gray-500">วันและเวลานัด (ไม่บังคับ)</label>
               <input
                 type="datetime-local"
                 value={scheduledAt}
