@@ -5,6 +5,7 @@ import { X, Loader2, Camera, Check } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
 import LinkifiedText from "@/components/LinkifiedText";
+import { STICKER_EMOJI, targetPeriodLabel, limitSummary } from "@/lib/missionDisplay";
 
 interface Props {
   mission: Mission;
@@ -128,8 +129,23 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         {!isCheckbox && (
           <p className="text-sm text-gray-400">
-            เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / สัปดาห์
+            เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / {targetPeriodLabel(mission.max_per_day)}
           </p>
+        )}
+
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-us font-semibold">
+            ⭐ +{mission.points} คะแนน
+          </span>
+          {mission.sticker_color && mission.sticker_amount > 0 && (
+            <span className="text-gray-500">
+              {STICKER_EMOJI[mission.sticker_color]} +{mission.sticker_amount}
+            </span>
+          )}
+        </div>
+
+        {limitSummary(mission.max_per_week, mission.max_per_day) && (
+          <p className="text-xs text-gray-400">{limitSummary(mission.max_per_week, mission.max_per_day)}</p>
         )}
 
         {mission.requires_proof && (

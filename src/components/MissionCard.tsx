@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { ChevronRight, UserPlus } from "lucide-react";
 import type { Mission, CheckIn } from "@/lib/types";
 import LinkifiedText from "@/components/LinkifiedText";
+import { STICKER_EMOJI, targetPeriodLabel, limitSummary } from "@/lib/missionDisplay";
 
 // Simple emoji stand-ins for now — see conversation note on custom
 // illustrated icons (same constraint as Badge artwork).
@@ -91,6 +92,18 @@ export default function MissionCard({
         <div>
           <p className="font-semibold text-gray-800 truncate">{mission.name}</p>
           {mission.description && <LinkifiedText text={mission.description} className="text-xs text-gray-400 truncate" />}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+          <span className="text-us font-semibold">⭐ +{mission.points}</span>
+          {mission.sticker_color && mission.sticker_amount > 0 && (
+            <span className="text-gray-500">
+              {STICKER_EMOJI[mission.sticker_color]} +{mission.sticker_amount}
+            </span>
+          )}
+          {limitSummary(mission.max_per_week, mission.max_per_day) && (
+            <span className="text-gray-400">· {limitSummary(mission.max_per_week, mission.max_per_day)}</span>
+          )}
         </div>
 
         <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
