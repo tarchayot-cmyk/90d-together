@@ -170,6 +170,7 @@ export default function InviteModal({
               <input
                 type="datetime-local"
                 value={scheduledAt}
+                min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                 onChange={(e) => setScheduledAt(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-we/40"
               />

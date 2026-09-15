@@ -101,7 +101,11 @@ export default function InvitationsPage() {
     });
     setBusyId(null);
     if (error) {
-      setBanner("ส่งข้อเสนอไม่สำเร็จ กรุณาลองใหม่");
+      setBanner(
+        error.message.includes("scheduled_time_in_past")
+          ? "เวลาที่เลือกผ่านไปแล้ว กรุณาเลือกเวลาในอนาคต"
+          : "ส่งข้อเสนอไม่สำเร็จ กรุณาลองใหม่"
+      );
       return;
     }
     setBanner("ส่งข้อเสนอเวลาใหม่แล้ว");
@@ -181,6 +185,7 @@ export default function InvitationsPage() {
                         <input
                           type="datetime-local"
                           value={counterTime}
+                          min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                           onChange={(e) => setCounterTime(e.target.value)}
                           className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                         />
