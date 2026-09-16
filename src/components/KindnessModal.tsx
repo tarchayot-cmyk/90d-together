@@ -16,8 +16,8 @@ interface Colleague {
 
 function friendlyError(raw: string): string {
   if (raw.includes("cannot_send_to_self")) return "ส่งให้ตัวเองไม่ได้นะ 😉";
-  if (raw.includes("pair_limit_reached")) return "สัปดาห์นี้คุณส่งให้คนนี้ไปแล้ว ลองส่งให้เพื่อนคนอื่นดูนะ";
-  if (raw.includes("recipient_limit_reached")) return "เพื่อนคนนี้ได้รับ Kindness ครบโควตาของสัปดาห์นี้แล้ว";
+  if (raw.includes("daily_send_limit_reached")) return "วันนี้ส่งครบ 10 ครั้งแล้ว พรุ่งนี้มาส่งต่อนะ";
+  if (raw.includes("message_required")) return "พิมพ์ข้อความก่อนส่งนะ";
   if (raw.includes("campaign_not_active")) return "แคมเปญนี้ยังไม่เริ่ม หรือสิ้นสุดแล้ว";
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
@@ -37,15 +37,20 @@ export default function KindnessModal({
   const [loadingList, setLoadingList] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remainingToday, setRemainingToday] = useState<number | null>(null);
 
   useEffect(() => {
-    async function loadColleagues() {
+    async function loadInitial() {
       const supabase = createClient();
-      const { data } = await supabase.rpc("list_colleagues");
-      setColleagues(data ?? []);
+      const [{ data: colleaguesData }, { data: statusData }] = await Promise.all([
+        supabase.rpc("list_colleagues"),
+        supabase.rpc("get_kindness_sender_status"),
+      ]);
+      setColleagues(colleaguesData ?? []);
+      setRemainingToday(statusData?.remaining_today ?? null);
       setLoadingList(false);
     }
-    loadColleagues();
+    loadInitial();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,13 +65,17 @@ export default function KindnessModal({
       setError("เลือกประเภทความห่วงใยก่อนนะ");
       return;
     }
+    if (!message.trim()) {
+      setError("พิมพ์ข้อความก่อนส่งนะ");
+      return;
+    }
 
     setSubmitting(true);
     const supabase = createClient();
-    const { error: rpcError } = await supabase.rpc("give_kindness", {
+    const { data, error: rpcError } = await supabase.rpc("give_kindness", {
       p_to_member_id: toMemberId,
       p_category: category,
-      p_message: message || null,
+      p_message: message.trim(),
     });
     setSubmitting(false);
 
@@ -75,9 +84,14 @@ export default function KindnessModal({
       return;
     }
 
+    if (typeof data?.remaining_today === "number") setRemainingToday(data.remaining_today);
+
     onSuccess();
     onClose();
   }
+
+  const remainingLabel =
+    remainingToday === null ? null : remainingToday === 0 ? "วันนี้ส่งครบโควตาแล้ว" : `วันนี้ส่งได้อีก ${remainingToday} ครั้ง`;
 
   return (
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={onClose}>
@@ -89,11 +103,22 @@ export default function KindnessModal({
           </button>
         </div>
 
+        {remainingLabel && (
+          <p
+            className={clsx(
+              "text-center text-sm font-semibold rounded-full py-2",
+              remainingToday === 0 ? "bg-gray-100 text-gray-400" : "bg-kindness/10 text-kindness"
+            )}
+          >
+            {remainingLabel}
+          </p>
+        )}
+
         <div className="rounded-xl bg-kindness/5 border border-kindness/15 p-3 text-xs text-gray-500 space-y-0.5">
-          <p>🔸 ส่งให้คนเดิมซ้ำได้อีกทีตอนขึ้นสัปดาห์ใหม่ (1 คน/สัปดาห์)</p>
-          <p>🔸 แต่ละคนรับ Kindness ได้สูงสุด 3 ครั้งต่อสัปดาห์</p>
+          <p>🔸 ส่งได้สูงสุด 10 ครั้งต่อวัน ส่งให้คนเดิมซ้ำได้ไม่จำกัด</p>
+          <p>🔸 เพื่อนรับ Kindness ได้ไม่จำกัด แต่ได้คะแนนแค่ 3 ครั้งแรกของแต่ละสัปดาห์</p>
           <p>🔸 ผู้รับจะไม่เห็นว่าใครเป็นคนส่งให้</p>
-          <p>🔸 ผู้รับจะได้ ⭐ +10 คะแนน 🌈 +1 สติ๊กเกอร์ (ผู้ส่งไม่ได้คะแนน)</p>
+          <p>🔸 ผู้รับที่ยังไม่ครบโควตาจะได้ ⭐ +10 คะแนน 🌈 +1 สติ๊กเกอร์ (ผู้ส่งไม่ได้คะแนน)</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -156,11 +181,12 @@ export default function KindnessModal({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">ข้อความ (ไม่บังคับ)</label>
+            <label className="text-xs font-medium text-gray-500">ข้อความ (ต้องใส่)</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={2}
+              required
               placeholder="เช่น ขอบคุณที่ช่วยงานเมื่อเช้านะ!"
               className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-kindness/40"
             />
@@ -170,7 +196,7 @@ export default function KindnessModal({
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || remainingToday === 0}
             className="w-full rounded-full bg-kindness py-3 text-sm font-semibold text-white min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}

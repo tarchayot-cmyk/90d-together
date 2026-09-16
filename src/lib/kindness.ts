@@ -5,6 +5,7 @@ export const KINDNESS_CATEGORIES = [
   { value: "encourage", emoji: "🤝", label: "ให้กำลังใจ" },
   { value: "healthy_food_invite", emoji: "🥗", label: "ชวนกินดี" },
   { value: "rest_stretch_invite", emoji: "🧘", label: "ชวนพัก/ยืดเหยียด" },
+  { value: "other", emoji: "✨", label: "อื่นๆ" },
 ] as const;
 
 export type KindnessCategoryValue = (typeof KINDNESS_CATEGORIES)[number]["value"];
