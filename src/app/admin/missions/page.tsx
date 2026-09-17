@@ -129,6 +129,7 @@ export default function AdminMissionsPage() {
 
       {editing && (
         <MissionFormModal
+          key={editing === "new" ? "new" : editing.id}
           campaignId={campaignId}
           mission={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}

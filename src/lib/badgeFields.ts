@@ -21,9 +21,8 @@ const COMMON_FIELDS = [
 
 const VARIETY_FIELD = { field: "distinct_missions", label: "จำนวนภารกิจที่ต่างกันที่ทำสำเร็จอย่างน้อย 1 ครั้ง" };
 
-// "rest" (พัก) currently has only 1 real mission (Sleep Me), so a
-// "tried N different missions" badge doesn't make sense there.
+// Every theme now has enough missions for a "variety" badge
+// (rest grew from 1 mission to 7), so no exclusions remain.
 export function getFieldOptions(theme: string) {
-  if (theme === "rest") return COMMON_FIELDS;
   return [...COMMON_FIELDS, VARIETY_FIELD];
 }
