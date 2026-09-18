@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Send } from "lucide-react";
+import { X, Loader2, Send, History } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import { KINDNESS_CATEGORIES, type KindnessCategoryValue } from "@/lib/kindness";
@@ -12,6 +12,20 @@ interface Colleague {
   full_name: string;
   department: string | null;
   avatar_url: string | null;
+}
+
+interface SentKindnessRow {
+  id: string;
+  created_at: string;
+  category: KindnessCategoryValue;
+  message: string;
+  campaign_week: number;
+  to_name: string;
+  awarded_points: boolean;
+}
+
+function categoryMeta(value: string) {
+  return KINDNESS_CATEGORIES.find((c) => c.value === value);
 }
 
 function friendlyError(raw: string): string {
@@ -30,6 +44,7 @@ export default function KindnessModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const [view, setView] = useState<"send" | "history">("send");
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
   const [toMemberId, setToMemberId] = useState("");
   const [category, setCategory] = useState<KindnessCategoryValue | null>(null);
@@ -38,6 +53,8 @@ export default function KindnessModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remainingToday, setRemainingToday] = useState<number | null>(null);
+  const [history, setHistory] = useState<SentKindnessRow[] | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     async function loadInitial() {
@@ -52,6 +69,16 @@ export default function KindnessModal({
     }
     loadInitial();
   }, []);
+
+  async function openHistory() {
+    setView("history");
+    if (history !== null) return; // already loaded once this session
+    setLoadingHistory(true);
+    const supabase = createClient();
+    const { data } = await supabase.rpc("get_my_sent_kindness");
+    setHistory((data as SentKindnessRow[]) ?? []);
+    setLoadingHistory(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -103,6 +130,61 @@ export default function KindnessModal({
           </button>
         </div>
 
+        <div className="flex rounded-full bg-gray-100 p-1">
+          <button
+            onClick={() => setView("send")}
+            className={clsx(
+              "flex-1 rounded-full py-2 text-sm font-semibold min-h-[36px]",
+              view === "send" ? "bg-white text-kindness shadow-sm" : "text-gray-400"
+            )}
+          >
+            ส่งให้เพื่อน
+          </button>
+          <button
+            onClick={openHistory}
+            className={clsx(
+              "flex-1 rounded-full py-2 text-sm font-semibold min-h-[36px] flex items-center justify-center gap-1.5",
+              view === "history" ? "bg-white text-kindness shadow-sm" : "text-gray-400"
+            )}
+          >
+            <History size={14} />
+            ประวัติที่ส่งไป
+          </button>
+        </div>
+
+        {view === "history" && (
+          <div className="space-y-2">
+            {loadingHistory && <p className="text-sm text-gray-400 text-center py-8">กำลังโหลด...</p>}
+            {!loadingHistory && history?.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-8">ยังไม่เคยส่ง Kindness ให้ใครเลย</p>
+            )}
+            {!loadingHistory &&
+              history?.map((h) => {
+                const meta = categoryMeta(h.category);
+                return (
+                  <div key={h.id} className="rounded-xl bg-bg p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-700">
+                        {meta?.emoji ?? "🌈"} ส่งให้ {h.to_name}
+                      </p>
+                      {h.awarded_points ? (
+                        <span className="text-xs text-kindness font-medium shrink-0">ได้คะแนน</span>
+                      ) : (
+                        <span className="text-xs text-gray-400 shrink-0">เกินโควตาสัปดาห์นั้น</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{h.message}</p>
+                    <p className="text-xs text-gray-400">
+                      {meta?.label ?? h.category} · {new Date(h.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+
+        {view === "send" && (
+        <>
         {remainingLabel && (
           <p
             className={clsx(
@@ -203,6 +285,8 @@ export default function KindnessModal({
             {submitting ? "กำลังส่ง..." : "ส่ง Kindness"}
           </button>
         </form>
+        </>
+        )}
       </div>
     </div>
   );
