@@ -23,7 +23,10 @@ export default function KindnessTicker() {
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data } = await supabase.rpc("get_featured_kindness_messages");
+      const { data, error } = await supabase.rpc("get_featured_kindness_messages");
+      if (error) {
+        console.error("get_featured_kindness_messages failed:", error.message);
+      }
       setMessages((data as FeaturedMessage[]) ?? []);
     }
     load();
