@@ -47,14 +47,27 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     const incoming = Array.from(files);
+
     setProofFiles((prev) => {
-      const combined = [...prev, ...incoming];
-      return combined.slice(0, MAX_PROOF_IMAGES);
+      const availableSlots = MAX_PROOF_IMAGES - prev.length;
+
+      if (incoming.length > availableSlots) {
+        setError(
+          availableSlots === 0
+            ? `แนบครบ ${MAX_PROOF_IMAGES} รูปแล้ว ลบรูปเดิมออกก่อนถึงจะเพิ่มได้`
+            : `เลือกได้อีกแค่ ${availableSlots} รูป (สูงสุดรวม ${MAX_PROOF_IMAGES} รูป) — เพิ่มให้ ${availableSlots} รูปแรกเท่านั้น`
+        );
+      } else {
+        setError(null);
+      }
+
+      return [...prev, ...incoming.slice(0, availableSlots)];
     });
   }
 
   function removeFile(index: number) {
     setProofFiles((prev) => prev.filter((_, i) => i !== index));
+    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
