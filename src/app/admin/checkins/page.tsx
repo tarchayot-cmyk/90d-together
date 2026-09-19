@@ -12,7 +12,7 @@ interface CheckinRow {
   note: string | null;
   completed_at: string | null;
   proof_status: string;
-  proof_url: string | null;
+  proof_urls: string[] | null;
   created_at: string;
   updated_at: string;
   reviewed_at: string | null;
@@ -49,7 +49,7 @@ export default function AdminCheckinsPage() {
     const { data, error } = await supabase
       .from("check_ins")
       .select(
-        "id, campaign_week, value, note, completed_at, proof_status, proof_url, created_at, updated_at, reviewed_at, rejection_reason, " +
+        "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
           "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
           "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
           "reviewer:members!check_ins_reviewed_by_fkey(full_name)"
@@ -142,7 +142,7 @@ export default function AdminCheckinsPage() {
 
   async function handleCleanupOldProofs() {
     const candidates = rows.filter(
-      (r) => r.proof_url && (r.proof_status === "approved" || r.proof_status === "rejected")
+      (r) => r.proof_urls && r.proof_urls.length > 0 && (r.proof_status === "approved" || r.proof_status === "rejected")
     );
 
     if (candidates.length === 0) {
@@ -150,8 +150,10 @@ export default function AdminCheckinsPage() {
       return;
     }
 
+    const totalImages = candidates.reduce((sum, r) => sum + (r.proof_urls?.length ?? 0), 0);
+
     const confirmed = window.confirm(
-      `พบรูปหลักฐานที่ตรวจสอบเสร็จแล้ว จำนวน ${candidates.length} รูป\n\n` +
+      `พบรูปหลักฐานที่ตรวจสอบเสร็จแล้ว จำนวน ${totalImages} รูป (จาก ${candidates.length} รายการ)\n\n` +
         "ลบไฟล์รูปเหล่านี้ทิ้งถาวร (คะแนน/สติ๊กเกอร์ที่แจกไปแล้วไม่ถูกกระทบ — ลบแค่ตัวรูปเท่านั้น)?"
     );
     if (!confirmed) return;
@@ -160,7 +162,8 @@ export default function AdminCheckinsPage() {
     const supabase = createClient();
 
     const paths = candidates
-      .map((r) => r.proof_url!.split("/storage/v1/object/public/proofs/")[1])
+      .flatMap((r) => r.proof_urls ?? [])
+      .map((url) => url.split("/storage/v1/object/public/proofs/")[1])
       .filter(Boolean);
 
     const { error: removeError } = await supabase.storage.from("proofs").remove(paths);
@@ -286,17 +289,18 @@ export default function AdminCheckinsPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {row.proof_url && (
+                {row.proof_urls?.map((url, i) => (
                   <a
-                    href={row.proof_url}
+                    key={url}
+                    href={url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
                   >
                     <ImageIcon size={14} />
-                    ดูรูปหลักฐาน
+                    รูป {i + 1}
                   </a>
-                )}
+                ))}
 
                 {isPending && (
                   <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, Camera, Check } from "lucide-react";
+import { X, Loader2, Camera, Check, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
 import LinkifiedText from "@/components/LinkifiedText";
@@ -18,8 +18,10 @@ interface Props {
   }) => void;
 }
 
+const MAX_PROOF_IMAGES = 3;
+
 // Human-readable messages for the exceptions raised by complete_mission()
-// (see supabase/migrations/0039_mission_window_change.sql for the current version).
+// (see supabase/migrations/0068_multi_proof_images.sql for the current version).
 function friendlyError(raw: string): string {
   if (raw.includes("already_checked_in_this_week")) return "คุณทำภารกิจนี้ไปแล้วในสัปดาห์นี้ ✓";
   if (raw.includes("weekly_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของสัปดาห์นี้แล้ว";
@@ -28,6 +30,7 @@ function friendlyError(raw: string): string {
   if (raw.includes("campaign_not_active")) return "แคมเปญนี้ยังไม่เริ่ม หรือสิ้นสุดแล้ว";
   if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้";
+  if (raw.includes("too_many_proof_images")) return `แนบรูปได้สูงสุด ${MAX_PROOF_IMAGES} รูปเท่านั้น`;
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
 }
@@ -37,9 +40,22 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [value, setValue] = useState("");
   const [checked, setChecked] = useState(false);
   const [note, setNote] = useState("");
-  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofFiles, setProofFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function addFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+    setProofFiles((prev) => {
+      const combined = [...prev, ...incoming];
+      return combined.slice(0, MAX_PROOF_IMAGES);
+    });
+  }
+
+  function removeFile(index: number) {
+    setProofFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,7 +76,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       }
     }
 
-    if (mission.requires_proof && !proofFile) {
+    if (mission.requires_proof && proofFiles.length === 0) {
       setError("ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
       return;
     }
@@ -68,8 +84,8 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
     setLoading(true);
     const supabase = createClient();
 
-    let proofUrl: string | null = null;
-    if (proofFile) {
+    let proofUrls: string[] | null = null;
+    if (proofFiles.length > 0) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -81,28 +97,33 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
         return;
       }
 
-      const ext = proofFile.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${mission.id}-${Date.now()}.${ext}`;
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < proofFiles.length; i++) {
+        const file = proofFiles[i];
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${user.id}/${mission.id}-${Date.now()}-${i}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from("proofs").upload(path, proofFile, {
-        cacheControl: "3600",
-        upsert: false,
-      });
+        const { error: uploadError } = await supabase.storage.from("proofs").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-      if (uploadError) {
-        setLoading(false);
-        setError("แนบรูปไม่สำเร็จ กรุณาลองใหม่");
-        return;
+        if (uploadError) {
+          setLoading(false);
+          setError("แนบรูปไม่สำเร็จ กรุณาลองใหม่");
+          return;
+        }
+
+        uploadedUrls.push(supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl);
       }
-
-      proofUrl = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
+      proofUrls = uploadedUrls;
     }
 
     const { data, error: rpcError } = await supabase.rpc("complete_mission", {
       p_mission_id: mission.id,
       p_value: numericValue,
       p_note: note || null,
-      p_proof_url: proofUrl,
+      p_proof_urls: proofUrls,
     });
     setLoading(false);
 
@@ -150,7 +171,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         {mission.requires_proof && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-            ภารกิจนี้ต้องแนบรูปหลักฐาน — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ
+            ภารกิจนี้ต้องแนบรูปหลักฐาน (สูงสุด {MAX_PROOF_IMAGES} รูป) — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ
           </p>
         )}
 
@@ -199,17 +220,45 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
           {mission.requires_proof && (
             <div>
-              <label className="text-xs font-medium text-gray-500">แนบรูปหลักฐาน</label>
-              <label className="mt-1 flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-500 cursor-pointer min-h-[44px]">
-                <Camera size={18} />
-                {proofFile ? proofFile.name : "แตะเพื่อถ่ายรูป/เลือกรูป"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
-                />
+              <label className="text-xs font-medium text-gray-500">
+                แนบรูปหลักฐาน ({proofFiles.length}/{MAX_PROOF_IMAGES})
               </label>
+
+              {proofFiles.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {proofFiles.map((file, i) => (
+                    <div key={i} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                      <Camera size={14} className="shrink-0 text-gray-400" />
+                      <span className="flex-1 truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        aria-label="ลบรูปนี้"
+                        className="shrink-0 text-red-400 p-1 min-h-[28px] min-w-[28px] flex items-center justify-center"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {proofFiles.length < MAX_PROOF_IMAGES && (
+                <label className="mt-2 flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-500 cursor-pointer min-h-[44px]">
+                  <Camera size={18} />
+                  {proofFiles.length === 0 ? "แตะเพื่อถ่ายรูป/เลือกรูป" : "เพิ่มรูปอีก"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      addFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
             </div>
           )}
 
