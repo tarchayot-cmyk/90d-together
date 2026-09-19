@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabaseClient";
 import BuddyCard from "@/components/BuddyCard";
 import SquadCard from "@/components/SquadCard";
 import KindnessModal from "@/components/KindnessModal";
+import KindnessTicker from "@/components/KindnessTicker";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import AvatarCircle from "@/components/AvatarCircle";
 import PhaseHero from "@/components/PhaseHero";
@@ -91,6 +92,8 @@ export default function HomePage() {
           endDate={phaseInfo.end_date}
         />
       )}
+
+      <KindnessTicker />
 
       <div className="grid grid-cols-2 gap-3">
         {QUICK_ACTIONS.map((action) => {
