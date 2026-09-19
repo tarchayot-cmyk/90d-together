@@ -9,6 +9,7 @@ interface CheckinRow {
   id: string;
   campaign_week: number;
   value: number;
+  note: string | null;
   completed_at: string | null;
   proof_status: string;
   proof_url: string | null;
@@ -48,7 +49,7 @@ export default function AdminCheckinsPage() {
     const { data, error } = await supabase
       .from("check_ins")
       .select(
-        "id, campaign_week, value, completed_at, proof_status, proof_url, created_at, updated_at, reviewed_at, rejection_reason, " +
+        "id, campaign_week, value, note, completed_at, proof_status, proof_url, created_at, updated_at, reviewed_at, rejection_reason, " +
           "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
           "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
           "reviewer:members!check_ins_reviewed_by_fkey(full_name)"
@@ -140,8 +141,6 @@ export default function AdminCheckinsPage() {
   }
 
   async function handleCleanupOldProofs() {
-    // All reviewed check-ins (approved/rejected) with a photo still
-    // attached — no age restriction, admin can clear any time.
     const candidates = rows.filter(
       (r) => r.proof_url && (r.proof_status === "approved" || r.proof_status === "rejected")
     );
@@ -268,6 +267,12 @@ export default function AdminCheckinsPage() {
                   {!mission?.requires_proof && row.completed_at && " · สำเร็จ"}
                 </p>
                 <p className="text-xs text-gray-300">{new Date(row.created_at).toLocaleString("th-TH")}</p>
+
+                {row.note && (
+                  <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-2.5 py-1.5 mt-1.5">
+                    💬 {row.note}
+                  </p>
+                )}
 
                 {isReviewed && reviewer && (
                   <p className="text-xs text-gray-400 mt-1">
