@@ -80,7 +80,13 @@ export const FRUIT_SPOTS = [
 // Regions used when a custom (painted) image IS provided — each part
 // gets ONE image covering its natural area, layered bottom-to-top:
 // roots -> trunk -> branches -> leaves -> fruits -> flowers.
-const CANOPY_REGION = { x: 68, y: 48, width: 164, height: 165 }; // branches/leaves/fruits/flowers share this
+// Each canopy part gets its OWN quadrant — sharing one region made
+// later-drawn parts completely hide earlier ones when several had
+// custom images at once (confirmed bug, fixed here).
+const LEAF_REGION = { x: 55, y: 45, width: 100, height: 95 };      // top-left
+const BRANCH_REGION = { x: 150, y: 45, width: 100, height: 95 };   // top-right
+const FLOWER_REGION = { x: 55, y: 130, width: 100, height: 90 };   // bottom-left
+const FRUIT_REGION = { x: 150, y: 130, width: 100, height: 90 };   // bottom-right
 const ROOT_REGION = { x: 55, y: 235, width: 190, height: 45 };
 
 export function Flower({ cx, cy }: { cx: number; cy: number }) {
@@ -154,7 +160,7 @@ export function TreeSVG({
 
       {/* branches (yellow / กาย) */}
       {branchImage ? (
-        branchCount > 0 && <image href={branchImage} x={CANOPY_REGION.x} y={CANOPY_REGION.y} width={CANOPY_REGION.width} height={CANOPY_REGION.height} preserveAspectRatio="xMidYMid meet" />
+        branchCount > 0 && <image href={branchImage} x={BRANCH_REGION.x} y={BRANCH_REGION.y} width={BRANCH_REGION.width} height={BRANCH_REGION.height} preserveAspectRatio="xMidYMid meet" />
       ) : (
         BRANCH_LINES.slice(0, branchCount).map((b, i) => (
           <line key={i} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2} stroke="#8D6E4A" strokeWidth="5" strokeLinecap="round" />
@@ -163,7 +169,7 @@ export function TreeSVG({
 
       {/* leaves (orange / สังคม) — before trunk so trunk overlaps cleanly in fallback mode */}
       {leafImage ? (
-        leafCount > 0 && <image href={leafImage} x={CANOPY_REGION.x} y={CANOPY_REGION.y} width={CANOPY_REGION.width} height={CANOPY_REGION.height} preserveAspectRatio="xMidYMid meet" />
+        leafCount > 0 && <image href={leafImage} x={LEAF_REGION.x} y={LEAF_REGION.y} width={LEAF_REGION.width} height={LEAF_REGION.height} preserveAspectRatio="xMidYMid meet" />
       ) : (
         LEAF_SPOTS.slice(0, leafCount).map((l, i) => <circle key={i} cx={l.cx} cy={l.cy} r={l.r} fill="#8BC98A" opacity="0.9" />)
       )}
@@ -177,14 +183,14 @@ export function TreeSVG({
 
       {/* fruits (red / กิน) */}
       {fruitImage ? (
-        fruitCount > 0 && <image href={fruitImage} x={CANOPY_REGION.x} y={CANOPY_REGION.y} width={CANOPY_REGION.width} height={CANOPY_REGION.height} preserveAspectRatio="xMidYMid meet" />
+        fruitCount > 0 && <image href={fruitImage} x={FRUIT_REGION.x} y={FRUIT_REGION.y} width={FRUIT_REGION.width} height={FRUIT_REGION.height} preserveAspectRatio="xMidYMid meet" />
       ) : (
         FRUIT_SPOTS.slice(0, fruitCount).map((f, i) => <circle key={i} cx={f.cx} cy={f.cy} r="6" fill="#E5533D" />)
       )}
 
       {/* flowers (purple / ใจ) */}
       {flowerImage ? (
-        flowerCount > 0 && <image href={flowerImage} x={CANOPY_REGION.x} y={CANOPY_REGION.y} width={CANOPY_REGION.width} height={CANOPY_REGION.height} preserveAspectRatio="xMidYMid meet" />
+        flowerCount > 0 && <image href={flowerImage} x={FLOWER_REGION.x} y={FLOWER_REGION.y} width={FLOWER_REGION.width} height={FLOWER_REGION.height} preserveAspectRatio="xMidYMid meet" />
       ) : (
         FLOWER_SPOTS.slice(0, flowerCount).map((f, i) => <Flower key={i} cx={f.cx} cy={f.cy} />)
       )}

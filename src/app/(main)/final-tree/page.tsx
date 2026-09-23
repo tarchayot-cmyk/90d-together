@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
+import CollectiveTreeVisual from "@/components/CollectiveTreeVisual";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -29,13 +30,21 @@ interface FinalSummary {
 
 export default function FinalTreePage() {
   const [summary, setSummary] = useState<FinalSummary | null>(null);
+  const [collectiveThresholds, setCollectiveThresholds] = useState<number[]>([50, 150, 400]);
+  const [treeImages, setTreeImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data } = await supabase.rpc("get_final_tree_summary");
-      setSummary(data);
+      const [{ data: summaryData }, { data: settingsData }, { data: treeImagesData }] = await Promise.all([
+        supabase.rpc("get_final_tree_summary"),
+        supabase.rpc("get_tree_settings"),
+        supabase.rpc("get_tree_images"),
+      ]);
+      setSummary(summaryData);
+      if (settingsData?.collective_thresholds) setCollectiveThresholds(settingsData.collective_thresholds);
+      setTreeImages((treeImagesData as Record<string, string>) ?? {});
       setLoading(false);
     }
     load();
@@ -66,18 +75,16 @@ export default function FinalTreePage() {
     <div className="pt-2 pb-6 space-y-5 text-center">
       <p className="text-sm text-gray-400">{summary.campaign_name}</p>
 
-      {/* Big combined tree — every person's stickers, kindness, and
-          badges feed the same tree. Spec section 23 ASCII art,
-          rendered as an emoji block so it needs no image assets. */}
-      <div className="rounded-card bg-white shadow-soft py-6 px-2">
-        <pre className="font-sans leading-[1.35] text-2xl sm:text-3xl whitespace-pre-wrap">
-{`      🍎 🌈 🍎
- 🌿 🌿 🌿 🌿 🌿 🌿
-🌿 🌳 🌳 🌳 🌳 🌳 🌿
-     ┃ ┃ ┃ ┃ ┃`}
-        </pre>
+      {/* Same collective tree shown on /tree while it's still growing —
+          this is its final, fully-grown reveal, not a different tree. */}
+      <CollectiveTreeVisual
+        stickerCounts={summary.stickers_by_color ?? {}}
+        thresholds={collectiveThresholds}
+        treeImages={treeImages}
+      />
 
-        <div className="mt-4 space-y-1">
+      <div className="rounded-card bg-white shadow-soft py-4 px-2">
+        <div className="space-y-1">
           <p className="font-bold text-us tracking-wide">ME → WE → US</p>
           <p className="text-sm text-gray-500">90 Days of Growing Together</p>
           <p className="text-sm text-gray-500">🌱 เริ่มจากฉัน 🌿 เติบโตไปกับเพื่อน 🌳 แข็งแรงไปด้วยกัน</p>
