@@ -15,6 +15,7 @@ const TABS = [
   { href: "/admin/badges", label: "🏅 Badges" },
   { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ" },
   { href: "/admin/kindness", label: "💌 Kindness" },
+  { href: "/admin/tree-images", label: "🌳 รูปต้นไม้" },
   { href: "/admin/proposals", label: "📢 Proposals" },
   { href: "/admin/checkins", label: "✅ Check-ins" },
   { href: "/admin/reports", label: "📊 Reports" },

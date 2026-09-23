@@ -97,7 +97,7 @@ export default function AdminBadgesPage() {
     const path = `${editing.family_code || "badge"}-${editing.tier}-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage.from("badge-icons").upload(path, file, {
-      cacheControl: "3600",
+      cacheControl: "31536000",
       upsert: true,
     });
 

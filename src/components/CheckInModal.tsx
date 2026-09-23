@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
 import LinkifiedText from "@/components/LinkifiedText";
 import { STICKER_EMOJI, targetPeriodLabel, limitSummary } from "@/lib/missionDisplay";
+import { compressImage } from "@/lib/compressImage";
 
 interface Props {
   mission: Mission;
@@ -112,12 +113,12 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
       const uploadedUrls: string[] = [];
       for (let i = 0; i < proofFiles.length; i++) {
-        const file = proofFiles[i];
+        const file = await compressImage(proofFiles[i]);
         const ext = file.name.split(".").pop() || "jpg";
         const path = `${user.id}/${mission.id}-${Date.now()}-${i}.${ext}`;
 
         const { error: uploadError } = await supabase.storage.from("proofs").upload(path, file, {
-          cacheControl: "3600",
+          cacheControl: "31536000",
           upsert: false,
         });
 
@@ -231,11 +232,10 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
             />
           </div>
 
-          {mission.requires_proof && (
-            <div>
-              <label className="text-xs font-medium text-gray-500">
-                แนบรูปหลักฐาน ({proofFiles.length}/{MAX_PROOF_IMAGES})
-              </label>
+          <div>
+            <label className="text-xs font-medium text-gray-500">
+              แนบรูปหลักฐาน {mission.requires_proof ? "" : "(ไม่บังคับ)"} ({proofFiles.length}/{MAX_PROOF_IMAGES})
+            </label>
 
               {proofFiles.length > 0 && (
                 <div className="mt-2 space-y-1.5">
@@ -273,7 +273,6 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
                 </label>
               )}
             </div>
-          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

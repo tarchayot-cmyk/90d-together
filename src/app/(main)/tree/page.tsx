@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { createClient } from "@/lib/supabaseClient";
 import TreeVisual from "@/components/TreeVisual";
-import type { TreeState } from "@/lib/types";
+import CollectiveTreeVisual from "@/components/CollectiveTreeVisual";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -16,19 +16,25 @@ const STICKER_EMOJI: Record<string, string> = {
 };
 
 interface TreePageData {
-  tree: TreeState;
   totalPoints: number;
   stickerCounts: Record<string, number>;
+  collectiveStickerCounts: Record<string, number>;
+  treeImages: Record<string, string>;
+  personalThresholds: number[];
+  collectiveThresholds: number[];
 }
 
 async function fetchTreeData(): Promise<TreePageData> {
   const supabase = createClient();
 
-  const [{ data: treeData }, { data: pointsRows }, { data: stickerRows }] = await Promise.all([
-    supabase.rpc("get_tree_progress"),
-    supabase.from("points_transactions").select("points"), // RLS scopes this to the caller's own rows
-    supabase.from("stickers").select("color, amount"), // same — own rows only
-  ]);
+  const [{ data: pointsRows }, { data: stickerRows }, { data: collectiveStickers }, { data: treeImagesData }, { data: settingsData }] =
+    await Promise.all([
+      supabase.from("points_transactions").select("points"), // RLS scopes this to the caller's own rows
+      supabase.from("stickers").select("color, amount"), // same — own rows only
+      supabase.rpc("get_campaign_sticker_totals"),
+      supabase.rpc("get_tree_images"),
+      supabase.rpc("get_tree_settings"),
+    ]);
 
   const stickerCounts: Record<string, number> = {};
   for (const s of stickerRows ?? []) {
@@ -36,9 +42,12 @@ async function fetchTreeData(): Promise<TreePageData> {
   }
 
   return {
-    tree: treeData ?? { level: 1, progress: 0, me: 0, we: 0, us: 0 },
     totalPoints: (pointsRows ?? []).reduce((sum: number, p: { points: number }) => sum + p.points, 0),
     stickerCounts,
+    collectiveStickerCounts: (collectiveStickers as Record<string, number>) ?? {},
+    treeImages: (treeImagesData as Record<string, string>) ?? {},
+    personalThresholds: settingsData?.personal_thresholds ?? [3, 7, 15],
+    collectiveThresholds: settingsData?.collective_thresholds ?? [50, 150, 400],
   };
 }
 
@@ -52,7 +61,7 @@ export default function TreePage() {
     return <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>;
   }
 
-  const { tree, totalPoints, stickerCounts } = data;
+  const { totalPoints, stickerCounts, collectiveStickerCounts, treeImages, personalThresholds, collectiveThresholds } = data;
 
   return (
     <div className="space-y-4 pt-2">
@@ -61,7 +70,7 @@ export default function TreePage() {
         <h1 className="text-xl font-bold text-gray-800">🌳 My Tree</h1>
       </header>
 
-      <TreeVisual tree={tree} />
+      <TreeVisual stickerCounts={stickerCounts} thresholds={personalThresholds} treeImages={treeImages} />
 
       <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -85,6 +94,8 @@ export default function TreePage() {
           )}
         </div>
       </div>
+
+      <CollectiveTreeVisual stickerCounts={collectiveStickerCounts} thresholds={collectiveThresholds} treeImages={treeImages} />
 
       <a
         href="/final-tree"
