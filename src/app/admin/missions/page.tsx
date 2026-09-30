@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import MissionFormModal from "@/components/MissionFormModal";
 import { LEVELS } from "@/lib/missionOptions";
+import { THEMES } from "@/lib/badgeFields";
 import type { Mission } from "@/lib/types";
 
 export default function AdminMissionsPage() {
@@ -14,6 +15,7 @@ export default function AdminMissionsPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Mission | null | "new">(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [themeFilter, setThemeFilter] = useState<string>("all");
 
   async function load() {
     setLoading(true);
@@ -93,8 +95,34 @@ export default function AdminMissionsPage() {
 
       {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
 
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => setThemeFilter("all")}
+          className={clsx(
+            "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
+            themeFilter === "all" ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
+          )}
+        >
+          ทั้งหมด
+        </button>
+        {THEMES.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setThemeFilter(t.value)}
+            className={clsx(
+              "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
+              themeFilter === t.value ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {LEVELS.map((lvl) => {
-        const group = missions.filter((m) => m.level === lvl.value);
+        const group = missions.filter(
+          (m) => m.level === lvl.value && (themeFilter === "all" || m.theme === themeFilter)
+        );
         if (group.length === 0) return null;
         return (
           <div key={lvl.value} className="space-y-2">
@@ -102,7 +130,9 @@ export default function AdminMissionsPage() {
             {group.map((m) => (
               <div key={m.id} className="rounded-card bg-white shadow-soft p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{m.name}</p>
+                  <p className="font-medium text-gray-800 truncate">
+                    {THEMES.find((t) => t.value === m.theme)?.label.split(" ")[0] ?? ""} {m.name}
+                  </p>
                   <p className="text-xs text-gray-400">
                     เป้าหมาย {m.target_value.toLocaleString()} {m.unit} · ⭐ {m.points}
                     {m.requires_proof && " · ต้องแนบหลักฐาน"}

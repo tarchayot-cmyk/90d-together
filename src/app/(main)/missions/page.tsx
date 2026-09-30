@@ -8,6 +8,7 @@ import MissionCard from "@/components/MissionCard";
 import CheckInModal from "@/components/CheckInModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import PhaseHero from "@/components/PhaseHero";
+import { THEMES } from "@/lib/badgeFields";
 import type { Mission, CheckIn } from "@/lib/types";
 
 function currentCampaignWeek(startDate: string): number {
@@ -43,6 +44,7 @@ export default function MissionsPage() {
   const [loading, setLoading] = useState(true);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [reward, setReward] = useState<RewardToastData | null>(null);
+  const [themeFilter, setThemeFilter] = useState<string>("all");
 
   const loadMissionsForTab = useCallback(
     async (currentPhaseInfo: PhaseInfo, selectedTab: string) => {
@@ -110,6 +112,7 @@ export default function MissionsPage() {
 
   async function handleTabChange(newTab: string) {
     setTab(newTab);
+    setThemeFilter("all");
     if (phaseInfo) {
       setLoading(true);
       await loadMissionsForTab(phaseInfo, newTab);
@@ -186,12 +189,42 @@ export default function MissionsPage() {
                 <h2 className="text-sm font-semibold text-gray-500">🎯 ภารกิจหลัก ({TAB_META[tab].label})</h2>
               </div>
 
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setThemeFilter("all")}
+                  className={clsx(
+                    "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
+                    themeFilter === "all" ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
+                  )}
+                >
+                  ทั้งหมด
+                </button>
+                {THEMES.map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => setThemeFilter(t.value)}
+                    className={clsx(
+                      "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
+                      themeFilter === t.value ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
               {!loading && missions.length === 0 && (
                 <p className="text-sm text-gray-400 text-center py-8">ยังไม่มีภารกิจที่เปิดใช้งานในระดับนี้</p>
               )}
 
+              {!loading && missions.length > 0 && missions.filter((m) => themeFilter === "all" || m.theme === themeFilter).length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-8">ไม่มีภารกิจ theme นี้ในระดับนี้</p>
+              )}
+
               <div className="space-y-2">
-                {missions.map((mission) => (
+                {missions
+                  .filter((m) => themeFilter === "all" || m.theme === themeFilter)
+                  .map((mission) => (
                   <MissionCard
                     key={mission.id}
                     mission={mission}
