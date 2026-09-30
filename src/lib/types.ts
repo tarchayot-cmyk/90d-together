@@ -28,7 +28,7 @@ export interface Mission {
   sticker_amount: number;
   requires_proof: boolean;
   is_active: boolean;
-  input_type: "numeric" | "checkbox";
+  input_type: "numeric" | "checkbox" | "text";
   max_per_week: number;
   max_per_day: number | null;
   theme: "move" | "fuel" | "rest" | "mind" | "connect";

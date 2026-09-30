@@ -28,6 +28,7 @@ function friendlyError(raw: string): string {
   if (raw.includes("weekly_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของสัปดาห์นี้แล้ว";
   if (raw.includes("daily_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของวันนี้แล้ว ลองใหม่พรุ่งนี้นะ";
   if (raw.includes("target_not_reached")) return "ยังไม่ถึงเป้าหมาย ลองกรอกค่าที่มากขึ้นอีกนิด";
+  if (raw.includes("text_answer_required")) return "กรุณาพิมพ์คำตอบก่อน Check-in";
   if (raw.includes("campaign_not_active")) return "แคมเปญนี้ยังไม่เริ่ม หรือสิ้นสุดแล้ว";
   if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้";
@@ -38,6 +39,7 @@ function friendlyError(raw: string): string {
 
 export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const isCheckbox = mission.input_type === "checkbox";
+  const isText = mission.input_type === "text";
   const [value, setValue] = useState("");
   const [checked, setChecked] = useState(false);
   const [note, setNote] = useState("");
@@ -82,6 +84,12 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
         return;
       }
       numericValue = mission.target_value; // checkbox missions always submit their own target as-is
+    } else if (isText) {
+      if (!note.trim()) {
+        setError("กรุณาพิมพ์คำตอบก่อน Check-in");
+        return;
+      }
+      numericValue = mission.target_value; // text missions submit their own target as-is; the note is the answer
     } else {
       numericValue = Number(value);
       if (!value || Number.isNaN(numericValue) || numericValue < 0) {
@@ -162,7 +170,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         {mission.description && <LinkifiedText text={mission.description} className="text-sm text-gray-500" />}
 
-        {!isCheckbox && (
+        {!isCheckbox && !isText && (
           <p className="text-sm text-gray-400">
             เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / {targetPeriodLabel(mission.max_per_day)}
           </p>
@@ -207,6 +215,17 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
               </span>
               <span className={`text-sm font-medium ${checked ? "text-us" : "text-gray-600"}`}>ทำแล้ว</span>
             </button>
+          ) : isText ? (
+            <div>
+              <label className="text-xs font-medium text-gray-500">คำตอบ</label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="พิมพ์คำตอบของคุณที่นี่"
+                rows={3}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-us/40"
+              />
+            </div>
           ) : (
             <div>
               <label className="text-xs font-medium text-gray-500">ค่าที่ทำได้ ({mission.unit})</label>
@@ -221,6 +240,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
             </div>
           )}
 
+          {!isText && (
           <div>
             <label className="text-xs font-medium text-gray-500">โน้ต (ไม่บังคับ)</label>
             <input
@@ -231,6 +251,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
               className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-us/40"
             />
           </div>
+          )}
 
           <div>
             <label className="text-xs font-medium text-gray-500">

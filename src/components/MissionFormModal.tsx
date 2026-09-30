@@ -33,7 +33,7 @@ export default function MissionFormModal({
   const [description, setDescription] = useState(mission?.description ?? "");
   const [targetValue, setTargetValue] = useState(String(mission?.target_value ?? ""));
   const [unit, setUnit] = useState(mission?.unit ?? "");
-  const [inputType, setInputType] = useState<"numeric" | "checkbox">(mission?.input_type ?? "numeric");
+  const [inputType, setInputType] = useState<"numeric" | "checkbox" | "text">(mission?.input_type ?? "numeric");
   const [maxPerWeek, setMaxPerWeek] = useState(String(mission?.max_per_week ?? 1));
   const [maxPerDay, setMaxPerDay] = useState(mission?.max_per_day ? String(mission.max_per_day) : "");
   const [theme, setTheme] = useState(mission?.theme ?? "move");
@@ -49,8 +49,8 @@ export default function MissionFormModal({
     e.preventDefault();
     setError(null);
 
-    const finalTargetValue = inputType === "checkbox" ? "1" : targetValue;
-    const finalUnit = inputType === "checkbox" ? "ครั้ง" : unit;
+    const finalTargetValue = inputType === "numeric" ? targetValue : "1";
+    const finalUnit = inputType === "numeric" ? unit : "ครั้ง";
 
     if (!name.trim() || !finalUnit.trim() || !finalTargetValue) {
       setError("กรอกชื่อ, หน่วย, และเป้าหมายให้ครบ");
@@ -126,7 +126,7 @@ export default function MissionFormModal({
                   inputType === "numeric" ? "bg-us text-white" : "text-gray-500"
                 }`}
               >
-                กรอกตัวเลข (เช่น จำนวนก้าว)
+                กรอกตัวเลข
               </button>
               <button
                 type="button"
@@ -136,6 +136,15 @@ export default function MissionFormModal({
                 }`}
               >
                 ติ๊กว่าทำแล้ว
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputType("text")}
+                className={`flex-1 rounded-full py-2 text-xs font-semibold min-h-[36px] ${
+                  inputType === "text" ? "bg-us text-white" : "text-gray-500"
+                }`}
+              >
+                พิมพ์ข้อความ
               </button>
             </div>
           </div>
