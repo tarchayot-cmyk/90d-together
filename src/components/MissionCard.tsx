@@ -45,22 +45,24 @@ export default function MissionCard({
 }) {
   const completedCount = checkIns.filter((c) => c.proof_status !== "rejected").length;
   const done = completedCount >= mission.max_per_week;
-  const showsCount = mission.max_per_week > 1;
   const icon = CATEGORY_ICON[mission.category] ?? "🌱";
   const bg = CATEGORY_BG[mission.category] ?? "bg-pastel-green";
 
-  // Weekly progress fraction: latest submitted value this week (out
-  // of target) for numeric missions, or times-done (out of max) for
-  // checkbox ones — the two numbers that actually mean something
-  // given how check-ins work today.
-  const latestValue = checkIns.filter((c) => c.proof_status !== "rejected").slice(-1)[0]?.value ?? 0;
-  const numeratorLabel =
-    mission.input_type === "checkbox"
-      ? `${completedCount}/${mission.max_per_week} ครั้ง`
-      : `${latestValue}/${mission.target_value} ${mission.unit}`;
-  const pct = mission.input_type === "checkbox"
-    ? Math.min(100, Math.round((completedCount / mission.max_per_week) * 100))
-    : Math.min(100, Math.round((latestValue / mission.target_value) * 100));
+  // Progress shown as "จำนวนครั้งที่ทำแล้ว/สูงสุดต่อสัปดาห์" for every
+  // mission (checkbox and numeric alike) — how many times checked in
+  // this week out of the weekly limit — rather than the raw
+  // value-vs-target_value number, since the count against the
+  // day/week cap is what people actually want to track.
+  const todayStr = new Date().toDateString();
+  const todayCount = checkIns.filter(
+    (c) => c.proof_status !== "rejected" && c.completed_at && new Date(c.completed_at).toDateString() === todayStr
+  ).length;
+  const numeratorLabel = mission.max_per_day
+    ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน`
+    : `${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`;
+  const pct = mission.max_per_day
+    ? Math.min(100, Math.round((todayCount / mission.max_per_day) * 100))
+    : Math.min(100, Math.round((completedCount / mission.max_per_week) * 100));
 
   if (compact) {
     return (
