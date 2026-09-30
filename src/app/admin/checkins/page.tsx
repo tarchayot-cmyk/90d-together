@@ -141,11 +141,29 @@ export default function AdminCheckinsPage() {
   }
 
   async function handleCleanupOldProofs() {
-    const candidates = rows.filter(
-      (r) => r.proof_urls && r.proof_urls.length > 0 && (r.proof_status === "approved" || r.proof_status === "rejected")
-    );
+    setCleaningUp(true);
+    const supabase = createClient();
+
+    // Look across ALL check-ins with a reviewed proof, not just the 150
+    // most-recently-loaded rows in `rows` — otherwise this can never
+    // reach older proof photos once the campaign has grown past 150
+    // check-ins total.
+    const { data: candidateRows, error: fetchError } = await supabase
+      .from("check_ins")
+      .select("id, proof_urls")
+      .not("proof_urls", "is", null)
+      .in("proof_status", ["approved", "rejected"]);
+
+    if (fetchError) {
+      setCleaningUp(false);
+      setBanner("ดึงรายการรูปที่จะล้างไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+
+    const candidates = (candidateRows ?? []) as { id: string; proof_urls: string[] | null }[];
 
     if (candidates.length === 0) {
+      setCleaningUp(false);
       setBanner("ไม่มีรูปหลักฐานที่ตรวจสอบแล้วให้ล้าง");
       return;
     }
@@ -153,24 +171,29 @@ export default function AdminCheckinsPage() {
     const totalImages = candidates.reduce((sum, r) => sum + (r.proof_urls?.length ?? 0), 0);
 
     const confirmed = window.confirm(
-      `พบรูปหลักฐานที่ตรวจสอบเสร็จแล้ว จำนวน ${totalImages} รูป (จาก ${candidates.length} รายการ)\n\n` +
+      `พบรูปหลักฐานที่ตรวจสอบเสร็จแล้ว จำนวน ${totalImages} รูป (จาก ${candidates.length} รายการ ทั้งแคมเปญ)\n\n` +
         "ลบไฟล์รูปเหล่านี้ทิ้งถาวร (คะแนน/สติ๊กเกอร์ที่แจกไปแล้วไม่ถูกกระทบ — ลบแค่ตัวรูปเท่านั้น)?"
     );
-    if (!confirmed) return;
-
-    setCleaningUp(true);
-    const supabase = createClient();
+    if (!confirmed) {
+      setCleaningUp(false);
+      return;
+    }
 
     const paths = candidates
       .flatMap((r) => r.proof_urls ?? [])
       .map((url) => url.split("/storage/v1/object/public/proofs/")[1])
       .filter(Boolean);
 
-    const { error: removeError } = await supabase.storage.from("proofs").remove(paths);
-    if (removeError) {
-      setCleaningUp(false);
-      setBanner("ลบไฟล์รูปไม่สำเร็จ กรุณาลองใหม่");
-      return;
+    // Delete in batches — a single remove() call with a very large path
+    // array can hit request-size limits.
+    const BATCH_SIZE = 200;
+    for (let i = 0; i < paths.length; i += BATCH_SIZE) {
+      const { error: removeError } = await supabase.storage.from("proofs").remove(paths.slice(i, i + BATCH_SIZE));
+      if (removeError) {
+        setCleaningUp(false);
+        setBanner("ลบไฟล์รูปไม่สำเร็จ กรุณาลองใหม่ (บางไฟล์อาจถูกลบไปแล้ว)");
+        return;
+      }
     }
 
     const { data, error: rpcError } = await supabase.rpc("admin_clear_proof_urls", {
