@@ -98,7 +98,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       }
     }
 
-    if (mission.requires_proof && proofFiles.length === 0) {
+    if (mission.requires_proof && !isText && proofFiles.length === 0) {
       setError("ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
       return;
     }
@@ -193,7 +193,9 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         {mission.requires_proof && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-            ภารกิจนี้ต้องแนบรูปหลักฐาน (สูงสุด {MAX_PROOF_IMAGES} รูป) — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ
+            {isText
+              ? "ภารกิจนี้ต้องรอ Admin ตรวจคำตอบก่อน — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ"
+              : `ภารกิจนี้ต้องแนบรูปหลักฐาน (สูงสุด ${MAX_PROOF_IMAGES} รูป) — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ`}
           </p>
         )}
 
@@ -255,7 +257,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
           <div>
             <label className="text-xs font-medium text-gray-500">
-              แนบรูปหลักฐาน {mission.requires_proof ? "" : "(ไม่บังคับ)"} ({proofFiles.length}/{MAX_PROOF_IMAGES})
+              แนบรูปหลักฐาน {mission.requires_proof && !isText ? "" : "(ไม่บังคับ)"} ({proofFiles.length}/{MAX_PROOF_IMAGES})
             </label>
 
               {proofFiles.length > 0 && (

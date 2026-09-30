@@ -170,7 +170,9 @@ export default function MissionFormModal({
 
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input type="checkbox" checked={requiresProof} onChange={(e) => setRequiresProof(e.target.checked)} className="h-4 w-4" />
-            ต้องแนบหลักฐาน (รอ Admin อนุมัติก่อนได้รางวัล)
+            {inputType === "text"
+              ? "ต้องรอ Admin อนุมัติ (ตรวจคำตอบก่อนได้รางวัล)"
+              : "ต้องแนบหลักฐาน (รอ Admin อนุมัติก่อนได้รางวัล)"}
           </label>
 
           <label className="flex items-center gap-2 text-sm text-gray-600">
