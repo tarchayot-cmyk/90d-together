@@ -16,6 +16,7 @@ interface Props {
     sticker: { color: string; amount: number } | null;
     message: string;
     pending_review?: boolean;
+    capped?: boolean;
   }) => void;
 }
 
