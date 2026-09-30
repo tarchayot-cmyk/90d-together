@@ -63,6 +63,10 @@ export default function AdminMissionsPage() {
       p_sticker_amount: mission.sticker_amount,
       p_requires_proof: mission.requires_proof,
       p_is_active: !mission.is_active,
+      p_input_type: mission.input_type,
+      p_max_per_week: mission.max_per_week,
+      p_max_per_day: mission.max_per_day,
+      p_theme: mission.theme,
     });
     if (error) {
       setBanner("เปลี่ยนสถานะไม่สำเร็จ กรุณาลองใหม่");
