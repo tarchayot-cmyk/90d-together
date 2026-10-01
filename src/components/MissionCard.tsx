@@ -58,7 +58,7 @@ export default function MissionCard({
     (c) => c.proof_status !== "rejected" && c.completed_at && new Date(c.completed_at).toDateString() === todayStr
   ).length;
   const numeratorLabel = mission.max_per_day
-    ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน`
+    ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน · ${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`
     : `${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`;
   const pct = mission.max_per_day
     ? Math.min(100, Math.round((todayCount / mission.max_per_day) * 100))
