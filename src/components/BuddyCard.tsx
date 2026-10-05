@@ -8,6 +8,8 @@ import AvatarCircle from "@/components/AvatarCircle";
 interface BuddyProgress {
   has_group: boolean;
   group_name?: string;
+  round_no?: number | null;
+  locked_until?: string | null;
   target?: number;
   total?: number;
   remaining?: number;
@@ -44,7 +46,9 @@ export default function BuddyCard() {
     <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Users size={18} className="text-we" />
-        <h3 className="font-semibold text-gray-800">{progress.group_name}</h3>
+        <h3 className="font-semibold text-gray-800">
+          {progress.round_no ? `Buddy ของสัปดาห์นี้ (รอบ ${progress.round_no})` : progress.group_name}
+        </h3>
       </div>
 
       <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">

@@ -32,19 +32,15 @@ function groupByName(rows: GroupRow[]) {
 export default function AdminGroupsPage() {
   const [buddyGroups, setBuddyGroups] = useState<{ name: string; members: MemberRef[] }[]>([]);
   const [squads, setSquads] = useState<{ name: string; members: MemberRef[] }[]>([]);
+  const [buddyRound, setBuddyRound] = useState<{ no: number; until: string; locked: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
 
-      const [{ data: buddyRows }, { data: squadRows }] = await Promise.all([
-        supabase
-          .from("buddy_members")
-          .select(
-            "group_id:buddy_group_id, group_name:buddy_groups!buddy_members_buddy_group_id_fkey(name), " +
-              "member:members!buddy_members_member_id_fkey(full_name, employee_code)"
-          ),
+      const [{ data: buddyStatus }, { data: squadRows }] = await Promise.all([
+        supabase.rpc("admin_buddy_round_status"),
         supabase
           .from("squad_members")
           .select(
@@ -54,18 +50,19 @@ export default function AdminGroupsPage() {
       ]);
 
       // group_name comes back nested (FK embed) — flatten to a plain string per row.
-      const flattenBuddy = (buddyRows ?? []).map((r: any) => ({
-        group_id: r.group_id,
-        group_name: one(r.group_name)?.name ?? "-",
-        member: r.member,
-      }));
       const flattenSquad = (squadRows ?? []).map((r: any) => ({
         group_id: r.group_id,
         group_name: one(r.group_name)?.name ?? "-",
         member: r.member,
       }));
 
-      setBuddyGroups(groupByName(flattenBuddy));
+      setBuddyRound(buddyStatus?.has_round ? { no: buddyStatus.round_no, until: buddyStatus.locked_until, locked: buddyStatus.locked } : null);
+      setBuddyGroups(
+        (buddyStatus?.groups ?? []).map((g: any) => ({
+          name: g.name,
+          members: g.members.map((m: any) => ({ full_name: m.full_name, employee_code: "" })),
+        }))
+      );
       setSquads(groupByName(flattenSquad));
       setLoading(false);
     }
@@ -79,10 +76,15 @@ export default function AdminGroupsPage() {
       <div>
         <h2 className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
           <Users size={16} /> Buddy Groups ({buddyGroups.length})
+          {buddyRound && (
+            <span className="text-xs font-normal text-gray-400">
+              · รอบที่ {buddyRound.no} {buddyRound.locked ? `ล็อกถึง ${new Date(buddyRound.until).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}` : "(หมดรอบแล้ว)"}
+            </span>
+          )}
         </h2>
         {buddyGroups.length === 0 && (
           <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">
-            ยังไม่มีการจับคู่ — ไปที่แท็บ Members กด "สุ่มแบ่ง Buddy"
+            ยังไม่มีการจับคู่ — ไปที่แท็บ Members กด "สุ่มจับคู่ Buddy รายสัปดาห์"
           </p>
         )}
         <div className="space-y-2">
@@ -91,8 +93,8 @@ export default function AdminGroupsPage() {
               <p className="font-medium text-gray-800 text-sm mb-1">{g.name}</p>
               <ul className="text-xs text-gray-500 space-y-0.5">
                 {g.members.map((m) => (
-                  <li key={m.employee_code}>
-                    {m.full_name} <span className="text-gray-300">· {m.employee_code}</span>
+                  <li key={m.full_name + m.employee_code}>
+                    {m.full_name} {m.employee_code && <span className="text-gray-300">· {m.employee_code}</span>}
                   </li>
                 ))}
               </ul>

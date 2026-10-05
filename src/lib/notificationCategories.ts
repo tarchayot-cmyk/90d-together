@@ -17,6 +17,7 @@ const CATEGORY_BY_TYPE: Record<string, NotificationCategory> = {
   activity_accepted: { label: "คำเชิญกิจกรรม", icon: "🤝" },
   activity_declined: { label: "คำเชิญกิจกรรม", icon: "🤝" },
   activity_counter_proposed: { label: "คำเชิญกิจกรรม", icon: "🤝" },
+  buddy_assigned: { label: "Buddy", icon: "🤝" },
   voting_opened: { label: "โพลกิจกรรม", icon: "📢" },
   feedback_submitted: { label: "คำถาม/ข้อเสนอแนะ", icon: "💬" },
   feedback_replied: { label: "คำถาม/ข้อเสนอแนะ", icon: "💬" },
