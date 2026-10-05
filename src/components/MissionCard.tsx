@@ -60,9 +60,8 @@ export default function MissionCard({
   const numeratorLabel = mission.max_per_day
     ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน · ${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`
     : `${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`;
-  const pct = mission.max_per_day
-    ? Math.min(100, Math.round((todayCount / mission.max_per_day) * 100))
-    : Math.min(100, Math.round((completedCount / mission.max_per_week) * 100));
+  // Bar tracks the weekly goal (full at e.g. 4/4); today's count is in the label.
+  const pct = Math.min(100, Math.round((completedCount / mission.max_per_week) * 100));
 
   if (compact) {
     return (
