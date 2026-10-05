@@ -1,4 +1,4 @@
-import { TreeSVG, PartLevelGrid } from "@/components/TreeParts";
+import { TreeSVG, PartLevelGrid, type Thresholds } from "@/components/TreeParts";
 
 // Personal tree: 6 parts, each leveled by the member's OWN sticker
 // counts, using admin-adjustable thresholds (/admin/tree-images).
@@ -8,7 +8,7 @@ export default function TreeVisual({
   treeImages = {},
 }: {
   stickerCounts: Record<string, number>;
-  thresholds: number[];
+  thresholds: Thresholds;
   treeImages?: Record<string, string>;
 }) {
   return (

@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { createClient } from "@/lib/supabaseClient";
 import TreeVisual from "@/components/TreeVisual";
 import CollectiveTreeVisual from "@/components/CollectiveTreeVisual";
+import type { Thresholds } from "@/components/TreeParts";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -20,8 +21,8 @@ interface TreePageData {
   stickerCounts: Record<string, number>;
   collectiveStickerCounts: Record<string, number>;
   treeImages: Record<string, string>;
-  personalThresholds: number[];
-  collectiveThresholds: number[];
+  personalThresholds: Thresholds;
+  collectiveThresholds: Thresholds;
 }
 
 async function fetchTreeData(): Promise<TreePageData> {
@@ -46,8 +47,8 @@ async function fetchTreeData(): Promise<TreePageData> {
     stickerCounts,
     collectiveStickerCounts: (collectiveStickers as Record<string, number>) ?? {},
     treeImages: (treeImagesData as Record<string, string>) ?? {},
-    personalThresholds: settingsData?.personal_thresholds ?? [3, 7, 15],
-    collectiveThresholds: settingsData?.collective_thresholds ?? [50, 150, 400],
+    personalThresholds: settingsData?.personal_thresholds_by_color ?? settingsData?.personal_thresholds ?? [3, 7, 15],
+    collectiveThresholds: settingsData?.collective_thresholds_by_color ?? settingsData?.collective_thresholds ?? [50, 150, 400],
   };
 }
 

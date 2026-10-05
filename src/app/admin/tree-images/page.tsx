@@ -21,8 +21,12 @@ export default function AdminTreeImagesPage() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
 
-  const [personalThresholds, setPersonalThresholds] = useState(["3", "7", "15"]);
-  const [collectiveThresholds, setCollectiveThresholds] = useState(["50", "150", "400"]);
+  const [personalByColor, setPersonalByColor] = useState<Record<string, string[]>>(
+    Object.fromEntries(PARTS.map((p) => [p.color, ["3", "7", "15"]]))
+  );
+  const [collectiveByColor, setCollectiveByColor] = useState<Record<string, string[]>>(
+    Object.fromEntries(PARTS.map((p) => [p.color, ["50", "150", "400"]]))
+  );
   const [savingThresholds, setSavingThresholds] = useState(false);
 
   async function load() {
@@ -33,8 +37,10 @@ export default function AdminTreeImagesPage() {
       supabase.rpc("get_tree_settings"),
     ]);
     setImages((imagesData as Record<string, string>) ?? {});
-    if (settingsData?.personal_thresholds) setPersonalThresholds(settingsData.personal_thresholds.map(String));
-    if (settingsData?.collective_thresholds) setCollectiveThresholds(settingsData.collective_thresholds.map(String));
+    const toStrings = (byColor: Record<string, number[]> | null, flat: number[] | null) =>
+      Object.fromEntries(PARTS.map((p) => [p.color, (byColor?.[p.color] ?? flat ?? [3, 7, 15]).map(String)]));
+    setPersonalByColor(toStrings(settingsData?.personal_thresholds_by_color, settingsData?.personal_thresholds));
+    setCollectiveByColor(toStrings(settingsData?.collective_thresholds_by_color, settingsData?.collective_thresholds));
     setLoading(false);
   }
 
@@ -43,27 +49,29 @@ export default function AdminTreeImagesPage() {
   }, []);
 
   async function handleSaveThresholds() {
-    const personalNums = personalThresholds.map(Number);
-    const collectiveNums = collectiveThresholds.map(Number);
+    const toNums = (m: Record<string, string[]>) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v.map(Number)]));
+    const personal = toNums(personalByColor);
+    const collective = toNums(collectiveByColor);
 
-    if (personalNums.some((n) => Number.isNaN(n) || n < 0) || collectiveNums.some((n) => Number.isNaN(n) || n < 0)) {
-      setBanner("กรอกตัวเลขให้ครบและถูกต้อง");
-      return;
-    }
-    if (personalNums[0] >= personalNums[1] || personalNums[1] >= personalNums[2]) {
-      setBanner("เกณฑ์ต้นไม้ส่วนตัวต้องเรียงจากน้อยไปมาก");
-      return;
-    }
-    if (collectiveNums[0] >= collectiveNums[1] || collectiveNums[1] >= collectiveNums[2]) {
-      setBanner("เกณฑ์ต้นไม้รวมทีมต้องเรียงจากน้อยไปมาก");
-      return;
+    for (const [label, set] of [["ส่วนตัว", personal], ["รวมทีม", collective]] as const) {
+      for (const part of PARTS) {
+        const n = set[part.color];
+        if (n.some((x) => Number.isNaN(x) || x < 0)) {
+          setBanner("กรอกตัวเลขให้ครบและถูกต้อง");
+          return;
+        }
+        if (n[0] >= n[1] || n[1] >= n[2]) {
+          setBanner(`เกณฑ์ต้นไม้${label} (${part.label}) ต้องเรียงจากน้อยไปมาก`);
+          return;
+        }
+      }
     }
 
     setSavingThresholds(true);
     const supabase = createClient();
-    const { error } = await supabase.rpc("admin_update_tree_settings", {
-      p_personal_thresholds: personalNums,
-      p_collective_thresholds: collectiveNums,
+    const { error } = await supabase.rpc("admin_update_tree_settings_by_color", {
+      p_personal: personal,
+      p_collective: collective,
     });
     setSavingThresholds(false);
 
@@ -224,18 +232,26 @@ export default function AdminTreeImagesPage() {
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-3">🎚️ เกณฑ์ระดับ</h2>
         <div className="space-y-3">
-          <ThresholdRow
-            label="ต้นไม้ส่วนตัว (ต่อคน)"
-            unit="จำนวนสติ๊กเกอร์สีนั้นที่สะสม"
-            values={personalThresholds}
-            onChange={setPersonalThresholds}
-          />
-          <ThresholdRow
-            label="ต้นไม้รวมทีม (รวมทุกคน)"
-            unit="จำนวนสติ๊กเกอร์สีนั้นรวมทั้งทีม"
-            values={collectiveThresholds}
-            onChange={setCollectiveThresholds}
-          />
+          {PARTS.map((part) => (
+            <div key={part.color} className="space-y-2">
+              <p className="text-xs font-semibold text-gray-700 pt-1">
+                {part.label} <span className="text-gray-300">· {part.theme}</span>
+              </p>
+              {/* called as a function (not <ThresholdRow/>) so inputs keep focus while typing */}
+              {ThresholdRow({
+                label: "ส่วนตัว (ต่อคน)",
+                unit: "จำนวนสติ๊กเกอร์สีนี้ที่สะสม",
+                values: personalByColor[part.color],
+                onChange: (next) => setPersonalByColor((prev) => ({ ...prev, [part.color]: next })),
+              })}
+              {ThresholdRow({
+                label: "รวมทีม (รวมทุกคน)",
+                unit: "จำนวนสติ๊กเกอร์สีนี้รวมทั้งทีม",
+                values: collectiveByColor[part.color],
+                onChange: (next) => setCollectiveByColor((prev) => ({ ...prev, [part.color]: next })),
+              })}
+            </div>
+          ))}
           <button
             onClick={handleSaveThresholds}
             disabled={savingThresholds}

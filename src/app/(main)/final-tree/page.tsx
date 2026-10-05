@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import CollectiveTreeVisual from "@/components/CollectiveTreeVisual";
+import type { Thresholds } from "@/components/TreeParts";
 
 const STICKER_EMOJI: Record<string, string> = {
   green: "🟢",
@@ -30,7 +31,7 @@ interface FinalSummary {
 
 export default function FinalTreePage() {
   const [summary, setSummary] = useState<FinalSummary | null>(null);
-  const [collectiveThresholds, setCollectiveThresholds] = useState<number[]>([50, 150, 400]);
+  const [collectiveThresholds, setCollectiveThresholds] = useState<Thresholds>([50, 150, 400]);
   const [treeImages, setTreeImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +44,8 @@ export default function FinalTreePage() {
         supabase.rpc("get_tree_images"),
       ]);
       setSummary(summaryData);
-      if (settingsData?.collective_thresholds) setCollectiveThresholds(settingsData.collective_thresholds);
+      const ct = settingsData?.collective_thresholds_by_color ?? settingsData?.collective_thresholds;
+      if (ct) setCollectiveThresholds(ct);
       setTreeImages((treeImagesData as Record<string, string>) ?? {});
       setLoading(false);
     }

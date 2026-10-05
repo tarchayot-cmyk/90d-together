@@ -1,0 +1,7 @@
+-- Applied via Supabase MCP (tree_thresholds_per_color). tree_settings gets personal_thresholds_by_color /
+-- collective_thresholds_by_color (jsonb: color -> [t1,t2,t3]); get_tree_settings returns them;
+-- admin_update_tree_settings_by_color(p_personal, p_collective) saves them.
+-- Values set 5 Oct 2026 (personal / collective):
+--   yellow 30,80,150 / 500,2500,5000   red 25,70,130 / 400,2000,4200   pink 15,40,80 / 250,1200,2600
+--   orange 15,40,80 / 250,1200,2400    purple 10,30,60 / 120,800,1700  rainbow 5,15,30 / 150,500,1000
+-- Client falls back to the old single arrays when the by-color value is null.

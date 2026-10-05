@@ -1,4 +1,4 @@
-import { TreeSVG, PartLevelGrid } from "@/components/TreeParts";
+import { TreeSVG, PartLevelGrid, type Thresholds } from "@/components/TreeParts";
 
 // Collective / team tree: same 6-part structure as the personal
 // tree, but leveled by TEAM-WIDE sticker totals (every member's
@@ -10,7 +10,7 @@ export default function CollectiveTreeVisual({
   treeImages = {},
 }: {
   stickerCounts: Record<string, number>;
-  thresholds: number[];
+  thresholds: Thresholds;
   treeImages?: Record<string, string>;
 }) {
   return (

@@ -32,6 +32,14 @@ export const PARTS: PartConfig[] = [
   { color: "red", partLabel: "ผล", themeLabel: "กิน", emoji: "🔴" },
 ];
 
+// Thresholds are either one [t1, t2, t3] for every color, or one per sticker color
+// (Record<color, [t1, t2, t3]>) because colors are earned at very different rates.
+export type Thresholds = number[] | Record<string, number[]>;
+
+export function thresholdsFor(color: string, t: Thresholds): number[] {
+  return Array.isArray(t) ? t : (t[color] ?? [3, 7, 15]);
+}
+
 // thresholds = [t1, t2, t3] -> level 0 if count<t1, 1 if <t2, 2 if <t3, else 3
 export function levelForCount(count: number, thresholds: number[]): 0 | 1 | 2 | 3 {
   const [t1, t2, t3] = thresholds;
@@ -116,17 +124,17 @@ export function TreeSVG({
   size = 260,
 }: {
   stickerCounts: Record<string, number>;
-  thresholds: number[];
+  thresholds: Thresholds;
   treeImages: Record<string, string>;
   imageKeyPrefix: string;
   size?: number;
 }) {
-  const trunkLevel = levelForCount(stickerCounts.rainbow ?? 0, thresholds);
-  const rootLevel = levelForCount(stickerCounts.pink ?? 0, thresholds);
-  const branchLevel = levelForCount(stickerCounts.yellow ?? 0, thresholds);
-  const leafLevel = levelForCount(stickerCounts.orange ?? 0, thresholds);
-  const flowerLevel = levelForCount(stickerCounts.purple ?? 0, thresholds);
-  const fruitLevel = levelForCount(stickerCounts.red ?? 0, thresholds);
+  const trunkLevel = levelForCount(stickerCounts.rainbow ?? 0, thresholdsFor("rainbow", thresholds));
+  const rootLevel = levelForCount(stickerCounts.pink ?? 0, thresholdsFor("pink", thresholds));
+  const branchLevel = levelForCount(stickerCounts.yellow ?? 0, thresholdsFor("yellow", thresholds));
+  const leafLevel = levelForCount(stickerCounts.orange ?? 0, thresholdsFor("orange", thresholds));
+  const flowerLevel = levelForCount(stickerCounts.purple ?? 0, thresholdsFor("purple", thresholds));
+  const fruitLevel = levelForCount(stickerCounts.red ?? 0, thresholdsFor("red", thresholds));
 
   const trunkHeight = 30 + trunkLevel * 20; // 30 - 90
   const trunkTopY = 250 - trunkHeight;
@@ -198,20 +206,28 @@ export function TreeSVG({
   );
 }
 
-export function PartLevelGrid({ stickerCounts, thresholds }: { stickerCounts: Record<string, number>; thresholds: number[] }) {
+export function PartLevelGrid({ stickerCounts, thresholds }: { stickerCounts: Record<string, number>; thresholds: Thresholds }) {
   return (
     <div className="grid grid-cols-2 gap-2">
       {PARTS.map((p) => {
-        const level = levelForCount(stickerCounts[p.color] ?? 0, thresholds);
+        const count = stickerCounts[p.color] ?? 0;
+        const th = thresholdsFor(p.color, thresholds);
+        const level = levelForCount(count, th);
+        const remaining = level < 3 ? th[level] - count : 0;
         return (
-          <div key={p.color} className="flex items-center justify-between rounded-xl bg-bg px-3 py-2">
-            <span className="text-xs text-gray-500">
-              {p.emoji} {p.partLabel} <span className="text-gray-300">· {p.themeLabel}</span>
-            </span>
-            <span className="text-xs font-semibold text-gray-600">
-              {"●".repeat(level)}
-              {"○".repeat(3 - level)}
-            </span>
+          <div key={p.color} className="rounded-xl bg-bg px-3 py-2 space-y-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                {p.emoji} {p.partLabel} <span className="text-gray-300">· {p.themeLabel}</span>
+              </span>
+              <span className="text-xs font-semibold text-gray-600">
+                {"●".repeat(level)}
+                {"○".repeat(3 - level)}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              {level >= 3 ? "ระดับสูงสุดแล้ว 🎉" : `อีก ${remaining.toLocaleString()} ดวงถึงระดับ ${level + 1}`}
+            </p>
           </div>
         );
       })}
