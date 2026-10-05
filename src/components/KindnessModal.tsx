@@ -42,7 +42,7 @@ export default function KindnessModal({
   onSuccess,
 }: {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (senderPoints: number) => void;
 }) {
   const [view, setView] = useState<"send" | "history">("send");
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
@@ -113,7 +113,7 @@ export default function KindnessModal({
 
     if (typeof data?.remaining_today === "number") setRemainingToday(data.remaining_today);
 
-    onSuccess();
+    onSuccess(typeof data?.sender_points === "number" ? data.sender_points : 0);
     onClose();
   }
 
@@ -170,7 +170,7 @@ export default function KindnessModal({
                       {h.awarded_points ? (
                         <span className="text-xs text-kindness font-medium shrink-0">ได้คะแนน</span>
                       ) : (
-                        <span className="text-xs text-gray-400 shrink-0">เกินโควตาสัปดาห์นั้น</span>
+                        <span className="text-xs text-gray-400 shrink-0">ไม่ได้คะแนน</span>
                       )}
                     </div>
                     <p className="text-sm text-gray-600">{h.message}</p>
@@ -200,7 +200,8 @@ export default function KindnessModal({
           <p>🔸 ส่งได้สูงสุด 10 ครั้งต่อวัน ส่งให้คนเดิมซ้ำได้ไม่จำกัด</p>
           <p>🔸 เพื่อนรับ Kindness ได้ไม่จำกัด แต่ได้คะแนนแค่ 3 ครั้งแรกของแต่ละสัปดาห์</p>
           <p>🔸 ผู้รับจะไม่เห็นว่าใครเป็นคนส่งให้</p>
-          <p>🔸 ผู้รับที่ยังไม่ครบโควตาจะได้ ⭐ +10 คะแนน 🌈 +1 สติ๊กเกอร์ (ผู้ส่งไม่ได้คะแนน)</p>
+          <p>🔸 ผู้รับที่ยังไม่ครบโควตาจะได้ ⭐ +10 คะแนน 🌈 +1 สติ๊กเกอร์</p>
+          <p>🔸 ช่วง WE ผู้ส่งก็ได้ ⭐ +10 คะแนน (สูงสุด 3 ครั้ง/สัปดาห์ และนับ 1 ครั้งต่อเพื่อน 1 คน)</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

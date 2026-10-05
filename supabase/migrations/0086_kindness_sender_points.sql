@@ -1,0 +1,6 @@
+-- Applied via Supabase MCP (kindness_sender_points + connect_cap_counts_kindness_points).
+-- give_kindness: from WE phase (day 31-60) the SENDER earns +10 points per send, max 3 rewarded sends
+-- per campaign week, one reward per recipient per week (anti ping-pong). Receiver rules unchanged.
+-- get_kindness_sender_status adds sender_reward_active / rewarded_this_week / reward_remaining_week.
+-- get_my_sent_kindness.awarded_points now checks the sender's own transaction.
+-- complete_mission + admin_approve_checkin: for theme 'connect' the monthly cap also counts kindness points.

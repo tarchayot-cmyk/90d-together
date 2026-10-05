@@ -38,6 +38,7 @@ export default function HomePage() {
   const [phaseInfo, setPhaseInfo] = useState<{ primary_phase: string | null; current_day: number; start_date: string; end_date: string; visible_levels: string[] } | null>(null);
   const [notifPreview, setNotifPreview] = useState<NotificationPreview[]>([]);
   const [todayMission, setTodayMission] = useState<Mission | null>(null);
+  const [kindStatus, setKindStatus] = useState<{ sender_reward_active: boolean; rewarded_this_week: number; reward_remaining_week: number } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -58,6 +59,9 @@ export default function HomePage() {
           setTodayMission(missions?.[0] ?? null);
         }
       }
+
+      const { data: ks } = await supabase.rpc("get_kindness_sender_status");
+      if (ks) setKindStatus(ks);
 
       const { data: notifs } = await supabase
         .from("notifications")
@@ -92,6 +96,21 @@ export default function HomePage() {
           startDate={phaseInfo.start_date}
           endDate={phaseInfo.end_date}
         />
+      )}
+
+      {kindStatus?.sender_reward_active && kindStatus.reward_remaining_week > 0 && (
+        <button
+          onClick={() => setKindnessOpen(true)}
+          className="w-full text-left rounded-card bg-pastel-pink border border-kindness/20 p-3 flex items-center gap-3"
+        >
+          <span className="text-2xl">🌈</span>
+          <span className="flex-1 text-sm text-gray-700">
+            {kindStatus.rewarded_this_week === 0
+              ? "สัปดาห์นี้ยังไม่ได้ส่ง Kindness เลย — ส่งให้เพื่อนรับ +10 แต้มต่อครั้ง (สูงสุด 3 ครั้ง/สัปดาห์)"
+              : `ส่ง Kindness ได้อีก ${kindStatus.reward_remaining_week} ครั้งที่ได้แต้มสัปดาห์นี้ (+10 แต้ม/ครั้ง)`}
+          </span>
+          <ChevronRight size={18} className="text-kindness shrink-0" />
+        </button>
       )}
 
       <KindnessTicker />
@@ -187,7 +206,10 @@ export default function HomePage() {
       {kindnessOpen && (
         <KindnessModal
           onClose={() => setKindnessOpen(false)}
-          onSuccess={() => setToast({ points: 0, sticker: null, message: "ส่งความห่วงใยสำเร็จ! 🌈" })}
+          onSuccess={(pts) => {
+            setToast({ points: pts, sticker: null, message: "ส่งความห่วงใยสำเร็จ! 🌈" });
+            createClient().rpc("get_kindness_sender_status").then(({ data }) => data && setKindStatus(data));
+          }}
         />
       )}
 
