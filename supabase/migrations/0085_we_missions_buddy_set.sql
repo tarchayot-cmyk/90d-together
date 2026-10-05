@@ -1,0 +1,4 @@
+-- Applied via Supabase MCP (we_missions_buddy_set). WE missions (level 'we', hidden until day 31):
+-- reused Buddy Lunch/Stretch/Walk/Hydration + group stretch with WE points; added 8 buddy missions
+-- (walk after meal 20, workout 50, walk/run 55, relax 40, thank buddy 40, learn together 40,
+--  healthy menu 55, weekly Buddy Challenge 60). See DB `missions where level='we'`.
