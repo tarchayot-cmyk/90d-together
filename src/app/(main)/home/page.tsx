@@ -13,6 +13,7 @@ import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import AvatarCircle from "@/components/AvatarCircle";
 import PhaseHero from "@/components/PhaseHero";
 import { getNotificationCategory } from "@/lib/notificationCategories";
+import { shortName } from "@/lib/displayName";
 import type { Mission } from "@/lib/types";
 
 interface NotificationPreview {
@@ -75,12 +76,12 @@ export default function HomePage() {
       <header className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-gray-800 truncate">
-            {loading ? "..." : member ? `สวัสดี, ${member.nickname ?? member.full_name} 👋` : "90 Days Growing Together"}
+            {loading ? "..." : member ? `สวัสดี, ${member.nickname ?? shortName(member.full_name)} 👋` : "90 Days Growing Together"}
           </h1>
           <p className="text-sm text-gray-400">มาร่วมกันสร้างสุขภาพดีไปด้วยกันนะ</p>
         </div>
         <Link href="/profile" className="shrink-0">
-          <AvatarCircle avatarUrl={member?.avatar_url} name={member?.nickname ?? member?.full_name} size={44} />
+          <AvatarCircle avatarUrl={member?.avatar_url} name={member?.nickname ?? shortName(member?.full_name)} size={44} />
         </Link>
       </header>
 

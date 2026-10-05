@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
 import FeedbackModal from "@/components/FeedbackModal";
+import { shortName } from "@/lib/displayName";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -105,7 +106,7 @@ export default function ProfilePage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              (member?.nickname ?? member?.full_name ?? "?").charAt(0).toUpperCase()
+              (member?.nickname ?? shortName(member?.full_name) ?? "?").charAt(0).toUpperCase()
             )}
           </div>
           <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-us text-white flex items-center justify-center cursor-pointer shadow-soft">
@@ -116,7 +117,7 @@ export default function ProfilePage() {
         <div>
           <p className="text-sm text-gray-400">👤 Profile</p>
           <h1 className="text-xl font-bold text-gray-800">
-            {memberLoading ? "..." : member?.full_name ?? "ผู้เข้าร่วม"}
+            {memberLoading ? "..." : member?.full_name ? shortName(member.full_name) : "ผู้เข้าร่วม"}
           </h1>
         </div>
       </header>
