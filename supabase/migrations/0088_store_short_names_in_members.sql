@@ -1,0 +1,6 @@
+-- Applied via Supabase MCP (members_real_name_backup_and_trigger + data update).
+-- members.real_full_name = backup of the original full names; members.full_name now holds the short
+-- display name (given name + first letter of surname, e.g. "จิรพร ล.") so admin pages match what
+-- participants see. Trigger trg_members_shorten_name shortens any new/edited full name automatically
+-- and keeps what was typed in real_full_name.
+-- To restore: update members set full_name = real_full_name;  (trigger will re-shorten, so drop it first)
