@@ -132,6 +132,19 @@ export default function MissionsPage() {
     return c.filter((x) => x.proof_status !== "rejected").length >= m.max_per_week;
   }
 
+  // Weekly progress per theme: check-ins done (capped at each mission's weekly max)
+  // divided by the total weekly max of all active missions in that theme.
+  function themeProgress(theme: string): number | null {
+    const list = missions.filter((m) => m.theme === theme);
+    const total = list.reduce((sum, m) => sum + m.max_per_week, 0);
+    if (total === 0) return null;
+    const done = list.reduce((sum, m) => {
+      const c = (checkInsByMission[m.id] ?? []).filter((x) => x.proof_status !== "rejected").length;
+      return sum + Math.min(c, m.max_per_week);
+    }, 0);
+    return Math.round((done / total) * 100);
+  }
+
   const isUnlocked = phaseInfo?.unlocked_levels.includes(tab) ?? false;
   const isVisible = phaseInfo?.visible_levels.includes(tab) ?? false;
   const featuredMission = missions.find((m) => {
@@ -206,18 +219,36 @@ export default function MissionsPage() {
                 >
                   ทั้งหมด
                 </button>
-                {THEMES.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setThemeFilter(t.value)}
-                    className={clsx(
-                      "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px]",
-                      themeFilter === t.value ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {THEMES.map((t) => {
+                  const pct = themeProgress(t.value);
+                  const active = themeFilter === t.value;
+                  return (
+                    <button
+                      key={t.value}
+                      onClick={() => setThemeFilter(t.value)}
+                      className={clsx(
+                        "text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1.5",
+                        active ? "bg-us text-white" : "bg-white text-gray-500 shadow-soft"
+                      )}
+                    >
+                      {t.label}
+                      {pct !== null && (
+                        <span
+                          className={clsx(
+                            "rounded-full px-1.5 text-[10px] leading-4",
+                            active
+                              ? "bg-white/25 text-white"
+                              : pct >= 100
+                                ? "bg-us text-white"
+                                : "bg-gray-100 text-gray-500"
+                          )}
+                        >
+                          {pct}%
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {!loading && missions.length === 0 && (
