@@ -61,7 +61,9 @@ export default function MissionsPage() {
         .select("*")
         .eq("campaign_id", currentPhaseInfo.campaign_id)
         .eq("level", selectedTab)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true }); // fixed order so the list doesn't reshuffle between loads
 
       let myCheckIns: CheckIn[] = [];
       if (member?.id && missionRows?.length) {
@@ -123,6 +125,11 @@ export default function MissionsPage() {
   function handleSuccess(result: { points: number; sticker: { color: string; amount: number } | null; message: string }) {
     setReward({ points: result.points, sticker: result.sticker, message: result.message });
     if (phaseInfo) loadMissionsForTab(phaseInfo, tab);
+  }
+
+  function isWeekDone(m: Mission) {
+    const c = checkInsByMission[m.id] ?? [];
+    return c.filter((x) => x.proof_status !== "rejected").length >= m.max_per_week;
   }
 
   const isUnlocked = phaseInfo?.unlocked_levels.includes(tab) ?? false;
@@ -224,6 +231,9 @@ export default function MissionsPage() {
               <div className="space-y-2">
                 {missions
                   .filter((m) => themeFilter === "all" || m.theme === themeFilter)
+                  // Missions that hit this week's limit sink to the bottom;
+                  // the rest keep their original order (Array.sort is stable).
+                  .sort((a, b) => Number(isWeekDone(a)) - Number(isWeekDone(b)))
                   .map((mission) => (
                   <MissionCard
                     key={mission.id}
