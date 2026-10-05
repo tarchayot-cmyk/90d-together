@@ -1,0 +1,4 @@
+-- Applied via Supabase MCP (we_only_badges): 18 WE-only badges (6 families x bulk/lean/smart):
+-- we_move/fuel/rest/mind/connect_buddy (WE-level completions per theme), we_connect_kind (Kindness sent in WE).
+-- get_badge_measurements adds we_completions.<theme> and we_kindness_sent;
+-- get_badge_progress hides we_* badges until day 31 (15 Oct).
