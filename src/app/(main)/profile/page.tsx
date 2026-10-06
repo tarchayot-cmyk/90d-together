@@ -20,6 +20,29 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [gender, setGender] = useState<string>("");
+  const [allowCross, setAllowCross] = useState(false);
+  const [savingGender, setSavingGender] = useState(false);
+  const [genderMsg, setGenderMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGender(member?.gender ?? "");
+    setAllowCross(member?.allow_cross_gender_buddy ?? false);
+  }, [member?.gender, member?.allow_cross_gender_buddy]);
+
+  async function saveGender(nextGender: string, nextCross: boolean) {
+    setGender(nextGender);
+    setAllowCross(nextCross);
+    setSavingGender(true);
+    setGenderMsg(null);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("update_my_gender", {
+      p_gender: nextGender || null,
+      p_allow_cross: nextCross,
+    });
+    setSavingGender(false);
+    setGenderMsg(error ? "บันทึกไม่สำเร็จ กรุณาลองใหม่" : "บันทึกแล้ว ✓");
+  }
 
   useEffect(() => {
     setAvatarUrl(member?.avatar_url ?? null);
@@ -129,6 +152,40 @@ export default function ProfilePage() {
         <Row label="ชื่อเล่น" value={member?.nickname ?? "-"} />
         <Row label="หน่วย" value={member?.unit ?? "-"} />
         <Row label="สถานะ" value={member?.is_active ? "Active" : "Inactive"} />
+      </div>
+
+      <div className="rounded-card bg-white shadow-soft p-4 space-y-2">
+        <h2 className="font-semibold text-gray-800 text-sm">🤝 ข้อมูลสำหรับจับคู่ Buddy</h2>
+        <p className="text-xs text-gray-500">ใช้เพื่อจัดคู่เพศเดียวกันเป็นหลัก แอดมินเท่านั้นที่เห็น ไม่แสดงให้สมาชิกคนอื่น</p>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { v: "female", label: "หญิง" },
+            { v: "male", label: "ชาย" },
+            { v: "", label: "ไม่ระบุ" },
+          ].map((o) => (
+            <button
+              key={o.v || "none"}
+              type="button"
+              disabled={savingGender}
+              onClick={() => saveGender(o.v, allowCross)}
+              className={`rounded-full py-2 text-sm font-medium min-h-[44px] border ${
+                gender === o.v ? "bg-us text-white border-us" : "bg-white text-gray-600 border-gray-200"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <input
+            type="checkbox"
+            checked={allowCross}
+            disabled={savingGender}
+            onChange={(e) => saveGender(gender, e.target.checked)}
+          />
+          ยินดีให้จับคู่ข้ามเพศ
+        </label>
+        {genderMsg && <p className="text-xs text-gray-500">{genderMsg}</p>}
       </div>
 
       <div className="rounded-card bg-white shadow-soft p-4 space-y-3">

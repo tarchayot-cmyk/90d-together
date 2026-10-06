@@ -12,6 +12,8 @@ export interface Member {
   avatar_url: string | null;
   role: "participant" | "admin" | "super_admin";
   is_active: boolean;
+  gender?: "male" | "female" | null;
+  allow_cross_gender_buddy?: boolean;
 }
 
 export interface Mission {

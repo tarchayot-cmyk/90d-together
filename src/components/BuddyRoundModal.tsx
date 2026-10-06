@@ -8,6 +8,7 @@ interface PreviewMember {
   id: string;
   full_name: string;
   score: number;
+  gender?: "male" | "female" | null;
 }
 interface PreviewGroup {
   name: string;
@@ -16,6 +17,9 @@ interface PreviewGroup {
 interface Preview {
   round_no: number;
   repeat_pairs: number;
+  trios?: number;
+  mixed_gender_groups?: number;
+  unknown_gender?: number;
   groups: PreviewGroup[];
 }
 interface Status {
@@ -102,11 +106,23 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
           )}
 
           {!locked && preview && (
-            <p className="text-xs text-gray-500">
-              จับคู่คนเก่ง-คนที่ยังไม่ค่อยได้ทำ (ดูจากแต้ม 14 วันล่าสุด) และหลีกเลี่ยงคู่ซ้ำเดิม
-              {preview.repeat_pairs > 0 ? ` · คู่ซ้ำ ${preview.repeat_pairs} คู่` : " · ไม่มีคู่ซ้ำ"}
-              {" "}— กดสุ่มใหม่ได้ไม่จำกัด กด "ตกลง" แล้วจะล็อก 7 วัน
-            </p>
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>
+                จับคู่คนที่ active ใกล้เคียงกัน (ระดับเดียวกันหรือติดกัน จากแต้ม 14 วันล่าสุด) เพศเดียวกันเป็นหลัก
+                และหลีกเลี่ยงคู่ซ้ำเดิม — คนที่เหลือเป็นเศษจะเข้ากลุ่ม 3 คน
+              </p>
+              <p>
+                {preview.repeat_pairs > 0 ? `คู่ซ้ำ ${preview.repeat_pairs} คู่` : "ไม่มีคู่ซ้ำ"}
+                {" · "}กลุ่ม 3 คน {preview.trios ?? 0} กลุ่ม
+                {(preview.mixed_gender_groups ?? 0) > 0 ? ` · กลุ่มชาย-หญิงผสม ${preview.mixed_gender_groups} กลุ่ม` : ""}
+              </p>
+              {(preview.unknown_gender ?? 0) > 0 && (
+                <p className="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 p-2">
+                  ยังไม่ระบุเพศ {preview.unknown_gender} คน — ระบบจะจับคู่คนเหล่านี้ได้ทุกเพศ แนะนำให้ให้สมาชิกกรอกที่หน้าโปรไฟล์ หรือแอดมินกรอกให้ก่อนยืนยัน
+                </p>
+              )}
+              <p>กดสุ่มใหม่ได้ไม่จำกัด กด "ตกลง" แล้วจะล็อก 7 วัน</p>
+            </div>
           )}
 
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -117,7 +133,10 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
               <ul className="text-sm text-gray-700 space-y-0.5">
                 {g.members.map((m) => (
                   <li key={m.id} className="flex justify-between gap-2">
-                    <span className="truncate">{m.full_name}</span>
+                    <span className="truncate">
+                      {"gender" in m && (m as PreviewMember).gender ? ((m as PreviewMember).gender === "male" ? "♂ " : "♀ ") : ""}
+                      {m.full_name}
+                    </span>
                     {"score" in m && <span className="text-xs text-gray-400 shrink-0">{(m as PreviewMember).score} แต้ม</span>}
                   </li>
                 ))}

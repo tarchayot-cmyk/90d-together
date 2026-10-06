@@ -21,6 +21,8 @@ interface MemberRow {
   avatar_url: string | null;
   role: string;
   is_active: boolean;
+  gender: "male" | "female" | null;
+  allow_cross_gender_buddy: boolean;
   points: number;
 }
 
@@ -50,7 +52,7 @@ export default function AdminMembersPage() {
     const [{ data: memberRows }, { data: pointRows }] = await Promise.all([
       supabase
         .from("members")
-        .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active")
+        .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active, gender, allow_cross_gender_buddy")
         .order("full_name"),
       supabase.from("points_transactions").select("member_id, points"),
     ]);
@@ -206,6 +208,7 @@ export default function AdminMembersPage() {
                 <p className="text-xs text-gray-400 truncate">
                   {m.employee_code}
                   {(m.unit ?? m.department) && ` · ${m.unit ?? m.department}`}
+                  {m.gender ? ` · ${m.gender === "male" ? "ชาย" : "หญิง"}${m.allow_cross_gender_buddy ? " (คู่ข้ามเพศได้)" : ""}` : " · ยังไม่ระบุเพศ"}
                 </p>
               </div>
 

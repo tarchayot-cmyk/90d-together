@@ -18,6 +18,8 @@ interface EditableMember {
   full_name: string;
   nickname: string | null;
   unit: string | null;
+  gender?: "male" | "female" | null;
+  allow_cross_gender_buddy?: boolean;
 }
 
 export default function EditMemberModal({
@@ -32,6 +34,8 @@ export default function EditMemberModal({
   const [fullName, setFullName] = useState(member.full_name);
   const [nickname, setNickname] = useState(member.nickname ?? "");
   const [unit, setUnit] = useState(member.unit ?? "");
+  const [gender, setGender] = useState<string>(member.gender ?? "");
+  const [allowCross, setAllowCross] = useState(member.allow_cross_gender_buddy ?? false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,10 +56,20 @@ export default function EditMemberModal({
       p_nickname: nickname.trim() || null,
       p_unit: unit || null,
     });
-    setLoading(false);
-
     if (rpcError) {
+      setLoading(false);
       setError(friendlyError(rpcError.message));
+      return;
+    }
+
+    const { error: genderError } = await supabase.rpc("admin_set_member_gender", {
+      p_member_id: member.id,
+      p_gender: gender || null,
+      p_allow_cross: allowCross,
+    });
+    setLoading(false);
+    if (genderError) {
+      setError(friendlyError(genderError.message));
       return;
     }
 
@@ -102,6 +116,19 @@ export default function EditMemberModal({
                 <option key={u} value={u}>{u}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">เพศ (ใช้จับคู่ Buddy เท่านั้น)</label>
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base">
+              <option value="">-- ไม่ระบุ --</option>
+              <option value="female">หญิง</option>
+              <option value="male">ชาย</option>
+            </select>
+            <label className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+              <input type="checkbox" checked={allowCross} onChange={(e) => setAllowCross(e.target.checked)} />
+              ยินดีให้จับคู่ข้ามเพศ
+            </label>
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
