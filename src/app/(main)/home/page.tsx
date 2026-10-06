@@ -6,6 +6,7 @@ import { HeartHandshake, Users, Megaphone, CheckCircle2, ChevronRight, Bell } fr
 import { useMember } from "@/hooks/useMember";
 import { createClient } from "@/lib/supabaseClient";
 import BuddyCard from "@/components/BuddyCard";
+import WeeklyGoalCard from "@/components/WeeklyGoalCard";
 import SquadCard from "@/components/SquadCard";
 import KindnessModal from "@/components/KindnessModal";
 import KindnessTicker from "@/components/KindnessTicker";
@@ -105,6 +106,8 @@ export default function HomePage() {
           endDate={phaseInfo.end_date}
         />
       )}
+
+      {member?.role === "participant" && <WeeklyGoalCard />}
 
       {member && member.role === "participant" && !member.gender && !genderNudgeHidden && (
         <div className="rounded-card bg-pastel-green border border-us/20 p-3 flex items-center gap-3">
