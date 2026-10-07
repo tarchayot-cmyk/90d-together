@@ -75,6 +75,19 @@ export default function MissionsPage() {
           .eq("campaign_week", week)
           .in("mission_id", missionRows.map((m) => m.id));
         myCheckIns = checkins ?? [];
+
+        // Missions with a lifetime cap (max_total, e.g. "once during WE") must show as done
+        // in later weeks too, so also pull their check-ins from every week.
+        const lifetimeIds = missionRows.filter((m) => m.max_total != null).map((m) => m.id);
+        if (lifetimeIds.length) {
+          const { data: lifetime } = await supabase
+            .from("check_ins")
+            .select("*")
+            .eq("member_id", member.id)
+            .in("mission_id", lifetimeIds);
+          const seen = new Set(myCheckIns.map((c) => c.id));
+          for (const c of lifetime ?? []) if (!seen.has(c.id)) myCheckIns.push(c);
+        }
       }
 
       const grouped: Record<string, CheckIn[]> = {};

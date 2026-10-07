@@ -1,0 +1,3 @@
+-- missions.max_total: เพดานจำนวนครั้งตลอดแคมเปญต่อคน (เช่น ทำได้ครั้งเดียวตลอดช่วง WE)
+-- complete_mission ตรวจ total_limit_reached; เพิ่มภารกิจ WE "ทักทาย Buddy" (20 แต้ม ต้องแนบรูป ครั้งเดียว)
+-- ใช้งานจริงถูก apply ผ่าน Supabase แล้ว (ดู migration mission_max_total_and_greet_buddy)

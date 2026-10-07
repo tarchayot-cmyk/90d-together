@@ -27,6 +27,7 @@ const MAX_PROOF_IMAGES = 3;
 function friendlyError(raw: string): string {
   if (raw.includes("already_checked_in_this_week")) return "คุณทำภารกิจนี้ไปแล้วในสัปดาห์นี้ ✓";
   if (raw.includes("weekly_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของสัปดาห์นี้แล้ว";
+  if (raw.includes("total_limit_reached")) return "ภารกิจนี้ทำได้ครั้งเดียวตลอดช่วงนี้ และคุณทำไปแล้ว ✓";
   if (raw.includes("daily_limit_reached")) return "ทำภารกิจนี้ครบจำนวนครั้งสูงสุดของวันนี้แล้ว ลองใหม่พรุ่งนี้นะ";
   if (raw.includes("target_not_reached")) return "ยังไม่ถึงเป้าหมาย ลองกรอกค่าที่มากขึ้นอีกนิด";
   if (raw.includes("text_answer_required")) return "กรุณาพิมพ์คำตอบก่อน Check-in";

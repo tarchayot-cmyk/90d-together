@@ -33,6 +33,7 @@ export interface Mission {
   input_type: "numeric" | "checkbox" | "text";
   max_per_week: number;
   max_per_day: number | null;
+  max_total?: number | null; // lifetime cap per member (e.g. once during the WE phase)
   theme: "move" | "fuel" | "rest" | "mind" | "connect";
 }
 
