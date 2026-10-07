@@ -9,7 +9,7 @@ export interface BadgeRow {
   code: string;
   family_code: string;
   tier: "bulk" | "lean" | "smart";
-  theme: "move" | "fuel" | "rest" | "mind" | "connect";
+  theme: "move" | "fuel" | "rest" | "mind" | "connect" | "goal";
   name: string;
   description: string | null;
   icon: string | null;
@@ -27,6 +27,7 @@ const THEME_LABEL: Record<string, string> = {
   rest: "😴 พัก",
   mind: "🧠 ใจ",
   connect: "🤝 สังคม",
+  goal: "🎯 เป้ารายสัปดาห์",
 };
 
 function stripMedal(name: string) {
@@ -53,7 +54,7 @@ export default function BadgeFamilyList({ badges, groupByLevel = true }: { badge
 
   const content = groupByLevel ? (
     <div className="space-y-5">
-      {(["move", "fuel", "rest", "mind", "connect"] as const).map((th) => {
+      {(["move", "fuel", "rest", "mind", "connect", "goal"] as const).map((th) => {
         const themeFamilies = families.filter((f) => f.theme === th);
         if (themeFamilies.length === 0) return null;
         return (

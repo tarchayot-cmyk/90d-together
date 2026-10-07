@@ -10,7 +10,7 @@ interface Badge {
   id: string;
   family_code: string;
   tier: "bulk" | "lean" | "smart";
-  theme: "move" | "fuel" | "rest" | "mind" | "connect";
+  theme: "move" | "fuel" | "rest" | "mind" | "connect" | "goal";
   name: string;
   description: string | null;
   icon: string | null;

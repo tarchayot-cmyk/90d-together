@@ -10,7 +10,7 @@ interface ScoreDetail {
   id: string;
   created_at: string;
   points: number;
-  source: "mission" | "kindness" | "admin_adjust";
+  source: "mission" | "kindness" | "admin_adjust" | "comeback" | "weekly_goal";
   activity: string;
   detail: string | null;
   proof_status: string | null;
@@ -21,6 +21,8 @@ const SOURCE_LABEL: Record<string, string> = {
   mission: "🎯 ภารกิจ",
   kindness: "🌈 Kindness",
   admin_adjust: "⚙️ Admin ปรับคะแนน",
+  comeback: "👋 โบนัสกลับมา",
+  weekly_goal: "🎯 เป้ารายสัปดาห์",
 };
 
 export default function ScoreDetailModal({

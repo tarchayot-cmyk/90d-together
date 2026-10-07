@@ -11,6 +11,7 @@ export const THEMES = [
   { value: "rest", label: "😴 พัก (Rest)" },
   { value: "mind", label: "🧠 ใจ (Mind)" },
   { value: "connect", label: "🤝 สังคม (Connect)" },
+  { value: "goal", label: "🎯 เป้ารายสัปดาห์ (Goal)" },
 ] as const;
 
 const COMMON_FIELDS = [
@@ -23,6 +24,14 @@ const VARIETY_FIELD = { field: "distinct_missions", label: "จำนวนภ�
 
 // Every theme now has enough missions for a "variety" badge
 // (rest grew from 1 mission to 7), so no exclusions remain.
+// "goal" badges count completed weekly goals (weekly_goals table), not missions.
+const GOAL_FIELDS = [
+  { field: "weeks_2", label: "จำนวนสัปดาห์ที่ทำเป้า 2 วันขึ้นไปสำเร็จ" },
+  { field: "weeks_4", label: "จำนวนสัปดาห์ที่ทำเป้า 4 วันขึ้นไปสำเร็จ" },
+  { field: "weeks_6", label: "จำนวนสัปดาห์ที่ทำเป้า 6 วันสำเร็จ" },
+];
+
 export function getFieldOptions(theme: string) {
+  if (theme === "goal") return GOAL_FIELDS;
   return [...COMMON_FIELDS, VARIETY_FIELD];
 }
