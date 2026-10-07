@@ -17,6 +17,9 @@ interface NotificationRow {
   created_at: string;
 }
 
+const dateFmt = new Intl.DateTimeFormat("th-TH", { dateStyle: "short", timeStyle: "short" });
+const fmtDate = (v: string) => dateFmt.format(new Date(v));
+
 export default function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -27,8 +30,8 @@ export default function NotificationBell() {
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
-  async function load() {
-    setLoading(true);
+  async function load(showSpinner = false) {
+    if (showSpinner) setLoading(true);
     const supabase = createClient();
     // RLS (notifications_select_own) already scopes this to the
     // caller's own rows — no need to filter by member id here.
@@ -42,12 +45,22 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
-    load();
-    // Light polling instead of realtime — keeps Task 1 scope minimal
-    // while still surfacing new notifications without a manual refresh.
-    const interval = setInterval(load, 60_000);
+    load(true);
+    // Light polling; skip while the tab is hidden, silent (no spinner flash).
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 60_000);
     return () => clearInterval(interval);
   }, []);
+
+  async function handleClearAll() {
+    if (!window.confirm("ลบการแจ้งเตือนทั้งหมด?")) return;
+    setActionError(null);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("clear_all_my_notifications");
+    if (!error) setItems([]);
+    else setActionError("ลบไม่สำเร็จ กรุณาลองใหม่");
+  }
 
   async function handleClick(n: NotificationRow) {
     if (!n.is_read) {
@@ -106,11 +119,18 @@ export default function NotificationBell() {
           <div className="absolute right-0 mt-2 w-80 max-w-[85vw] bg-white rounded-card shadow-lg z-40 max-h-[70vh] overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
               <p className="font-semibold text-sm text-gray-800">การแจ้งเตือน</p>
-              {unreadCount > 0 && (
-                <button onClick={handleMarkAllRead} className="text-xs text-us font-medium">
-                  อ่านทั้งหมด
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} className="text-xs text-us font-medium">
+                    อ่านทั้งหมด
+                  </button>
+                )}
+                {items.length > 0 && (
+                  <button onClick={handleClearAll} className="text-xs text-red-400 font-medium">
+                    ลบทั้งหมด
+                  </button>
+                )}
+              </div>
             </div>
 
             {actionError && <p className="text-xs text-red-500 text-center py-2 border-b border-gray-50">{actionError}</p>}
@@ -135,7 +155,7 @@ export default function NotificationBell() {
                       <span className="mr-1">{getNotificationCategory(n.type).icon}</span>
                       {n.message}
                       <span className="block text-xs text-gray-300 mt-0.5">
-                        {new Date(n.created_at).toLocaleString("th-TH")}
+                        {fmtDate(n.created_at)}
                       </span>
                     </span>
                     <button

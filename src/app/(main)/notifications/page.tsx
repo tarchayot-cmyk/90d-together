@@ -16,6 +16,9 @@ interface NotificationRow {
   created_at: string;
 }
 
+const dateFmt = new Intl.DateTimeFormat("th-TH", { dateStyle: "short", timeStyle: "short" });
+const fmtDate = (v: string) => dateFmt.format(new Date(v));
+
 export default function AllNotificationsPage() {
   const router = useRouter();
   const [items, setItems] = useState<NotificationRow[]>([]);
@@ -69,6 +72,15 @@ export default function AllNotificationsPage() {
     }
   }
 
+  async function handleClearAll() {
+    if (!window.confirm("ลบการแจ้งเตือนทั้งหมด?")) return;
+    setActionError(null);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("clear_all_my_notifications");
+    if (!error) setItems([]);
+    else setActionError("ลบไม่สำเร็จ กรุณาลองใหม่");
+  }
+
   async function handleMarkAllRead() {
     const supabase = createClient();
     const { error } = await supabase.rpc("mark_all_notifications_read");
@@ -84,11 +96,18 @@ export default function AllNotificationsPage() {
           <p className="text-sm text-gray-400">🔔 ทั้งหมด</p>
           <h1 className="text-xl font-bold text-gray-800">การแจ้งเตือน</h1>
         </div>
-        {unreadCount > 0 && (
-          <button onClick={handleMarkAllRead} className="text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[36px]">
-            อ่านทั้งหมด
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button onClick={handleMarkAllRead} className="text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[36px]">
+              อ่านทั้งหมด
+            </button>
+          )}
+          {items.length > 0 && (
+            <button onClick={handleClearAll} className="text-xs font-semibold text-red-400 border border-red-200 rounded-full px-3 py-1.5 min-h-[36px]">
+              ลบทั้งหมด
+            </button>
+          )}
+        </div>
       </header>
 
       {actionError && <p className="text-sm text-red-500 text-center bg-white rounded-card p-2 shadow-soft">{actionError}</p>}
@@ -120,7 +139,7 @@ export default function AllNotificationsPage() {
                 <p className={clsx("text-sm break-words", n.is_read ? "text-gray-500" : "text-gray-800 font-medium")}>
                   {n.message}
                 </p>
-                <p className="text-xs text-gray-300 mt-1">{new Date(n.created_at).toLocaleString("th-TH")}</p>
+                <p className="text-xs text-gray-300 mt-1">{fmtDate(n.created_at)}</p>
               </div>
               <div className="flex flex-col items-end justify-between shrink-0">
                 {!n.is_read && <span className="w-2 h-2 rounded-full bg-us" />}
