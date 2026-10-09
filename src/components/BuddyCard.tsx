@@ -16,6 +16,28 @@ interface BuddyProgress {
   members?: { name: string; avatar_url: string | null; value: number }[];
 }
 
+interface BuddyFlame {
+  has_group: boolean;
+  flame?: number;
+  spare_left?: boolean;
+  today_lit?: boolean;
+  is_current?: boolean;
+  awarded?: number[];
+  people?: { name: string; is_me: boolean; done_today: boolean }[];
+}
+
+const FLAME_MILESTONES: { day: number; pts: number }[] = [
+  { day: 3, pts: 10 },
+  { day: 5, pts: 15 },
+  { day: 7, pts: 25 },
+];
+
+async function fetchBuddyFlame(): Promise<BuddyFlame | null> {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("get_buddy_flame");
+  return data;
+}
+
 async function fetchBuddyProgress(): Promise<BuddyProgress | null> {
   const supabase = createClient();
   const { data } = await supabase.rpc("get_buddy_progress");
@@ -24,6 +46,11 @@ async function fetchBuddyProgress(): Promise<BuddyProgress | null> {
 
 export default function BuddyCard() {
   const { data: progress, isLoading: loading } = useSWR("buddy-progress", fetchBuddyProgress, {
+    revalidateOnFocus: false,
+    dedupingInterval: 15_000,
+  });
+
+  const { data: flame } = useSWR("buddy-flame", fetchBuddyFlame, {
     revalidateOnFocus: false,
     dedupingInterval: 15_000,
   });
@@ -61,6 +88,49 @@ export default function BuddyCard() {
         </span>
         <span className="font-semibold text-we">เหลืออีก {(progress.remaining ?? 0).toLocaleString()}</span>
       </div>
+
+      {flame?.has_group && (
+        <div className="rounded-xl bg-orange-50 px-3 py-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-orange-600">
+              🔥 ไฟ Buddy {flame.flame ? `${flame.flame} วัน` : "ยังไม่ติด"}
+            </span>
+            <span className="text-[11px] text-orange-500">
+              {flame.spare_left ? "ไฟสำรอง 1 ครั้ง" : "ใช้ไฟสำรองแล้ว"}
+            </span>
+          </div>
+          <div className="flex gap-1.5">
+            {FLAME_MILESTONES.map((m) => {
+              const got = flame.awarded?.includes(m.day);
+              const reached = (flame.flame ?? 0) >= m.day;
+              return (
+                <span
+                  key={m.day}
+                  className={`flex-1 text-center rounded-lg py-1 text-[11px] ${
+                    got
+                      ? "bg-orange-500 text-white font-semibold"
+                      : reached
+                        ? "bg-orange-200 text-orange-700"
+                        : "bg-white text-gray-400"
+                  }`}
+                >
+                  {m.day} วัน +{m.pts}
+                </span>
+              );
+            })}
+          </div>
+          {flame.is_current && !flame.today_lit && !!flame.people?.length && (
+            <p className="text-[11px] text-orange-600">
+              วันนี้เช็คอินแล้ว:{" "}
+              {flame.people.map((p) => `${p.is_me ? "คุณ" : p.name} ${p.done_today ? "✓" : "–"}`).join("  ")}
+              {" "}— ทุกคนเช็คอินวันนี้ ไฟถึงจะติด
+            </p>
+          )}
+          {flame.is_current && flame.today_lit && (
+            <p className="text-[11px] text-orange-600">วันนี้ไฟติดแล้ว 🔥</p>
+          )}
+        </div>
+      )}
 
       {!!progress.members?.length && (
         <ul className="space-y-1.5 pt-1 border-t border-gray-50">

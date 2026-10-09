@@ -19,6 +19,8 @@ const CATEGORY_BY_TYPE: Record<string, NotificationCategory> = {
   activity_counter_proposed: { label: "คำเชิญกิจกรรม", icon: "🤝" },
   buddy_assigned: { label: "Buddy", icon: "🤝" },
   buddy_pair_bonus: { label: "Buddy", icon: "🤝" },
+  buddy_flame_bonus: { label: "Buddy", icon: "🔥" },
+  buddy_flame_nudge: { label: "Buddy", icon: "🔥" },
   comeback_bonus: { label: "โบนัส", icon: "👋" },
   weekly_goal_completed: { label: "โบนัส", icon: "🎯" },
   voting_opened: { label: "โพลกิจกรรม", icon: "📢" },

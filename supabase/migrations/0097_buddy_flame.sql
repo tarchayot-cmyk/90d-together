@@ -1,0 +1,7 @@
+-- ไฟ Buddy 🔥: applied via MCP as buddy_flame_schema, buddy_flame_functions,
+-- buddy_flame_state_fix_series, score_details_label_buddy_flame.
+-- Summary: table buddy_flame_awards (round_id, member_id, milestone 3/5/7), points source 'buddy_flame',
+-- notification types buddy_flame_bonus / buddy_flame_nudge, functions buddy_flame_state(group),
+-- try_award_buddy_flame(check_in) (called from after_checkin_completed), get_buddy_flame() for the UI.
+-- Rules: a day is lit when every group member has a non-rejected check-in that Bangkok day (by created_at);
+-- one spare per round; bonus +10/+15/+25 at 3/5/7 lit days in a chain.
