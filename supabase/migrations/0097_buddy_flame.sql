@@ -5,3 +5,4 @@
 -- try_award_buddy_flame(check_in) (called from after_checkin_completed), get_buddy_flame() for the UI.
 -- Rules: a day is lit when every group member has a non-rejected check-in that Bangkok day (by created_at);
 -- one spare per round; bonus +10/+15/+25 at 3/5/7 lit days in a chain.
+-- Nudge notification text: "🔥 Buddy เช็คอินแล้ว เหลือคุณ Power up กัน!" (changed from "เติมไฟกัน!" via MCP).
