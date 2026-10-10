@@ -20,6 +20,7 @@ interface Preview {
   trios?: number;
   mixed_gender_groups?: number;
   unknown_gender?: number;
+  excluded_no_gender?: number;
   groups: PreviewGroup[];
 }
 interface Status {
@@ -116,9 +117,9 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
                 {" · "}กลุ่ม 3 คน {preview.trios ?? 0} กลุ่ม
                 {(preview.mixed_gender_groups ?? 0) > 0 ? ` · กลุ่มชาย-หญิงผสม ${preview.mixed_gender_groups} กลุ่ม` : ""}
               </p>
-              {(preview.unknown_gender ?? 0) > 0 && (
+              {(preview.excluded_no_gender ?? 0) > 0 && (
                 <p className="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 p-2">
-                  ยังไม่ระบุเพศ {preview.unknown_gender} คน — ระบบจะจับคู่คนเหล่านี้ได้ทุกเพศ แนะนำให้ให้สมาชิกกรอกที่หน้าโปรไฟล์ หรือแอดมินกรอกให้ก่อนยืนยัน
+                  จับคู่เฉพาะคนที่ระบุเพศแล้ว — ยังไม่ระบุเพศ {preview.excluded_no_gender} คน จะไม่ถูกจับคู่ในรอบนี้ ให้สมาชิกกรอกที่หน้าโปรไฟล์ หรือแอดมินกรอกให้ แล้วสุ่มใหม่ได้
                 </p>
               )}
               <p>กดสุ่มใหม่ได้ไม่จำกัด กด "ตกลง" แล้วจะล็อก 7 วัน</p>

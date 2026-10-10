@@ -156,7 +156,7 @@ export default function ProfilePage() {
 
       <div className="rounded-card bg-white shadow-soft p-4 space-y-2">
         <h2 className="font-semibold text-gray-800 text-sm">🤝 ข้อมูลสำหรับจับคู่ Buddy</h2>
-        <p className="text-xs text-gray-500">ใช้เพื่อจัดคู่เพศเดียวกันเป็นหลัก แอดมินเท่านั้นที่เห็น ไม่แสดงให้สมาชิกคนอื่น</p>
+        <p className="text-xs text-gray-500">ต้องระบุเพศจึงจะถูกจับคู่ Buddy (ถ้าเลือก "ไม่ระบุ" จะไม่ถูกจับคู่) ใช้เพื่อจัดคู่เพศเดียวกันเป็นหลัก แอดมินเท่านั้นที่เห็น ไม่แสดงให้สมาชิกคนอื่น</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { v: "female", label: "หญิง" },

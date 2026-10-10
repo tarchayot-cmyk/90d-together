@@ -62,7 +62,7 @@ export default function BuddyCard() {
   if (!progress?.has_group) {
     return (
       <div className="rounded-card bg-white shadow-soft p-4 text-sm text-gray-400 text-center">
-        ยังไม่ได้จับคู่ Buddy — รอ Admin จัดกลุ่มให้นะ 🤝
+        ยังไม่ได้จับคู่ Buddy — การจับคู่ใช้เฉพาะคนที่ระบุเพศในโปรไฟล์แล้ว ถ้ายังไม่ได้ระบุ ไปกรอกที่หน้าโปรไฟล์ แล้วรอ Admin จัดกลุ่มรอบถัดไปนะ 🤝
       </div>
     );
   }
