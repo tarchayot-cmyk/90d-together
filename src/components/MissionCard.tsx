@@ -53,13 +53,14 @@ export default function MissionCard({
   // this week out of the weekly limit — rather than the raw
   // value-vs-target_value number, since the count against the
   // day/week cap is what people actually want to track.
+  const periodUnit = mission.max_per_round != null ? "ครั้ง/รอบ Buddy" : "ครั้ง/สัปดาห์";
   const todayStr = new Date().toDateString();
   const todayCount = checkIns.filter(
     (c) => c.proof_status !== "rejected" && c.completed_at && new Date(c.completed_at).toDateString() === todayStr
   ).length;
   const numeratorLabel = mission.max_per_day
-    ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน · ${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`
-    : `${completedCount}/${mission.max_per_week} ครั้ง/สัปดาห์`;
+    ? `${todayCount}/${mission.max_per_day} ครั้ง/วัน · ${completedCount}/${mission.max_per_week} ${periodUnit}`
+    : `${completedCount}/${mission.max_per_week} ${periodUnit}`;
   // Bar tracks the weekly goal (full at e.g. 4/4); today's count is in the label.
   const pct = Math.min(100, Math.round((completedCount / mission.max_per_week) * 100));
 

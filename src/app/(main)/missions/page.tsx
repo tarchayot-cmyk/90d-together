@@ -90,13 +90,33 @@ export default function MissionsPage() {
         }
       }
 
+      // Missions limited per Buddy round (e.g. greet Buddy): count check-ins since the current
+      // round started (any week), and show the per-round limit instead of the weekly one.
+      const roundMissions = (missionRows ?? []).filter((m) => m.max_per_round != null);
+      if (member?.id && roundMissions.length) {
+        const { data: roundStart } = await supabase.rpc("get_my_buddy_round_start");
+        const { data: allRound } = await supabase
+          .from("check_ins")
+          .select("*")
+          .eq("member_id", member.id)
+          .in("mission_id", roundMissions.map((m) => m.id));
+        const roundIds = new Set(roundMissions.map((m) => m.id));
+        myCheckIns = myCheckIns.filter((c) => !roundIds.has(c.mission_id));
+        for (const c of allRound ?? []) {
+          if (!roundStart || (!c.created_at || new Date(c.created_at) >= new Date(roundStart))) myCheckIns.push(c);
+        }
+      }
+      const displayMissions = (missionRows ?? []).map((m) =>
+        m.max_per_round != null ? { ...m, max_per_week: m.max_per_round } : m
+      );
+
       const grouped: Record<string, CheckIn[]> = {};
       for (const c of myCheckIns) {
         if (!grouped[c.mission_id]) grouped[c.mission_id] = [];
         grouped[c.mission_id].push(c);
       }
 
-      setMissions(missionRows ?? []);
+      setMissions(displayMissions);
       setCheckInsByMission(grouped);
     },
     [member?.id]

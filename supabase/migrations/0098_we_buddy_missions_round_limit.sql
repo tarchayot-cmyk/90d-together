@@ -1,0 +1,5 @@
+-- Applied via MCP (live DB is authoritative). Summary:
+-- * missions.max_per_round (limit per Buddy round); complete_mission raises round_limit_reached
+-- * get_my_buddy_round_start() RPC
+-- * ทักทาย Buddy: first in list, once per Buddy round (was once total)
+-- * 5 WE Buddy missions now require proof: walk 15 min, stretch, Buddy Walk, Buddy Lunch, relax
