@@ -15,20 +15,27 @@ interface RankRow {
   employee_code?: string;
   department?: string | null;
   avatar_url?: string | null;
-  member_count?: number;
+  me_points: number;
+  we_points: number;
+  us_points: number;
   total_points: number;
 }
 
 const TABS: { value: TabType; label: string }[] = [
-  { value: "all", label: "🏆 ทั้งหมด" },
+  { value: "all", label: "🏆 รวมทั้งหมด" },
   { value: "me", label: "🌱 ME" },
   { value: "we", label: "🌿 WE" },
   { value: "us", label: "🌳 US" },
 ];
 
-// "ทั้งหมด" reuses the individual (me) ranking — it's already every
-// participant's total points regardless of category.
-const RPC_TYPE: Record<TabType, "me" | "we" | "us"> = { all: "me", me: "me", we: "we", us: "us" };
+// Individual ranking for every tab; each tab ranks by the points earned in that phase
+// (ME = campaign days 1-30, WE = 31-60, US = 61-90) and "all" ranks by the grand total.
+const POINTS_KEY: Record<TabType, "total_points" | "me_points" | "we_points" | "us_points"> = {
+  all: "total_points",
+  me: "me_points",
+  we: "we_points",
+  us: "us_points",
+};
 
 const PODIUM_STYLE = [
   { medal: "🥇", ring: "ring-yellow-400", bg: "bg-yellow-50", order: "order-2", size: 76 },
@@ -36,9 +43,9 @@ const PODIUM_STYLE = [
   { medal: "🥉", ring: "ring-orange-300", bg: "bg-orange-50", order: "order-3", size: 64 },
 ];
 
-async function fetchLeaderboard(_key: string, tab: TabType): Promise<RankRow[]> {
+async function fetchLeaderboard(): Promise<RankRow[]> {
   const supabase = createClient();
-  const { data } = await supabase.rpc("get_leaderboard", { p_type: RPC_TYPE[tab] });
+  const { data } = await supabase.rpc("get_leaderboard_phases");
   return data?.rankings ?? [];
 }
 
@@ -64,12 +71,25 @@ export default function RankingPage() {
 
   const visibleTabs = TABS.filter((t) => t.value === "all" || visibleLevels.includes(t.value));
 
-  const { data: rows, isLoading: loading } = useSWR(["leaderboard", tab], ([, t]) => fetchLeaderboard("leaderboard", t), {
+  const { data: allRows, isLoading: loading } = useSWR("leaderboard-phases", fetchLeaderboard, {
     revalidateOnFocus: false,
     dedupingInterval: 15_000,
   });
 
-  const isIndividual = tab === "all" || tab === "me";
+  const pointsOf = (r: RankRow) => r[POINTS_KEY[tab]] ?? 0;
+  const rows = allRows
+    ? [...allRows].sort((a, b) => pointsOf(b) - pointsOf(a) || a.name.localeCompare(b.name, "th"))
+    : undefined;
+  // Tied scores share the same rank (1, 2, 2, 4 ...).
+  const rankOf = (r: RankRow) => 1 + (rows ?? []).filter((x) => pointsOf(x) > pointsOf(r)).length;
+  const phaseLabels: { key: "me_points" | "we_points" | "us_points"; label: string; level: string }[] = [
+    { key: "me_points", label: "ME", level: "me" },
+    { key: "we_points", label: "WE", level: "we" },
+    { key: "us_points", label: "US", level: "us" },
+  ];
+  const shownPhases = phaseLabels.filter((p) => visibleLevels.includes(p.level));
+
+  const isIndividual = true;
 
   const filtered = (rows ?? []).filter((r) => {
     if (!query.trim()) return true;
@@ -92,7 +112,7 @@ export default function RankingPage() {
             <Trophy size={20} /> กระดานอันดับ
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            จัดอันดับจากคะแนนรวมของทุกกิจกรรม มาร่วมสร้างสุขภาพดีไปด้วยกัน
+            จัดอันดับรายบุคคลแยกตามช่วง ME / WE / US และคะแนนรวม มาร่วมสร้างสุขภาพดีไปด้วยกัน
           </p>
         </div>
       </header>
@@ -136,7 +156,7 @@ export default function RankingPage() {
                   )}
                   <p className="text-xs font-semibold text-gray-800 text-center truncate w-full">{row.name}</p>
                   {row.department && <p className="text-[10px] text-gray-400 truncate w-full text-center">{row.department}</p>}
-                  <p className="text-xs font-bold text-us">🌿 {row.total_points.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-us">🌿 {pointsOf(row).toLocaleString()}</p>
                 </div>
               );
             })}
@@ -158,7 +178,7 @@ export default function RankingPage() {
 
       <ol className="space-y-2">
         {rest.map((row, i) => {
-          const rank = query.trim() ? i + 1 : i + 4;
+          const rank = rankOf(row);
           return (
             <li key={row.id} className="rounded-card bg-white shadow-soft p-3 flex items-center gap-3">
               <span className="w-6 text-center font-bold text-gray-400 text-sm">{rank}</span>
@@ -166,9 +186,13 @@ export default function RankingPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800 truncate">{row.name}</p>
                 {row.employee_code && <p className="text-xs text-gray-400">{row.employee_code}{row.department ? ` · ${row.department}` : ""}</p>}
-                {row.member_count !== undefined && <p className="text-xs text-gray-400">{row.member_count} คน</p>}
+                {tab === "all" && shownPhases.length > 1 && (
+                  <p className="text-[11px] text-gray-400">
+                    {shownPhases.map((p) => `${p.label} ${(row[p.key] ?? 0).toLocaleString()}`).join(" · ")}
+                  </p>
+                )}
               </div>
-              <span className="font-bold text-us shrink-0">🌿 {row.total_points.toLocaleString()}</span>
+              <span className="font-bold text-us shrink-0">🌿 {pointsOf(row).toLocaleString()}</span>
             </li>
           );
         })}

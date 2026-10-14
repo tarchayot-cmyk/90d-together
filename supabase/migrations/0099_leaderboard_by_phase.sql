@@ -1,0 +1,2 @@
+-- Applied via MCP. get_leaderboard_phases(): individual points per phase
+-- (ME = campaign days 1-30, WE = 31-60, US = 61-90, by Bangkok date) + grand total.
