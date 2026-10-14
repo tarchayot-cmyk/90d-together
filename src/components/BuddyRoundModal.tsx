@@ -8,6 +8,7 @@ interface PreviewMember {
   id: string;
   full_name: string;
   score: number;
+  total?: number;
   gender?: "male" | "female" | null;
 }
 interface PreviewGroup {
@@ -138,7 +139,12 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
                       {"gender" in m && (m as PreviewMember).gender ? ((m as PreviewMember).gender === "male" ? "♂ " : "♀ ") : ""}
                       {m.full_name}
                     </span>
-                    {"score" in m && <span className="text-xs text-gray-400 shrink-0">{(m as PreviewMember).score} แต้ม</span>}
+                    {"score" in m && (
+                      <span className="text-xs text-gray-400 shrink-0 text-right">
+                        {((m as PreviewMember).total ?? (m as PreviewMember).score).toLocaleString()} แต้ม
+                        <span className="block text-[10px] text-gray-300">14 วันล่าสุด {(m as PreviewMember).score.toLocaleString()}</span>
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -1,0 +1,1 @@
+-- Applied via MCP: admin_preview_buddy_round returns total points per member (score stays = last 14 days, used for matching).
