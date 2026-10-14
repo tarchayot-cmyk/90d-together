@@ -47,17 +47,22 @@ export default function AdminCheckinsPage() {
   async function load() {
     setLoading(true);
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("check_ins")
-      .select(
-        "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
+    const SELECT =
+      "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
           "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
           "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
           "reviewer:members!check_ins_reviewed_by_fkey(full_name), " +
-          "buddy:members!check_ins_buddy_member_id_fkey(full_name)"
-      )
-      .order("created_at", { ascending: false })
-      .limit(150);
+          "buddy:members!check_ins_buddy_member_id_fkey(full_name)";
+    // รายการรอตรวจทั้งหมด (ไม่จำกัดจำนวน) + รายการล่าสุด 150 รายการ แล้วรวมกัน
+    const [pendingRes, recentRes] = await Promise.all([
+      supabase.from("check_ins").select(SELECT).eq("proof_status", "pending").order("created_at", { ascending: true }).limit(1000),
+      supabase.from("check_ins").select(SELECT).order("created_at", { ascending: false }).limit(150),
+    ]);
+    const error = pendingRes.error || recentRes.error;
+    const pending = (pendingRes.data as unknown as CheckinRow[]) ?? [];
+    const pendingIds = new Set(pending.map((r) => r.id));
+    const recent = ((recentRes.data as unknown as CheckinRow[]) ?? []).filter((r) => !pendingIds.has(r.id));
+    const data = [...pending, ...recent]; // รอตรวจ (เก่าสุดก่อน) อยู่บนสุด ตามด้วยรายการล่าสุด
 
     if (!error) setRows((data as unknown as CheckinRow[]) ?? []);
     setLoading(false);
