@@ -1,0 +1,1 @@
+-- Applied via MCP: get_buddy_flame people[].missions (WE missions done today).

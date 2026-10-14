@@ -23,7 +23,7 @@ interface BuddyFlame {
   today_lit?: boolean;
   is_current?: boolean;
   awarded?: number[];
-  people?: { name: string; is_me: boolean; done_today: boolean }[];
+  people?: { name: string; is_me: boolean; done_today: boolean; missions?: string[] }[];
 }
 
 const FLAME_MILESTONES: { day: number; pts: number }[] = [
@@ -129,6 +129,25 @@ export default function BuddyCard() {
           {flame.is_current && flame.today_lit && (
             <p className="text-[11px] text-orange-600">วันนี้ไฟติดแล้ว 🔥</p>
           )}
+        </div>
+      )}
+
+      {flame?.has_group && !!flame.people?.length && (
+        <div className="rounded-xl bg-we/5 px-3 py-2.5 space-y-1.5">
+          <p className="text-xs font-semibold text-we">👥 กลุ่มของฉัน · วันนี้ทำอะไรไปแล้ว</p>
+          <ul className="space-y-1">
+            {flame.people.map((p) => (
+              <li key={p.name + String(p.is_me)} className="text-xs text-gray-600">
+                <span className="font-semibold">{p.is_me ? "คุณ" : p.name}</span>{" "}
+                {p.missions && p.missions.length > 0 ? (
+                  <span className="text-gray-500">✓ {p.missions.join(" · ")}</span>
+                ) : (
+                  <span className="text-gray-300">{p.done_today ? "✓ เช็คอินภารกิจ ME แล้ว" : "– ยังไม่ได้เช็คอินวันนี้"}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-gray-400">ทำภารกิจ WE เดียวกันในวันเดียวกัน ได้โบนัสคู่ +5 ทั้งสองคน</p>
         </div>
       )}
 
