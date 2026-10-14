@@ -1,0 +1,1 @@
+-- Applied via MCP: Bangkok-midnight day counting (SET timezone on date functions), Thursday-start weeks from day 31 (campaign_week_of/start/end), Buddy round lock to next Thursday 00:00 (next_week_boundary).

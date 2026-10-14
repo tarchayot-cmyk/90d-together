@@ -12,10 +12,12 @@ import { THEMES } from "@/lib/badgeFields";
 import type { Mission, CheckIn } from "@/lib/types";
 
 function currentCampaignWeek(startDate: string): number {
-  const start = new Date(startDate);
-  const today = new Date();
-  const days = Math.floor((today.getTime() - start.getTime()) / 86_400_000) + 1;
-  return Math.max(1, Math.ceil(days / 7));
+  // นับตามเที่ยงคืนเวลาไทย; ช่วง ME (วัน 1-30) สัปดาห์ละ 7 วัน, หลังจากนั้นสัปดาห์ = พฤหัส 00:00 → พุธ 23:59
+  // ต้องตรงกับ campaign_week_of() ใน DB
+  const bkkToday = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const days = Math.round((Date.parse(bkkToday) - Date.parse(startDate.slice(0, 10))) / 86_400_000) + 1;
+  const week = days <= 30 ? Math.ceil(days / 7) : 5 + Math.ceil((days - 30) / 7);
+  return Math.max(1, week);
 }
 
 const TAB_META: Record<string, { emoji: string; label: string }> = {
