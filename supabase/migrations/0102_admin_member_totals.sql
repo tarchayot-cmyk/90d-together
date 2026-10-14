@@ -1,0 +1,1 @@
+-- Applied via MCP: admin_member_totals() aggregates points/stickers/badges server-side (admin pages were truncated at 1000 rows).

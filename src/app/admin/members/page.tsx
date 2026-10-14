@@ -54,12 +54,13 @@ export default function AdminMembersPage() {
         .from("members")
         .select("id, employee_code, full_name, nickname, unit, department, avatar_url, role, is_active, gender, allow_cross_gender_buddy")
         .order("full_name"),
-      supabase.from("points_transactions").select("member_id, points"),
+      supabase.rpc("admin_member_totals"),
     ]);
 
+    // รวมที่ฝั่งฐานข้อมูล (ดึงทีละแถวจะโดนจำกัด 1,000 แถว)
     const pointsByMember = new Map<string, number>();
-    for (const row of pointRows ?? []) {
-      pointsByMember.set(row.member_id, (pointsByMember.get(row.member_id) ?? 0) + row.points);
+    for (const row of (pointRows ?? []) as { member_id: string; points: number }[]) {
+      pointsByMember.set(row.member_id, Number(row.points));
     }
 
     setMembers((memberRows ?? []).map((m) => ({ ...m, points: pointsByMember.get(m.id) ?? 0 })));

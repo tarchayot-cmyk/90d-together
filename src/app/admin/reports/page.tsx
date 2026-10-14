@@ -36,32 +36,23 @@ export default function AdminReportsPage() {
     async function load() {
       const supabase = createClient();
 
-      const [{ data: members }, { data: points }, { data: stickers }, { data: badges }] = await Promise.all([
+      // รวมคะแนน/สติ๊กเกอร์/เหรียญที่ฝั่งฐานข้อมูล (ดึงทีละแถวจะโดนจำกัด 1,000 แถว ทำให้ยอดขาด)
+      const [{ data: members }, { data: totals }] = await Promise.all([
         supabase
           .from("members")
           .select("id, full_name, employee_code, department")
           .eq("role", "participant")
           .order("full_name"),
-        supabase.from("points_transactions").select("member_id, points"),
-        supabase.from("stickers").select("member_id, color, amount"),
-        supabase.from("member_badges").select("member_id"),
+        supabase.rpc("admin_member_totals"),
       ]);
 
       const pointsByMember = new Map<string, number>();
-      for (const p of points ?? []) {
-        pointsByMember.set(p.member_id, (pointsByMember.get(p.member_id) ?? 0) + p.points);
-      }
-
       const stickersByMember = new Map<string, Record<string, number>>();
-      for (const s of stickers ?? []) {
-        const existing = stickersByMember.get(s.member_id) ?? {};
-        existing[s.color] = (existing[s.color] ?? 0) + s.amount;
-        stickersByMember.set(s.member_id, existing);
-      }
-
       const badgesByMember = new Map<string, number>();
-      for (const b of badges ?? []) {
-        badgesByMember.set(b.member_id, (badgesByMember.get(b.member_id) ?? 0) + 1);
+      for (const t of (totals ?? []) as { member_id: string; points: number; stickers: Record<string, number>; badge_count: number }[]) {
+        pointsByMember.set(t.member_id, Number(t.points));
+        stickersByMember.set(t.member_id, t.stickers ?? {});
+        badgesByMember.set(t.member_id, Number(t.badge_count));
       }
 
       const summary: MemberSummary[] = (members ?? []).map((m) => {
