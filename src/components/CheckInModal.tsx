@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Loader2, Camera, Check, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import type { Mission } from "@/lib/types";
@@ -36,6 +36,8 @@ function friendlyError(raw: string): string {
   if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้";
   if (raw.includes("too_many_proof_images")) return `แนบรูปได้สูงสุด ${MAX_PROOF_IMAGES} รูปเท่านั้น`;
+  if (raw.includes("buddy_required")) return "เลือกชื่อ Buddy ที่ทำกิจกรรมด้วยกันก่อน Check-in นะ";
+  if (raw.includes("buddy_invalid")) return "Buddy ที่เลือกไม่ถูกต้อง กรุณาเลือกใหม่";
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
   return "เกิดข้อผิดพลาด กรุณาลองใหม่";
 }
@@ -49,6 +51,29 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [proofFiles, setProofFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const needsBuddy = !!mission.requires_buddy;
+  const [buddyId, setBuddyId] = useState("");
+  const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
+  const [hasGroup, setHasGroup] = useState(true);
+  const [buddyLoading, setBuddyLoading] = useState(needsBuddy);
+
+  useEffect(() => {
+    if (!needsBuddy) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.rpc("get_my_buddy_options");
+      if (cancelled) return;
+      const opts = (data?.options ?? []) as { id: string; name: string }[];
+      setBuddyOptions(opts);
+      setHasGroup(!!data?.has_group);
+      if (opts.length === 1) setBuddyId(opts[0].id);
+      setBuddyLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [needsBuddy]);
 
   function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -101,6 +126,11 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       }
     }
 
+    if (needsBuddy && !buddyId) {
+      setError("เลือกชื่อ Buddy ที่ทำกิจกรรมด้วยกันก่อน Check-in นะ");
+      return;
+    }
+
     if (mission.requires_proof && !isText && proofFiles.length === 0) {
       setError("ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
       return;
@@ -144,11 +174,12 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       proofUrls = uploadedUrls;
     }
 
-    const { data, error: rpcError } = await supabase.rpc("complete_mission", {
+    const { data, error: rpcError } = await supabase.rpc("complete_mission_with_buddy", {
       p_mission_id: mission.id,
       p_value: numericValue,
       p_note: note || null,
       p_proof_urls: proofUrls,
+      p_buddy_member_id: needsBuddy ? buddyId : null,
     });
     setLoading(false);
 
@@ -203,6 +234,30 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {needsBuddy && (
+            <div>
+              <label className="text-xs font-medium text-gray-500">ทำกิจกรรมนี้กับ Buddy คนไหน</label>
+              <select
+                value={buddyId}
+                onChange={(e) => setBuddyId(e.target.value)}
+                disabled={buddyLoading}
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-base bg-white focus:outline-none focus:ring-2 focus:ring-us/40"
+              >
+                <option value="">{buddyLoading ? "กำลังโหลด..." : "— เลือกชื่อ Buddy —"}</option>
+                {buddyOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+              {!buddyLoading && !hasGroup && (
+                <p className="mt-1 text-[11px] text-gray-400">
+                  คุณยังไม่ได้จับคู่ Buddy — เลือกเพื่อนที่ทำด้วยกันได้เลย (โบนัสคู่/ไฟ Buddy จะนับเมื่อแอดมินจับคู่แล้ว)
+                </p>
+              )}
+            </div>
+          )}
+
           {isCheckbox ? (
             <button
               type="button"

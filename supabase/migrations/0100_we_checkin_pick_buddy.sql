@@ -1,0 +1,5 @@
+-- Applied via MCP. WE missions require choosing the Buddy at check-in:
+-- * missions.requires_buddy (true for all WE missions), check_ins.buddy_member_id
+-- * complete_mission_with_buddy(..., p_buddy_member_id): validates Buddy is in the member's latest group
+--   (or any active participant if the member has no group); old complete_mission raises buddy_required for these missions
+-- * get_my_buddy_options() for the dropdown

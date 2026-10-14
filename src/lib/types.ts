@@ -34,6 +34,7 @@ export interface Mission {
   max_per_week: number;
   max_per_day: number | null;
   max_total?: number | null; // lifetime cap per member (e.g. once during the WE phase)
+  requires_buddy?: boolean; // WE missions: member must pick which Buddy they did it with
   max_per_round?: number | null; // cap per Buddy round (e.g. greet Buddy once per new Buddy)
   theme: "move" | "fuel" | "rest" | "mind" | "connect";
 }

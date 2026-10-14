@@ -20,6 +20,7 @@ interface CheckinRow {
   member: { full_name: string; employee_code: string } | { full_name: string; employee_code: string }[] | null;
   mission: { name: string; level: string; requires_proof: boolean } | { name: string; level: string; requires_proof: boolean }[] | null;
   reviewer: { full_name: string } | { full_name: string }[] | null;
+  buddy?: { full_name: string } | { full_name: string }[] | null;
 }
 
 function one<T>(v: T | T[] | null): T | null {
@@ -52,7 +53,8 @@ export default function AdminCheckinsPage() {
         "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
           "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
           "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
-          "reviewer:members!check_ins_reviewed_by_fkey(full_name)"
+          "reviewer:members!check_ins_reviewed_by_fkey(full_name), " +
+          "buddy:members!check_ins_buddy_member_id_fkey(full_name)"
       )
       .order("created_at", { ascending: false })
       .limit(150);
@@ -271,6 +273,7 @@ export default function AdminCheckinsPage() {
           const member = one(row.member);
           const mission = one(row.mission);
           const reviewer = one(row.reviewer);
+          const buddy = one(row.buddy ?? null);
           const isPending = row.proof_status === "pending";
           const isReviewed = row.proof_status === "approved" || row.proof_status === "rejected";
           const busy = busyId === row.id;
@@ -293,6 +296,8 @@ export default function AdminCheckinsPage() {
                   {!mission?.requires_proof && row.completed_at && " · สำเร็จ"}
                 </p>
                 <p className="text-xs text-gray-300">{new Date(row.created_at).toLocaleString("th-TH")}</p>
+
+                {buddy && <p className="text-xs text-we mt-1">🤝 ทำกับ Buddy: {buddy.full_name}</p>}
 
                 {row.note && (
                   <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-2.5 py-1.5 mt-1.5">
