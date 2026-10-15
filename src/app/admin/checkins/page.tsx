@@ -23,6 +23,13 @@ interface CheckinRow {
   buddy?: { full_name: string } | { full_name: string }[] | null;
 }
 
+const SELECT =
+  "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
+  "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
+  "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
+  "reviewer:members!check_ins_reviewed_by_fkey(full_name), " +
+  "buddy:members!check_ins_buddy_member_id_fkey(full_name)";
+
 function one<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? v[0] ?? null : v;
 }
@@ -43,16 +50,12 @@ export default function AdminCheckinsPage() {
   const [cleaningUp, setCleaningUp] = useState(false);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  // เช็คอินย้อนหลัง 2 วัน (วันนี้ + เมื่อวาน เวลาไทย) ของคนที่ค้นหา
+  const [extraRows, setExtraRows] = useState<CheckinRow[]>([]);
 
   async function load() {
     setLoading(true);
     const supabase = createClient();
-    const SELECT =
-      "id, campaign_week, value, note, completed_at, proof_status, proof_urls, created_at, updated_at, reviewed_at, rejection_reason, " +
-          "member:members!check_ins_member_id_fkey(full_name, employee_code), " +
-          "mission:missions!check_ins_mission_id_fkey(name, level, requires_proof), " +
-          "reviewer:members!check_ins_reviewed_by_fkey(full_name), " +
-          "buddy:members!check_ins_buddy_member_id_fkey(full_name)";
     // รายการรอตรวจทั้งหมด (ไม่จำกัดจำนวน) + รายการล่าสุด 150 รายการ แล้วรวมกัน
     const [pendingRes, recentRes] = await Promise.all([
       supabase.from("check_ins").select(SELECT).eq("proof_status", "pending").order("created_at", { ascending: true }).limit(1000),
@@ -71,6 +74,44 @@ export default function AdminCheckinsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setExtraRows([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const supabase = createClient();
+      const safe = q.replace(/[%,()]/g, " ");
+      const { data: ms } = await supabase
+        .from("members")
+        .select("id")
+        .or(`full_name.ilike.%${safe}%,employee_code.ilike.%${safe}%,nickname.ilike.%${safe}%`)
+        .limit(20);
+      const ids = (ms ?? []).map((m: { id: string }) => m.id);
+      if (ids.length === 0) {
+        if (!cancelled) setExtraRows([]);
+        return;
+      }
+      const DAY = 86400000;
+      const BKK = 7 * 3600000;
+      const since = new Date(Math.floor((Date.now() + BKK) / DAY) * DAY - BKK - DAY).toISOString();
+      const { data } = await supabase
+        .from("check_ins")
+        .select(SELECT)
+        .in("member_id", ids)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (!cancelled) setExtraRows((data as unknown as CheckinRow[]) ?? []);
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
 
   async function handleDelete(row: CheckinRow) {
     const member = one(row.member);
@@ -217,7 +258,9 @@ export default function AdminCheckinsPage() {
     load();
   }
 
-  const filtered = rows
+  const rowIds = new Set(rows.map((r) => r.id));
+  const allRows = extraRows.length > 0 ? [...rows, ...extraRows.filter((r) => !rowIds.has(r.id))] : rows;
+  const filtered = allRows
     .filter((r) => (pendingOnly ? r.proof_status === "pending" : true))
     .filter((r) => {
       const member = one(r.member);
@@ -229,6 +272,12 @@ export default function AdminCheckinsPage() {
         member?.employee_code.toLowerCase().includes(q) ||
         mission?.name.toLowerCase().includes(q)
       );
+    })
+    .sort((a, b) => {
+      if (extraRows.length === 0) return 0; // ไม่ได้ค้นหา — คงลำดับเดิม (รอตรวจก่อน)
+      const pa = a.proof_status === "pending" ? 0 : 1;
+      const pb = b.proof_status === "pending" ? 0 : 1;
+      return pa - pb || b.created_at.localeCompare(a.created_at);
     });
 
   const pendingCount = rows.filter((r) => r.proof_status === "pending").length;
@@ -236,7 +285,7 @@ export default function AdminCheckinsPage() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-gray-400">
-        แสดง 150 รายการล่าสุด — ลบแล้วคะแนน/สติ๊กเกอร์ของรายการนั้นจะถูกดึงคืนอัตโนมัติ และบันทึกลง Audit Log ทุกการกระทำ
+        แสดงรายการรอตรวจทั้งหมด + 150 รายการล่าสุด (ถ้าค้นหาชื่อ จะแสดงเช็คอินของคนนั้นย้อนหลัง 2 วันด้วย) — ลบแล้วคะแนน/สติ๊กเกอร์ของรายการนั้นจะถูกดึงคืนอัตโนมัติ และบันทึกลง Audit Log ทุกการกระทำ
       </p>
 
       {banner && <p className="text-sm text-center text-gray-500 bg-white rounded-card p-2 shadow-soft">{banner}</p>}
