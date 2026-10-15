@@ -1,0 +1,1 @@
+-- 0108: buddy_thanks / buddy_walk_goal notification types; complete_mission_with_buddy notifies Buddy of thank-you message (applied via MCP)
