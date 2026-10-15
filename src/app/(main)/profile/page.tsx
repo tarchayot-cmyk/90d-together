@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Camera, Loader2, MessageCircle } from "lucide-react";
+import { LogOut, Camera, Loader2, MessageCircle, History } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useMember } from "@/hooks/useMember";
 import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
 import FeedbackModal from "@/components/FeedbackModal";
+import CheckInHistoryModal from "@/components/CheckInHistoryModal";
 import { shortName } from "@/lib/displayName";
 
 export default function ProfilePage() {
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [highlightFeedbackId, setHighlightFeedbackId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -199,6 +201,14 @@ export default function ProfilePage() {
       </div>
 
       <button
+        onClick={() => setHistoryOpen(true)}
+        className="w-full rounded-card bg-white shadow-soft p-4 flex items-center justify-center gap-2 text-sm font-semibold text-us min-h-[44px]"
+      >
+        <History size={16} />
+        ประวัติเช็คอินของฉัน
+      </button>
+
+      <button
         onClick={() => setFeedbackOpen(true)}
         className="w-full rounded-card bg-white shadow-soft p-4 flex items-center justify-center gap-2 text-sm font-semibold text-us min-h-[44px]"
       >
@@ -214,6 +224,8 @@ export default function ProfilePage() {
         <LogOut size={16} />
         {signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
       </button>
+
+      {historyOpen && <CheckInHistoryModal onClose={() => setHistoryOpen(false)} />}
 
       {feedbackOpen && (
         <FeedbackModal

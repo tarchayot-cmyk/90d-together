@@ -1,0 +1,1 @@
+-- Applied via MCP: get_my_checkin_history().
