@@ -13,6 +13,7 @@ interface BuddyProgress {
   target?: number;
   total?: number;
   remaining?: number;
+  goal_reached?: boolean;
   members?: { name: string; avatar_url: string | null; value: number }[];
 }
 
@@ -84,9 +85,11 @@ export default function BuddyCard() {
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-gray-500">
-          {(progress.total ?? 0).toLocaleString()} / {(progress.target ?? 0).toLocaleString()} steps
+          Buddy Walk ก้าวรวมสัปดาห์นี้ {(progress.total ?? 0).toLocaleString()} / {(progress.target ?? 0).toLocaleString()}
         </span>
-        <span className="font-semibold text-we">เหลืออีก {(progress.remaining ?? 0).toLocaleString()}</span>
+        <span className="font-semibold text-we">
+          {progress.goal_reached ? "ถึงเป้าแล้ว 🎉" : `เหลืออีก ${(progress.remaining ?? 0).toLocaleString()}`}
+        </span>
       </div>
 
       {flame?.has_group && (

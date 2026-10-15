@@ -52,6 +52,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needsBuddy = !!mission.requires_buddy;
+  const isBuddyWalk = mission.category === "buddy_walk";
   const [buddyId, setBuddyId] = useState("");
   const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
   const [hasGroup, setHasGroup] = useState(true);
@@ -204,15 +205,20 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         {mission.description && <LinkifiedText text={mission.description} className="text-sm text-gray-500" />}
 
-        {!isCheckbox && !isText && (
+        {!isCheckbox && !isText && !isBuddyWalk && (
           <p className="text-sm text-gray-400">
             เป้าหมาย {mission.target_value.toLocaleString()} {mission.unit} / {targetPeriodLabel(mission.max_per_day)}
+          </p>
+        )}
+        {isBuddyWalk && (
+          <p className="text-sm text-gray-400">
+            กรอกก้าวของ <b>วันนี้</b> ระบบรวมก้าวทั้งสัปดาห์ของทุกคนในกลุ่มให้เอง · เป้ากลุ่ม 2 คน 80,000 ก้าว / กลุ่ม 3 คน 110,000 ก้าว
           </p>
         )}
 
         <div className="flex items-center gap-3 text-sm">
           <span className="text-us font-semibold">
-            ⭐ +{mission.points} คะแนน
+            ⭐ +{mission.points} คะแนน{isBuddyWalk ? " (ได้เมื่อก้าวรวมของกลุ่มถึงเป้า)" : ""}
           </span>
           {mission.sticker_color && mission.sticker_amount > 0 && (
             <span className="text-gray-500">
@@ -225,7 +231,12 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
           <p className="text-xs text-gray-400">{limitSummary(mission.max_per_week, mission.max_per_day)}</p>
         )}
 
-        {mission.requires_proof && (
+        {mission.requires_proof && isBuddyWalk && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+            แนบภาพหน้าจอก้าวของวันนี้ (สูงสุด {MAX_PROOF_IMAGES} รูป) — บันทึกได้ทันทีไม่ต้องรอ Admin คะแนนทุกคนในกลุ่มจะเข้าอัตโนมัติเมื่อก้าวรวมของกลุ่มถึงเป้า
+          </p>
+        )}
+        {mission.requires_proof && !isBuddyWalk && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
             {isText
               ? "ภารกิจนี้ต้องรอ Admin ตรวจคำตอบก่อน — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ"

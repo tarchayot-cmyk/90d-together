@@ -1,0 +1,1 @@
+-- Applied via MCP: Buddy Walk daily steps summed per group/week; reward when group total reaches 80,000 (2 people) / 110,000 (3 people).
