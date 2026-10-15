@@ -6,8 +6,9 @@ import { Search, Trophy } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 import AvatarCircle from "@/components/AvatarCircle";
+import BuddyGroupRanking from "@/components/BuddyGroupRanking";
 
-type TabType = "all" | "me" | "we" | "us";
+type TabType = "all" | "me" | "we" | "us" | "buddy";
 
 interface RankRow {
   id: string;
@@ -26,11 +27,12 @@ const TABS: { value: TabType; label: string }[] = [
   { value: "me", label: "🌱 ME" },
   { value: "we", label: "🌿 WE" },
   { value: "us", label: "🌳 US" },
+  { value: "buddy", label: "🤝 กลุ่ม Buddy" },
 ];
 
 // Individual ranking for every tab; each tab ranks by the points earned in that phase
 // (ME = campaign days 1-30, WE = 31-60, US = 61-90) and "all" ranks by the grand total.
-const POINTS_KEY: Record<TabType, "total_points" | "me_points" | "we_points" | "us_points"> = {
+const POINTS_KEY: Record<Exclude<TabType, "buddy">, "total_points" | "me_points" | "we_points" | "us_points"> = {
   all: "total_points",
   me: "me_points",
   we: "we_points",
@@ -66,17 +68,17 @@ export default function RankingPage() {
   }, []);
 
   useEffect(() => {
-    if (tab !== "all" && !visibleLevels.includes(tab)) setTab("all");
+    if (tab !== "all" && !visibleLevels.includes(tab === "buddy" ? "we" : tab)) setTab("all");
   }, [visibleLevels, tab]);
 
-  const visibleTabs = TABS.filter((t) => t.value === "all" || visibleLevels.includes(t.value));
+  const visibleTabs = TABS.filter((t) => t.value === "all" || visibleLevels.includes(t.value === "buddy" ? "we" : t.value));
 
   const { data: allRows, isLoading: loading } = useSWR("leaderboard-phases", fetchLeaderboard, {
     revalidateOnFocus: false,
     dedupingInterval: 15_000,
   });
 
-  const pointsOf = (r: RankRow) => r[POINTS_KEY[tab]] ?? 0;
+  const pointsOf = (r: RankRow) => r[POINTS_KEY[tab === "buddy" ? "all" : tab]] ?? 0;
   const rows = allRows
     ? [...allRows].sort((a, b) => pointsOf(b) - pointsOf(a) || a.name.localeCompare(b.name, "th"))
     : undefined;
@@ -132,11 +134,13 @@ export default function RankingPage() {
         ))}
       </div>
 
-      {loading && !rows && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
+      {tab === "buddy" && <BuddyGroupRanking />}
 
-      {!loading && filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีข้อมูลอันดับ</p>}
+      {tab !== "buddy" && loading && !rows && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
-      {top3.length > 0 && (
+      {tab !== "buddy" && !loading && filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-10">ยังไม่มีข้อมูลอันดับ</p>}
+
+      {tab !== "buddy" && top3.length > 0 && (
         <div className="rounded-card bg-white shadow-soft p-4">
           <p className="text-sm font-semibold text-gray-700 mb-3">🏆 Top 3</p>
           <div className="flex items-end justify-center gap-3">
@@ -164,7 +168,7 @@ export default function RankingPage() {
         </div>
       )}
 
-      {isIndividual && (
+      {tab !== "buddy" && (
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
           <input
@@ -177,7 +181,7 @@ export default function RankingPage() {
       )}
 
       <ol className="space-y-2">
-        {rest.map((row, i) => {
+        {(tab === "buddy" ? [] : rest).map((row, i) => {
           const rank = rankOf(row);
           return (
             <li key={row.id} className="rounded-card bg-white shadow-soft p-3 flex items-center gap-3">
