@@ -238,6 +238,12 @@ export default function MissionsPage() {
             </p>
           )}
 
+          {isVisible && tab === "we" && (
+            <p className="text-xs text-we bg-we/10 rounded-lg px-3 py-2">
+              📌 1 กิจกรรมที่ทำ เช็คอินได้ <b>ภารกิจเดียว</b> เท่านั้น — เลือกข้อที่ตรงที่สุด · ภารกิจมีป้าย 🤝 ต้องทำพร้อม Buddy / 🙋 ทำแยกกันได้
+            </p>
+          )}
+
           {isVisible && (
             <>
               <div className="flex items-center justify-between">
