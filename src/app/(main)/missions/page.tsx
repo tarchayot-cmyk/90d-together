@@ -9,6 +9,7 @@ import CheckInModal from "@/components/CheckInModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import PhaseHero from "@/components/PhaseHero";
 import { THEMES } from "@/lib/badgeFields";
+import ThemeCapProgress from "@/components/ThemeCapProgress";
 import type { Mission, CheckIn } from "@/lib/types";
 
 function currentCampaignWeek(startDate: string): number {
@@ -243,6 +244,8 @@ export default function MissionsPage() {
               📌 1 กิจกรรมที่ทำ เช็คอินได้ <b>ภารกิจเดียว</b> เท่านั้น — เลือกข้อที่ตรงที่สุด · ภารกิจมีป้าย 🤝 ต้องทำพร้อม Buddy / 🙋 ทำแยกกันได้
             </p>
           )}
+
+          {isVisible && <ThemeCapProgress refreshKey={reward} />}
 
           {isVisible && (
             <>

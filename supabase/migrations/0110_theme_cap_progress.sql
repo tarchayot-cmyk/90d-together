@@ -1,0 +1,1 @@
+-- 0110: get_theme_cap_progress() (applied via MCP)
