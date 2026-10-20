@@ -1,0 +1,1 @@
+-- 0112: buddy_forced_pairs table + admin_preview_buddy_round honors forced pairs for the matching round_no (applied via MCP)
