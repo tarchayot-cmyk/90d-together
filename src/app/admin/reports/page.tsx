@@ -157,7 +157,7 @@ export default function AdminReportsPage() {
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-card bg-white shadow-soft p-3 text-center">
           <p className="text-xl font-bold text-us">{totals.points.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">⭐ Growth Points {tab === "all" || tab === "buddy" ? "รวม" : `ช่วง ${tab.toUpperCase()}`}</p>
+          <p className="text-xs text-gray-400">⭐ Growth Points {tab === "all" ? "รวม" : `ช่วง ${tab.toUpperCase()}`}</p>
         </div>
         <div className="rounded-card bg-white shadow-soft p-3 text-center">
           <p className="text-xl font-bold text-us">{totals.stickers.toLocaleString()}</p>
