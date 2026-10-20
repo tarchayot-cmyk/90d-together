@@ -37,9 +37,9 @@ function fmtDate(d?: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 }
 
-async function fetchRanking(_key: string, week: number | null): Promise<RankingData> {
+async function fetchRanking(all: boolean, week: number | null): Promise<RankingData> {
   const supabase = createClient();
-  const { data } = await supabase.rpc("get_buddy_group_ranking", { p_week: week });
+  const { data } = await supabase.rpc(all ? "get_buddy_group_ranking_all" : "get_buddy_group_ranking", { p_week: week });
   return (data as RankingData) ?? { available_weeks: [], top: [] };
 }
 
@@ -77,9 +77,10 @@ function GroupCard({ g, showRank }: { g: GroupRow; showRank?: boolean }) {
   );
 }
 
-export default function BuddyGroupRanking() {
+// all = true (admin): show every group instead of the Top 5
+export default function BuddyGroupRanking({ all = false }: { all?: boolean }) {
   const [week, setWeek] = useState<number | null>(null);
-  const { data, isLoading } = useSWR(["buddy-group-ranking", week], ([k, w]) => fetchRanking(k, w as number | null), {
+  const { data, isLoading } = useSWR(["buddy-group-ranking", all, week], ([, a, w]) => fetchRanking(a as boolean, w as number | null), {
     revalidateOnFocus: false,
     dedupingInterval: 15_000,
   });
