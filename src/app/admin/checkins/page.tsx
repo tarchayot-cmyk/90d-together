@@ -371,6 +371,9 @@ export default function AdminCheckinsPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {row.proof_urls?.filter((u) => /\.(mp4|mov|m4v|webm|3gp)(\?|$)/i.test(u)).map((url) => (
+                  <video key={url} src={url} controls preload="metadata" playsInline className="w-full max-h-72 rounded-lg bg-black" />
+                ))}
                 {row.proof_urls?.map((url, i) => (
                   <a
                     key={url}
@@ -380,7 +383,7 @@ export default function AdminCheckinsPage() {
                     className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 min-h-[32px] flex items-center gap-1"
                   >
                     <ImageIcon size={14} />
-                    รูป {i + 1}
+                    {/\.(mp4|mov|m4v|webm|3gp)(\?|$)/i.test(url) ? "เปิดคลิป" : `รูป ${i + 1}`}
                   </a>
                 ))}
 

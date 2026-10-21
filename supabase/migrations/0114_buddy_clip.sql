@@ -1,0 +1,1 @@
+-- 0114: mission_category buddy_clip + mission "คลิปวิดีโอกิจกรรมกับ Buddy" (c5ca1f4b...); complete_mission_with_buddy: clip validation + 1 per group per round; admin_approve_checkin: award whole group (applied via MCP)

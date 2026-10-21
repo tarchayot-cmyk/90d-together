@@ -21,6 +21,25 @@ interface Props {
 }
 
 const MAX_PROOF_IMAGES = 3;
+// คลิปกับ Buddy: 1 ไฟล์ ยาวไม่เกิน ~12 วินาที (เผื่อเวลา) ขนาดไม่เกิน 40 MB
+const MAX_CLIP_MB = 40;
+const MAX_CLIP_SECONDS = 12;
+
+function readVideoDuration(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    const done = (d: number | null) => {
+      URL.revokeObjectURL(url);
+      resolve(d);
+    };
+    v.preload = "metadata";
+    v.onloadedmetadata = () => done(Number.isFinite(v.duration) ? v.duration : null);
+    v.onerror = () => done(null); // เบราว์เซอร์อ่านไม่ได้ (เช่น HEVC) — ข้ามการเช็คความยาว เหลือเช็คขนาดไฟล์
+    setTimeout(() => done(null), 4000);
+    v.src = url;
+  });
+}
 
 // Human-readable messages for the exceptions raised by complete_mission()
 // (see supabase/migrations/0068_multi_proof_images.sql for the current version).
@@ -36,6 +55,9 @@ function friendlyError(raw: string): string {
   if (raw.includes("mission_not_in_current_phase")) return "ภารกิจนี้ยังไม่เปิดหรือปิดไปแล้ว (พ้นช่วงของภารกิจนี้)";
   if (raw.includes("mission_not_found")) return "ไม่พบภารกิจนี้";
   if (raw.includes("too_many_proof_images")) return `แนบรูปได้สูงสุด ${MAX_PROOF_IMAGES} รูปเท่านั้น`;
+  if (raw.includes("clip_already_submitted")) return "กลุ่มของคุณส่งคลิปในรอบนี้ไปแล้ว ✓ (1 คลิปต่อกลุ่มต่อรอบ)";
+  if (raw.includes("clip_required")) return "ต้องแนบคลิปวิดีโอ 1 ไฟล์ก่อน Check-in";
+  if (raw.includes("buddy_group_required")) return "ภารกิจนี้ใช้ได้เมื่อจับคู่ Buddy แล้วเท่านั้น";
   if (raw.includes("buddy_required")) return "เลือกชื่อ Buddy ที่ทำกิจกรรมด้วยกันก่อน Check-in นะ";
   if (raw.includes("buddy_invalid")) return "Buddy ที่เลือกไม่ถูกต้อง กรุณาเลือกใหม่";
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
@@ -53,6 +75,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
   const needsBuddy = !!mission.requires_buddy;
   const isBuddyWalk = mission.category === "buddy_walk";
+  const isClip = mission.category === "buddy_clip";
   const [buddyId, setBuddyId] = useState("");
   const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
   const [hasGroup, setHasGroup] = useState(true);
@@ -75,6 +98,26 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       cancelled = true;
     };
   }, [needsBuddy]);
+
+  async function addClip(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith("video/")) {
+      setError("กรุณาเลือกไฟล์วิดีโอ");
+      return;
+    }
+    if (file.size > MAX_CLIP_MB * 1024 * 1024) {
+      setError(`ไฟล์ใหญ่เกิน ${MAX_CLIP_MB} MB — ถ่ายให้สั้นลง (5–10 วินาที) หรือเลือกความละเอียดต่ำลงแล้วลองใหม่`);
+      return;
+    }
+    const dur = await readVideoDuration(file);
+    if (dur !== null && dur > MAX_CLIP_SECONDS) {
+      setError(`คลิปยาว ${Math.round(dur)} วินาที — ต้องไม่เกิน 10 วินาที กรุณาตัดให้สั้นลง`);
+      return;
+    }
+    setError(null);
+    setProofFiles([file]);
+  }
 
   function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -133,7 +176,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
     }
 
     if (mission.requires_proof && !isText && proofFiles.length === 0) {
-      setError("ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
+      setError(isClip ? "ภารกิจนี้ต้องแนบคลิปวิดีโอก่อน Check-in" : "ภารกิจนี้ต้องแนบรูปหลักฐานก่อน Check-in");
       return;
     }
 
@@ -155,8 +198,8 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
       const uploadedUrls: string[] = [];
       for (let i = 0; i < proofFiles.length; i++) {
-        const file = await compressImage(proofFiles[i]);
-        const ext = file.name.split(".").pop() || "jpg";
+        const file = isClip ? proofFiles[i] : await compressImage(proofFiles[i]);
+        const ext = file.name.split(".").pop() || (isClip ? "mp4" : "jpg");
         const path = `${user.id}/${mission.id}-${Date.now()}-${i}.${ext}`;
 
         const { error: uploadError } = await supabase.storage.from("proofs").upload(path, file, {
@@ -166,7 +209,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
         if (uploadError) {
           setLoading(false);
-          setError("แนบรูปไม่สำเร็จ กรุณาลองใหม่");
+          setError(isClip ? "อัปโหลดคลิปไม่สำเร็จ ตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่" : "แนบรูปไม่สำเร็จ กรุณาลองใหม่");
           return;
         }
 
@@ -236,7 +279,12 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
             แนบภาพหน้าจอก้าวของวันนี้ (สูงสุด {MAX_PROOF_IMAGES} รูป) — บันทึกได้ทันทีไม่ต้องรอ Admin คะแนนทุกคนในกลุ่มจะเข้าอัตโนมัติเมื่อก้าวรวมของกลุ่มถึงเป้า
           </p>
         )}
-        {mission.requires_proof && !isBuddyWalk && (
+        {isClip && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+            อัปโหลดคลิป 5–10 วินาที (ไม่เกิน {MAX_CLIP_MB} MB) · 1 คนอัปโหลดแทนทั้งกลุ่ม · ทุกคนในกลุ่มได้คะแนนพร้อมกันเมื่อ Admin ตรวจสอบและอนุมัติ
+          </p>
+        )}
+        {mission.requires_proof && !isBuddyWalk && !isClip && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
             {isText
               ? "ภารกิจนี้ต้องรอ Admin ตรวจคำตอบก่อน — คะแนน/สติ๊กเกอร์จะได้หลัง Admin ตรวจสอบและอนุมัติ"
@@ -326,7 +374,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
 
           <div>
             <label className="text-xs font-medium text-gray-500">
-              แนบรูปหลักฐาน {mission.requires_proof && !isText ? "" : "(ไม่บังคับ)"} ({proofFiles.length}/{MAX_PROOF_IMAGES})
+              {isClip ? "แนบคลิปวิดีโอ (1 ไฟล์)" : `แนบรูปหลักฐาน ${mission.requires_proof && !isText ? "" : "(ไม่บังคับ)"} (${proofFiles.length}/${MAX_PROOF_IMAGES})`}
             </label>
 
               {proofFiles.length > 0 && (
@@ -338,7 +386,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
                       <button
                         type="button"
                         onClick={() => removeFile(i)}
-                        aria-label="ลบรูปนี้"
+                        aria-label="ลบไฟล์นี้"
                         className="shrink-0 text-red-400 p-1 min-h-[28px] min-w-[28px] flex items-center justify-center"
                       >
                         <Trash2 size={14} />
@@ -348,17 +396,18 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
                 </div>
               )}
 
-              {proofFiles.length < MAX_PROOF_IMAGES && (
+              {proofFiles.length < (isClip ? 1 : MAX_PROOF_IMAGES) && (
                 <label className="mt-2 flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-500 cursor-pointer min-h-[44px]">
                   <Camera size={18} />
-                  {proofFiles.length === 0 ? "แตะเพื่อถ่ายรูป/เลือกรูป" : "เพิ่มรูปอีก"}
+                  {isClip ? "แตะเพื่อถ่ายคลิป/เลือกคลิป" : proofFiles.length === 0 ? "แตะเพื่อถ่ายรูป/เลือกรูป" : "เพิ่มรูปอีก"}
                   <input
                     type="file"
-                    accept="image/*"
-                    multiple
+                    accept={isClip ? "video/*" : "image/*"}
+                    multiple={!isClip}
                     className="hidden"
                     onChange={(e) => {
-                      addFiles(e.target.files);
+                      if (isClip) addClip(e.target.files);
+                      else addFiles(e.target.files);
                       e.target.value = "";
                     }}
                   />
