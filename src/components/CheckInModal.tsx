@@ -80,6 +80,22 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
   const [hasGroup, setHasGroup] = useState(true);
   const [buddyLoading, setBuddyLoading] = useState(needsBuddy);
+  const [clipStatus, setClipStatus] = useState<{ submitted?: boolean; by_name?: string; by_me?: boolean; status?: string } | null>(null);
+
+  // คลิปกับ Buddy: เช็กก่อนว่ากลุ่มส่งในรอบนี้ไปแล้วหรือยัง จะได้ไม่ต้องอัปโหลดเสียเปล่า
+  useEffect(() => {
+    if (!isClip) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.rpc("get_my_group_clip_status", { p_mission_id: mission.id });
+      if (!cancelled) setClipStatus(data ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isClip, mission.id]);
+  const clipBlocked = isClip && !!clipStatus?.submitted;
 
   useEffect(() => {
     if (!needsBuddy) return;
@@ -292,7 +308,16 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        {clipBlocked && (
+          <p className="text-sm text-us bg-us/10 rounded-lg px-3 py-3">
+            {clipStatus?.by_me ? "คุณ" : clipStatus?.by_name}ส่งคลิปของกลุ่มในรอบนี้แล้ว ✓{" "}
+            {clipStatus?.status === "pending"
+              ? "รอ Admin ตรวจสอบ — เมื่ออนุมัติ ทุกคนในกลุ่มจะได้คะแนนพร้อมกัน ไม่ต้องอัปโหลดซ้ำ"
+              : "ทุกคนในกลุ่มได้คะแนนแล้ว ไม่ต้องอัปโหลดซ้ำ"}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className={clipBlocked ? "hidden" : "space-y-3"}>
           {needsBuddy && (
             <div>
               <label className="text-xs font-medium text-gray-500">ทำกิจกรรมนี้กับ Buddy คนไหน</label>
