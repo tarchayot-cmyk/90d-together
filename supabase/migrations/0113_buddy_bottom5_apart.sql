@@ -1,0 +1,1 @@
+-- 0113: admin_preview_buddy_round forbids the 5 lowest 14-day scorers from sharing a group (applied via MCP)
