@@ -1,0 +1,1 @@
+-- 0117: buddy group ranking uses uncapped activity points (applied via MCP)
