@@ -25,6 +25,7 @@ export default function AllNotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
@@ -82,10 +83,18 @@ export default function AllNotificationsPage() {
   }
 
   async function handleMarkAllRead() {
+    if (markingAll) return;
+    setMarkingAll(true);
+    setActionError(null);
+    // อัปเดตหน้าจอทันที (optimistic) แล้วค่อยบอกเซิร์ฟเวอร์ ถ้าไม่สำเร็จจะย้อนกลับและแจ้งเตือน
+    const snapshot = items;
+    setItems((prev) => prev.map((x) => ({ ...x, is_read: true })));
     const supabase = createClient();
     const { error } = await supabase.rpc("mark_all_notifications_read");
-    if (!error) {
-      setItems((prev) => prev.map((x) => ({ ...x, is_read: true })));
+    setMarkingAll(false);
+    if (error) {
+      setItems(snapshot);
+      setActionError("ทำเครื่องหมายอ่านแล้วไม่สำเร็จ กรุณาลองใหม่");
     }
   }
 
@@ -98,7 +107,7 @@ export default function AllNotificationsPage() {
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button onClick={handleMarkAllRead} className="text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[36px]">
+            <button onClick={handleMarkAllRead} disabled={markingAll} className="disabled:opacity-50 text-xs font-semibold text-us border border-us/30 rounded-full px-3 py-1.5 min-h-[36px]">
               อ่านทั้งหมด
             </button>
           )}
