@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: alter type notification_type add value if not exists 'points_milestone';

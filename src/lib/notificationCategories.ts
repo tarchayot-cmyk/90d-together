@@ -23,6 +23,7 @@ const CATEGORY_BY_TYPE: Record<string, NotificationCategory> = {
   buddy_flame_nudge: { label: "Buddy", icon: "🔥" },
   buddy_thanks: { label: "Buddy", icon: "💌" },
   buddy_walk_goal: { label: "Buddy", icon: "👟" },
+  points_milestone: { label: "ของรางวัล", icon: "🎉" },
   comeback_bonus: { label: "โบนัส", icon: "👋" },
   weekly_goal_completed: { label: "โบนัส", icon: "🎯" },
   voting_opened: { label: "โพลกิจกรรม", icon: "📢" },

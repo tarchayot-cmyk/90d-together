@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: table shirt_orders (RLS), get_my_shirt_status(), set_my_shirt_size(text), admin_shirt_orders()
