@@ -18,6 +18,7 @@ const TABS = [
   { href: "/admin/tree-images", label: "🌳 รูปต้นไม้" },
   { href: "/admin/proposals", label: "📢 Proposals" },
   { href: "/admin/checkins", label: "✅ Check-ins" },
+  { href: "/admin/clips", label: "🎬 คลิป Buddy" },
   { href: "/admin/reports", label: "📊 Reports" },
   { href: "/admin/campaign", label: "📅 Campaign" },
   { href: "/admin/audit", label: "📋 Audit" },
