@@ -18,6 +18,15 @@ function one<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? v[0] ?? null : v;
 }
 
+// Supabase Storage บังคับให้ดาวน์โหลดไฟล์ได้เมื่อมีพารามิเตอร์ ?download=ชื่อไฟล์ (แอตทริบิวต์ download ใช้ไม่ได้ข้ามโดเมน)
+function downloadUrl(url: string, r: ClipRow): string {
+  const ext = (url.split("?")[0].match(/\.(\w{2,4})$/)?.[1] ?? "mp4").toLowerCase();
+  const who = (one(r.member)?.full_name ?? "clip").replace(/[^\p{L}\p{N}]+/gu, "_");
+  const day = new Date(r.created_at).toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
+  const name = encodeURIComponent(`buddy-clip_${day}_${who}.${ext}`);
+  return url + (url.includes("?") ? "&" : "?") + "download=" + name;
+}
+
 const dateFmt = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });
 const STATUS: Record<string, string> = { pending: "รอตรวจ", approved: "อนุมัติแล้ว", rejected: "ปฏิเสธแล้ว" };
 
@@ -114,9 +123,14 @@ export default function AdminClipsPage() {
             {r.proof_urls?.map((url) => (
               <div key={url} className="space-y-1">
                 <video src={url} controls preload="metadata" className="w-full rounded-lg bg-black max-h-80" />
-                <a href={url} target="_blank" rel="noreferrer" download className="inline-flex items-center gap-1 text-xs text-us font-medium">
-                  <Download size={12} /> เปิด/ดาวน์โหลดคลิป
-                </a>
+                <div className="flex items-center gap-3">
+                  <a href={downloadUrl(url, r)} className="inline-flex items-center gap-1 text-xs text-us font-medium">
+                    <Download size={12} /> ดาวน์โหลดคลิป
+                  </a>
+                  <a href={url} target="_blank" rel="noreferrer" className="text-xs text-gray-400">
+                    เปิดในแท็บใหม่
+                  </a>
+                </div>
               </div>
             ))}
           </div>
