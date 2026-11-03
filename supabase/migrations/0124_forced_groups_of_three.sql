@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: buddy_forced_pairs.member_c; preview honors 3-person forced groups; admin_list_forced_groups(), admin_add_forced_group(round, uuid[]); confirm notification wording neutral

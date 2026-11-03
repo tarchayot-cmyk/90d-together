@@ -5,10 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 
 interface Pair {
   round_no: number;
-  member_a: string;
-  name_a: string;
-  member_b: string;
-  name_b: string;
+  names: string;
   next_round: number;
 }
 interface Mem {
@@ -24,13 +21,14 @@ export default function AdminBuddyPairsPage() {
   const [round, setRound] = useState<number | null>(null);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
+  const [c, setC] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   async function load() {
     const supabase = createClient();
     const [{ data: p }, { data: m }, { data: st }] = await Promise.all([
-      supabase.rpc("admin_list_forced_pairs"),
+      supabase.rpc("admin_list_forced_groups"),
       supabase.from("members").select("id, full_name, employee_code").eq("role", "participant").eq("is_active", true).order("full_name"),
       supabase.rpc("admin_buddy_round_status"),
     ]);
@@ -45,13 +43,13 @@ export default function AdminBuddyPairsPage() {
     load();
   }, []);
 
-  const pairedInRound = new Set(pairs.filter((x) => x.round_no === round).flatMap((x) => [x.member_a, x.member_b]));
+  const pairedNames = new Set(pairs.filter((x) => x.round_no === round).flatMap((x) => x.names.split(" + ")));
 
   async function add() {
     if (!a || !b || round == null || busy) return;
     setBusy(true);
     setMsg(null);
-    const { error } = await createClient().rpc("admin_add_forced_pair", { p_round_no: round, p_a: a, p_b: b });
+    const { error } = await createClient().rpc("admin_add_forced_group", { p_round_no: round, p_members: [a, b, ...(c ? [c] : [])] });
     setBusy(false);
     if (error) {
       setMsg(
@@ -65,13 +63,14 @@ export default function AdminBuddyPairsPage() {
     }
     setA("");
     setB("");
+    setC("");
     setMsg("เพิ่มคู่แล้ว ✓");
     load();
   }
 
-  const opts = (exclude: string) =>
+  const opts = (...exclude: string[]) =>
     members
-      .filter((m) => m.id !== exclude && !pairedInRound.has(m.id))
+      .filter((m) => !exclude.includes(m.id) && !pairedNames.has(m.full_name))
       .map((m) => (
         <option key={m.id} value={m.id}>
           {m.full_name} ({m.employee_code})
@@ -81,9 +80,9 @@ export default function AdminBuddyPairsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-800">🤝 กำหนดคู่ Buddy ล่วงหน้า</h1>
+        <h1 className="text-xl font-bold text-gray-800">🤝 กำหนดคู่/กลุ่ม Buddy ล่วงหน้า</h1>
         <p className="text-xs text-gray-500">
-          สมาชิกที่เลือกจับคู่กันเอง แล้วแจ้งแอดมิน ให้กรอกที่นี่ก่อนกดสุ่มจับคู่ ระบบจะจัดคู่เหล่านี้ไว้ก่อน แล้วสุ่มคนที่เหลือตามปกติ (กลุ่มที่กำหนดไว้เป็นคู่เสมอ ไม่ถูกเพิ่มคนที่ 3)
+          สมาชิกที่เลือกจับคู่กันเอง แล้วแจ้งแอดมิน ให้กรอกที่นี่ก่อนกดสุ่มจับคู่ ระบบจะจัดคู่เหล่านี้ไว้ก่อน แล้วสุ่มคนที่เหลือตามปกติ (กลุ่มที่กำหนดไว้ใส่ได้ 2 หรือ 3 คน และจะไม่ถูกเพิ่มคนอื่นเข้ามาอีก)
         </p>
       </div>
 
@@ -101,11 +100,15 @@ export default function AdminBuddyPairsPage() {
         </label>
         <select value={a} onChange={(e) => setA(e.target.value)} className="w-full rounded border border-gray-200 px-2 py-2.5 text-sm bg-white">
           <option value="">เลือกคนที่ 1</option>
-          {opts(b)}
+          {opts(b, c)}
         </select>
         <select value={b} onChange={(e) => setB(e.target.value)} className="w-full rounded border border-gray-200 px-2 py-2.5 text-sm bg-white">
           <option value="">เลือกคนที่ 2</option>
-          {opts(a)}
+          {opts(a, c)}
+        </select>
+        <select value={c} onChange={(e) => setC(e.target.value)} className="w-full rounded border border-gray-200 px-2 py-2.5 text-sm bg-white">
+          <option value="">คนที่ 3 (ไม่บังคับ — ถ้ากลุ่มมี 3 คน)</option>
+          {opts(a, b)}
         </select>
         <button
           onClick={add}
@@ -118,12 +121,12 @@ export default function AdminBuddyPairsPage() {
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs text-gray-400">คู่ที่กำหนดไว้แล้ว ({pairs.length})</p>
+        <p className="text-xs text-gray-400">กลุ่มที่กำหนดไว้แล้ว ({pairs.length})</p>
         {pairs.length === 0 && <p className="text-sm text-gray-400 text-center py-6">ยังไม่มี</p>}
         {pairs.map((p) => (
-          <div key={`${p.round_no}-${p.member_a}`} className="rounded-card bg-white shadow-soft p-3 flex items-center justify-between gap-2">
+          <div key={`${p.round_no}-${p.names}`} className="rounded-card bg-white shadow-soft p-3 flex items-center justify-between gap-2">
             <p className="text-sm text-gray-800">
-              {p.name_a} + {p.name_b}
+              {p.names}
             </p>
             <span className="text-xs text-gray-400 shrink-0">รอบ {p.round_no}</span>
           </div>
