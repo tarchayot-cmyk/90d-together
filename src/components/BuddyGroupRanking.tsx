@@ -20,11 +20,11 @@ interface GroupRow {
 }
 
 interface RankingData {
-  week?: number;
-  current_week?: number;
-  week_start?: string;
-  week_end?: string;
-  available_weeks: number[];
+  round?: number;
+  current_round?: number;
+  round_start?: string;
+  round_end?: string;
+  available_rounds: number[];
   total_groups?: number;
   top: GroupRow[];
   mine?: GroupRow | null;
@@ -37,10 +37,10 @@ function fmtDate(d?: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 }
 
-async function fetchRanking(all: boolean, week: number | null): Promise<RankingData> {
+async function fetchRanking(all: boolean, round: number | null): Promise<RankingData> {
   const supabase = createClient();
-  const { data } = await supabase.rpc(all ? "get_buddy_group_ranking_all" : "get_buddy_group_ranking", { p_week: week });
-  return (data as RankingData) ?? { available_weeks: [], top: [] };
+  const { data } = await supabase.rpc("get_buddy_ranking_by_round", { p_round: round, p_all: all });
+  return (data as RankingData) ?? { available_rounds: [], top: [] };
 }
 
 function GroupCard({ g, showRank }: { g: GroupRow; showRank?: boolean }) {
@@ -79,8 +79,8 @@ function GroupCard({ g, showRank }: { g: GroupRow; showRank?: boolean }) {
 
 // all = true (admin): show every group instead of the Top 5
 export default function BuddyGroupRanking({ all = false }: { all?: boolean }) {
-  const [week, setWeek] = useState<number | null>(null);
-  const { data, isLoading } = useSWR(["buddy-group-ranking", all, week], ([, a, w]) => fetchRanking(a as boolean, w as number | null), {
+  const [round, setRound] = useState<number | null>(null);
+  const { data, isLoading } = useSWR(["buddy-group-ranking-round", all, round], ([, a, r]) => fetchRanking(a as boolean, r as number | null), {
     revalidateOnFocus: false,
     dedupingInterval: 15_000,
   });
@@ -90,27 +90,27 @@ export default function BuddyGroupRanking({ all = false }: { all?: boolean }) {
   return (
     <div className="space-y-3">
       <div className="rounded-card bg-white shadow-soft p-3 text-xs text-gray-500 space-y-1">
-        <p className="font-semibold text-gray-700">🤝 อันดับกลุ่ม Buddy ประจำสัปดาห์</p>
+        <p className="font-semibold text-gray-700">🤝 อันดับกลุ่ม Buddy ประจำรอบ</p>
         <p>
           จัดอันดับจาก<b>คะแนนเฉลี่ยต่อคน</b> เพื่อให้กลุ่ม 2 คนและ 3 คนแข่งกันได้ยุติธรรม
-          นับ<b>คะแนนกิจกรรมของกลุ่ม (ไม่หักเพดานธีม)</b> ที่สมาชิกทำสำเร็จในสัปดาห์นั้น (พฤหัสฯ ถึง พุธ)
-          ตัวเลขจึงอาจสูงกว่าคะแนนส่วนตัวของแต่ละคนถ้าธีมนั้นเต็มเพดานแล้ว
+          นับ<b>คะแนนกิจกรรมของกลุ่ม (ไม่หักเพดานธีม)</b> ที่สมาชิกทำสำเร็จในรอบนั้น
+          ตัวเลขจึงอาจสูงกว่าคะแนนส่วนตัวของแต่ละคนถ้าธีมนั้นเต็มเพดานแล้ว อันดับกลุ่มจัดถึงรอบสุดท้ายของช่วง WE เท่านั้น
         </p>
       </div>
 
-      {data && data.available_weeks.length > 1 && (
+      {data && data.available_rounds.length > 1 && (
         <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {data.available_weeks.map((w) => (
+          {data.available_rounds.map((r) => (
             <button
-              key={w}
-              onClick={() => setWeek(w === data.current_week ? null : w)}
+              key={r}
+              onClick={() => setRound(r === data.current_round ? null : r)}
               className={clsx(
                 "rounded-full px-3 py-2 text-xs font-semibold min-h-[36px] shrink-0",
-                (week ?? data.current_week) === w ? "bg-we text-white" : "bg-white text-gray-500 shadow-soft"
+                (round ?? data.current_round) === r ? "bg-we text-white" : "bg-white text-gray-500 shadow-soft"
               )}
             >
-              สัปดาห์ {w}
-              {w === data.current_week ? " (ปัจจุบัน)" : ""}
+              รอบ {r}
+              {r === data.current_round ? " (ล่าสุด)" : ""}
             </button>
           ))}
         </div>
@@ -118,14 +118,14 @@ export default function BuddyGroupRanking({ all = false }: { all?: boolean }) {
 
       {isLoading && !data && <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>}
 
-      {data && data.available_weeks.length === 0 && (
+      {data && data.available_rounds.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-10">อันดับกลุ่ม Buddy จะเริ่มตั้งแต่ช่วง WE</p>
       )}
 
-      {data && data.week && (
+      {data && data.round && (
         <>
           <p className="text-xs text-gray-400">
-            {fmtDate(data.week_start)} – {fmtDate(data.week_end)} · ทั้งหมด {data.total_groups} กลุ่ม
+            รอบ {data.round} · {fmtDate(data.round_start)} – {fmtDate(data.round_end)} · ทั้งหมด {data.total_groups} กลุ่ม
           </p>
           <ol className="space-y-2">
             {data.top.map((g) => (

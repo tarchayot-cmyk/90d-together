@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: get_buddy_ranking_by_round(p_round, p_all); rounds shown only up to the end of WE (campaign day 60)
