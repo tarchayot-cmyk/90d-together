@@ -9,6 +9,7 @@ import BadgeFamilyList, { type BadgeRow } from "@/components/BadgeFamilyList";
 import FeedbackModal from "@/components/FeedbackModal";
 import CheckInHistoryModal from "@/components/CheckInHistoryModal";
 import { shortName } from "@/lib/displayName";
+import PairPauseCard from "@/components/PairPauseCard";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -189,6 +190,8 @@ export default function ProfilePage() {
         </label>
         {genderMsg && <p className="text-xs text-gray-500">{genderMsg}</p>}
       </div>
+
+      <PairPauseCard />
 
       <div className="rounded-card bg-white shadow-soft p-4 space-y-3">
         <h2 className="font-semibold text-gray-800 text-sm">🏅 Badge ของฉัน</h2>

@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: members.pair_paused, feature_flags (pair_pause allowed for EMP001), feature_enabled(), get_my_pair_pause(), set_my_pair_pause(); admin_preview_buddy_round skips pair_paused
