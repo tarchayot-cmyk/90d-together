@@ -111,8 +111,8 @@ export default function HomePage() {
       )}
 
       {member?.role === "participant" && <ShirtRewardCard />}
-      {member?.role === "participant" && <BuddySignupCard />}
-      {member?.role === "participant" && <GroupEventsCard />}
+      {member && <BuddySignupCard />}
+      {member && <GroupEventsCard />}
       {member?.role === "participant" && <WeeklyGoalCard />}
 
       {member && member.role === "participant" && !member.gender && !genderNudgeHidden && (
