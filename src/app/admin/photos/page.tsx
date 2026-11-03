@@ -32,6 +32,7 @@ export default function AdminPhotosPage() {
   const [progress, setProgress] = useState("");
   const [done, setDone] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState<string | null>(null);
+  const [scriptDone, setScriptDone] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -158,7 +159,7 @@ export default function AdminPhotosPage() {
   }
 
   async function remove(g: Group) {
-    if (busy || !done.has(g.name)) return;
+    if (busy || !(done.has(g.name) || scriptDone)) return;
     const targets = g.rows.filter((r) => r.proof_status !== "pending");
     const paths = targets.flatMap((r) => r.proof_urls ?? []).filter((u) => IMG.test(u.split("?")[0])).map((u) => u.split(MARK)[1]?.split("?")[0]).filter(Boolean) as string[];
     if (!window.confirm(`ลบรูปของ “${g.name}” จำนวน ${paths.length} รูปออกจากระบบถาวร?\n(คะแนนและสติ๊กเกอร์ไม่กระทบ · รายการที่ยังรอตรวจจะไม่ถูกลบ)\n\nดาวน์โหลดและตรวจไฟล์ในเครื่องแล้วใช่ไหม?`)) return;
@@ -190,6 +191,10 @@ export default function AdminPhotosPage() {
           กดดาวน์โหลดเป็น ZIP ต่อภารกิจ (แบ่งไฟล์ละ {PART_SIZE} รูป) ชื่อไฟล์ = วันที่_รหัส_ชื่อ · ปุ่มลบจะเปิดให้หลังดาวน์โหลดครบเท่านั้น · ไม่รวมคลิปวิดีโอ
         </p>
       </div>
+      <label className="flex items-start gap-2 text-xs text-gray-600 rounded-card bg-white shadow-soft p-3">
+        <input type="checkbox" checked={scriptDone} onChange={(e) => setScriptDone(e.target.checked)} className="mt-0.5" />
+        <span>ฉันโหลดรูปด้วยสคริปต์ในคอมครบแล้ว (ตรวจจำนวนไฟล์แล้ว) — เปิดปุ่มลบให้ทุกภารกิจ</span>
+      </label>
       {msg && <p className="text-xs rounded-card bg-white shadow-soft p-3 text-gray-700">{msg}</p>}
       {busy && <p className="text-xs text-us">⏳ {busy} · {progress} (อย่าปิดหน้านี้)</p>}
       {loading && <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>}
@@ -206,7 +211,7 @@ export default function AdminPhotosPage() {
             <button onClick={() => downloadEach(g)} disabled={!!busy} className="rounded-full border border-gray-200 text-gray-600 text-xs px-3 py-2 min-h-[36px] disabled:opacity-50">
               ⬇ ทีละไฟล์
             </button>
-            <button onClick={() => remove(g)} disabled={!!busy || !done.has(g.name)} className="rounded-full border border-red-200 text-red-400 text-xs px-3 py-2 min-h-[36px] disabled:opacity-40">
+            <button onClick={() => remove(g)} disabled={!!busy || !(done.has(g.name) || scriptDone)} className="rounded-full border border-red-200 text-red-400 text-xs px-3 py-2 min-h-[36px] disabled:opacity-40">
               🗑 ลบรูปภารกิจนี้
             </button>
           </div>
