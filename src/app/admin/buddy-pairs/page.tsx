@@ -8,6 +8,12 @@ interface Pair {
   names: string;
   next_round: number;
 }
+interface SignupRow {
+  name: string;
+  mode: string;
+  partner: string | null;
+  status: string;
+}
 interface Mem {
   id: string;
   full_name: string;
@@ -24,6 +30,7 @@ export default function AdminBuddyPairsPage() {
   const [c, setC] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [signups, setSignups] = useState<{ round_no: number | null; rows: SignupRow[]; not_signed: string[] } | null>(null);
 
   async function load() {
     const supabase = createClient();
@@ -32,6 +39,8 @@ export default function AdminBuddyPairsPage() {
       supabase.from("members").select("id, full_name, employee_code").eq("role", "participant").eq("is_active", true).order("full_name"),
       supabase.rpc("admin_buddy_round_status"),
     ]);
+    const { data: su } = await supabase.rpc("admin_list_buddy_signups");
+    setSignups(su ?? null);
     setPairs((p as Pair[]) ?? []);
     setMembers((m as Mem[]) ?? []);
     const nr = (p as Pair[] | null)?.[0]?.next_round ?? (st?.round_no ? Number(st.round_no) + 1 : null);
@@ -119,6 +128,28 @@ export default function AdminBuddyPairsPage() {
         </button>
         {msg && <p className="text-xs text-gray-500">{msg}</p>}
       </div>
+
+      {signups?.round_no != null && (
+        <div className="rounded-card bg-white shadow-soft p-3 space-y-2">
+          <p className="text-sm font-semibold text-gray-700">📝 สมัครจับคู่ Buddy รอบที่ {signups.round_no} (สมัครใจ)</p>
+          <p className="text-xs text-gray-500">
+            สมัครแล้ว {signups.rows.filter((r) => r.mode !== "none").length} คน · สุ่ม {signups.rows.filter((r) => r.mode === "random").length} · ขอคู่ตรงกัน{" "}
+            {signups.rows.filter((r) => r.status === "mutual").length / 2 || 0} คู่ · รอตอบกลับ {signups.rows.filter((r) => r.status === "waiting").length} · ยังไม่สมัคร {signups.not_signed.length} คน
+          </p>
+          <ul className="text-xs text-gray-600 space-y-0.5 max-h-48 overflow-y-auto">
+            {signups.rows.map((r) => (
+              <li key={r.name}>
+                {r.name} — {r.mode === "random" ? "สุ่ม" : r.mode === "none" ? "ไม่ขอจับคู่" : `ขอคู่กับ ${r.partner} (${r.status === "mutual" ? "ตรงกัน ✓" : "รอตอบกลับ"})`}
+              </li>
+            ))}
+          </ul>
+          <details className="text-xs text-gray-500">
+            <summary className="cursor-pointer">ยังไม่สมัคร ({signups.not_signed.length})</summary>
+            <p className="mt-1">{signups.not_signed.join(", ") || "-"}</p>
+          </details>
+          <p className="text-[11px] text-gray-400">คู่ที่ตรงกันจะถูกจัดไว้ให้อัตโนมัติตอนกดสุ่ม คนที่สุ่ม/ไม่ตรงกันจะถูกสุ่มรวมกัน คนที่ไม่สมัครจะไม่ถูกจับคู่</p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <p className="text-xs text-gray-400">กลุ่มที่กำหนดไว้แล้ว ({pairs.length})</p>

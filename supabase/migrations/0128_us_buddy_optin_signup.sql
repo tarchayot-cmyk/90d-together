@@ -1,0 +1,3 @@
+-- applied via Supabase MCP: buddy_round_settings (round 5 opt_in), buddy_round_overrides round 5 lock to 2026-12-14 00:00 Bangkok,
+-- feature flag us_buddy_signup (EMP001 only), buddy_signups, get_my_buddy_signup(), list_signup_candidates(), set_my_buddy_signup(), admin_list_buddy_signups();
+-- admin_preview_buddy_round: opt-in pool + mutual partner pairs as forced pairs

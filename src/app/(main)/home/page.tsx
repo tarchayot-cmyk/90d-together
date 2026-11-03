@@ -15,6 +15,7 @@ import AvatarCircle from "@/components/AvatarCircle";
 import PhaseHero from "@/components/PhaseHero";
 import ShirtRewardCard from "@/components/ShirtRewardCard";
 import GroupEventsCard from "@/components/GroupEventsCard";
+import BuddySignupCard from "@/components/BuddySignupCard";
 import { getNotificationCategory } from "@/lib/notificationCategories";
 import { shortName } from "@/lib/displayName";
 import type { Mission } from "@/lib/types";
@@ -110,6 +111,7 @@ export default function HomePage() {
       )}
 
       {member?.role === "participant" && <ShirtRewardCard />}
+      {member?.role === "participant" && <BuddySignupCard />}
       {member?.role === "participant" && <GroupEventsCard />}
       {member?.role === "participant" && <WeeklyGoalCard />}
 
