@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: pg_cron job close_halloween_mission (one-off, 2026-11-14 00:00 Bangkok): deactivates the Halloween mission at US start; job unschedules itself

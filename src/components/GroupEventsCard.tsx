@@ -18,7 +18,19 @@ export default function GroupEventsCard() {
   if (!data) return null;
   const now = Date.now();
   const upcoming = data.filter((e) => e.status === "open" && new Date(e.ends_at ?? new Date(e.starts_at).getTime() + 3 * 3600_000).getTime() >= now);
-  const mine = data.filter((e) => e.i_attended && e.status === "completed");
+  const mine = data.filter((e) => e.i_attended && e.status === "completed" && e.my_points > 0);
+  const groups: GroupEvent[][] = [];
+  const seen = new Map<string, GroupEvent[]>();
+  for (const e of upcoming) {
+    const k = e.series_id ?? e.id;
+    let g = seen.get(k);
+    if (!g) {
+      g = [];
+      seen.set(k, g);
+      groups.push(g);
+    }
+    g.push(e);
+  }
   if (upcoming.length === 0 && mine.length === 0) return null;
 
   async function toggle(e: GroupEvent) {
@@ -43,34 +55,44 @@ export default function GroupEventsCard() {
         </p>
       </div>
 
-      {upcoming.map((e) => {
-        const t = THEME_LABEL[e.theme];
-        const n = Math.max(e.rsvp_count, 1);
+      {groups.map((g) => {
+        const first = g[0];
+        const t = THEME_LABEL[first.theme];
+        const total = Math.max(first.series_rsvp_count, 1);
+        const multi = g.length > 1;
         return (
-          <div key={e.id} className="rounded-xl border border-gray-100 p-3 space-y-1.5">
+          <div key={first.series_id ?? first.id} className="rounded-xl border border-gray-100 p-3 space-y-2">
             <p className="text-sm font-semibold text-gray-800">
-              {t?.icon} {e.title}
+              {t?.icon} {first.title}
             </p>
-            <p className="text-xs text-gray-500">
-              🗓 {fmtEventTime(e.starts_at)}
-              {e.location ? ` · 📍 ${e.location}` : ""}
-            </p>
-            {e.description && <p className="text-xs text-gray-500">{e.description}</p>}
+            {first.description && <p className="text-xs text-gray-500">{first.description}</p>}
+            {multi && <p className="text-xs text-us">มี {g.length} รอบ — เลือกลงชื่อได้ 1 รอบ (ไม่ได้ลงชื่อก็มาได้)</p>}
             <p className="text-xs text-gray-600">
-              ลงชื่อแล้ว {e.rsvp_count}
-              {e.capacity ? `/${e.capacity}` : ""} คน · ถ้ามา {n} คน ได้คนละ <b>{eventPointsEach(n, e.points_per_person, e.points_cap)}</b> คะแนน
+              ลงชื่อแล้วรวม {first.series_rsvp_count} คน · ถ้ามา {total} คน ได้คนละ <b>{eventPointsEach(total, first.points_per_person, first.points_cap)}</b> คะแนน
             </p>
-            <button
-              onClick={() => toggle(e)}
-              disabled={busyId === e.id || (!e.i_rsvped && !!e.capacity && e.rsvp_count >= e.capacity)}
-              className={
-                e.i_rsvped
-                  ? "rounded-full border border-us/40 text-us text-sm font-semibold px-4 min-h-[40px] disabled:opacity-50"
-                  : "rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px] disabled:opacity-50"
-              }
-            >
-              {e.i_rsvped ? "✓ ลงชื่อแล้ว (กดเพื่อยกเลิก)" : "ลงชื่อเข้าร่วม"}
-            </button>
+            {g.map((e) => (
+              <div key={e.id} className="rounded-lg bg-gray-50 p-2 space-y-1.5">
+                <p className="text-xs text-gray-600">
+                  {multi ? `รอบที่ ${e.session_no} · ` : ""}🗓 {fmtEventTime(e.starts_at)}
+                  {e.location ? ` · 📍 ${e.location}` : ""}
+                </p>
+                <p className="text-xs text-gray-500">
+                  ลงชื่อ {e.rsvp_count}
+                  {e.capacity ? `/${e.capacity}` : ""} คน
+                </p>
+                <button
+                  onClick={() => toggle(e)}
+                  disabled={busyId === e.id || (!e.i_rsvped && !!e.capacity && e.rsvp_count >= e.capacity)}
+                  className={
+                    e.i_rsvped
+                      ? "rounded-full border border-us/40 text-us text-sm font-semibold px-4 min-h-[40px] disabled:opacity-50"
+                      : "rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px] disabled:opacity-50"
+                  }
+                >
+                  {e.i_rsvped ? "✓ ลงชื่อแล้ว (กดเพื่อยกเลิก)" : multi && g.some((x) => x.i_rsvped) ? "ย้ายมารอบนี้" : "ลงชื่อเข้าร่วม"}
+                </button>
+              </div>
+            ))}
           </div>
         );
       })}

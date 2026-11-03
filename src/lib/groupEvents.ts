@@ -29,6 +29,9 @@ export interface GroupEvent {
   ends_at: string | null;
   capacity: number | null;
   status: "open" | "completed" | "cancelled";
+  series_id: string | null;
+  session_no: number;
+  series_rsvp_count: number;
   points_per_person: number;
   points_cap: number;
   rsvp_count: number;

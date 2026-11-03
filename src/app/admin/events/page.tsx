@@ -14,6 +14,8 @@ interface Ev {
   ends_at: string | null;
   capacity: number | null;
   status: "open" | "completed" | "cancelled";
+  series_id: string | null;
+  session_no: number;
   rsvp_count: number;
   attended_count: number;
 }
@@ -45,6 +47,8 @@ export default function AdminEventsPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [rosterBusy, setRosterBusy] = useState(false);
   const [q, setQ] = useState("");
+  const [addFor, setAddFor] = useState<Ev | null>(null);
+  const [s2, setS2] = useState({ starts: "", ends: "", location: "", capacity: "" });
 
   async function load() {
     const { data } = await createClient().rpc("admin_list_group_events");
@@ -79,6 +83,28 @@ export default function AdminEventsPage() {
     }
     setMsg(status === "cancelled" ? "ยกเลิกกิจกรรมแล้ว" : "บันทึกแล้ว ✓");
     setForm(EMPTY);
+    load();
+  }
+
+  async function addSession() {
+    if (!addFor || !s2.starts) {
+      setMsg("กรอกวัน-เวลาเริ่มของรอบที่เพิ่ม");
+      return;
+    }
+    const { error } = await createClient().rpc("admin_add_event_session", {
+      p_event: addFor.id,
+      p_starts_at: new Date(s2.starts).toISOString(),
+      p_ends_at: s2.ends ? new Date(s2.ends).toISOString() : null,
+      p_location: s2.location,
+      p_capacity: s2.capacity ? Number(s2.capacity) : null,
+    });
+    if (error) {
+      setMsg("เพิ่มรอบไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+    setMsg("เพิ่มรอบแล้ว ✓ (สมาชิกเลือกลงชื่อได้รอบเดียว)");
+    setAddFor(null);
+    setS2({ starts: "", ends: "", location: "", capacity: "" });
     load();
   }
 
@@ -185,6 +211,7 @@ export default function AdminEventsPage() {
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-semibold text-gray-800">
                 {THEME_LABEL[e.theme]?.icon} {e.title}
+                {e.series_id ? ` (รอบที่ ${e.session_no})` : ""}
               </p>
               <span className="text-[11px] rounded-full bg-gray-50 text-gray-500 px-2 py-0.5 shrink-0">
                 {e.status === "open" ? "เปิดลงชื่อ" : e.status === "completed" ? "เช็กชื่อแล้ว" : "ยกเลิก"}
@@ -206,11 +233,37 @@ export default function AdminEventsPage() {
                 <button onClick={() => edit(e)} className="rounded-full border border-gray-200 text-gray-500 text-xs px-3 py-2 min-h-[36px]">
                   แก้ไขรายละเอียด
                 </button>
+                <button onClick={() => { setAddFor(e); setS2({ starts: "", ends: "", location: e.location ?? "", capacity: e.capacity ? String(e.capacity) : "" }); }} className="rounded-full border border-us/40 text-us text-xs px-3 py-2 min-h-[36px]">
+                  + เพิ่มรอบ
+                </button>
               </div>
             )}
           </div>
         ))}
       </div>
+
+      {addFor && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={() => setAddFor(null)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-gray-800 text-sm">เพิ่มรอบของ “{addFor.title}”</p>
+            <p className="text-xs text-gray-500">สมาชิกลงชื่อได้รอบเดียวต่อกิจกรรม · คะแนนนับผู้เข้าร่วมรวมทุกรอบ (คนที่มาทั้งสองรอบได้คะแนนครั้งเดียว)</p>
+            <label className="text-xs text-gray-500 block">
+              เริ่ม
+              <input type="datetime-local" value={s2.starts} onChange={(e) => setS2({ ...s2, starts: e.target.value })} className="w-full rounded border border-gray-200 px-2 py-2 text-sm mt-0.5" />
+            </label>
+            <label className="text-xs text-gray-500 block">
+              สิ้นสุด (ไม่บังคับ)
+              <input type="datetime-local" value={s2.ends} onChange={(e) => setS2({ ...s2, ends: e.target.value })} className="w-full rounded border border-gray-200 px-2 py-2 text-sm mt-0.5" />
+            </label>
+            <input value={s2.location} onChange={(e) => setS2({ ...s2, location: e.target.value })} placeholder="สถานที่" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
+            <input type="number" min={1} value={s2.capacity} onChange={(e) => setS2({ ...s2, capacity: e.target.value })} placeholder="จำนวนที่รับ (เว้นว่าง = ไม่จำกัด)" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
+            <div className="flex gap-2">
+              <button onClick={addSession} className="flex-1 rounded-full bg-us text-white font-semibold py-2.5 min-h-[44px]">เพิ่มรอบ</button>
+              <button onClick={() => setAddFor(null)} className="rounded-full bg-white text-gray-500 px-4 min-h-[44px] shadow-soft text-sm">ปิด</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {rosterFor && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={() => setRosterFor(null)}>

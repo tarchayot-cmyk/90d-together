@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: group_events.series_id/session_no; get_group_events, rsvp_group_event (one session per event), admin_list_group_events, admin_set_event_attendance (series-wide count, each person paid once), admin_add_event_session
