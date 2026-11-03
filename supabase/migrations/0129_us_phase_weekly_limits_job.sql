@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: pg_cron job us_phase_weekly_limits (one-off, 2026-11-14 00:00 Bangkok): max_per_week = 1 for active ME missions and WE missions except Buddy Walk; job unschedules itself
