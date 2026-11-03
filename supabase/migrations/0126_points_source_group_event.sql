@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: points_transactions.source allows 'group_event'; notification_type 'group_event'

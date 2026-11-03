@@ -10,7 +10,7 @@ interface ScoreDetail {
   id: string;
   created_at: string;
   points: number;
-  source: "mission" | "kindness" | "admin_adjust" | "comeback" | "weekly_goal" | "buddy_pair" | "buddy_flame";
+  source: "mission" | "kindness" | "admin_adjust" | "comeback" | "weekly_goal" | "buddy_pair" | "buddy_flame" | "group_event";
   activity: string;
   detail: string | null;
   proof_status: string | null;
@@ -25,6 +25,7 @@ const SOURCE_LABEL: Record<string, string> = {
   weekly_goal: "🎯 เป้ารายสัปดาห์",
   buddy_pair: "🤝 โบนัสคู่ Buddy",
   buddy_flame: "🔥 ไฟ Buddy",
+  group_event: "🎉 กิจกรรมร่วม",
 };
 
 export default function ScoreDetailModal({

@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: group_events, group_event_members, get_group_events(), rsvp_group_event(), admin_save_group_event(), admin_list_group_events(), admin_event_roster(), admin_set_event_attendance(); score details labels group_event
