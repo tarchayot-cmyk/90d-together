@@ -131,6 +131,27 @@ export default function AdminPhotosPage() {
     }
   }
 
+  // ดาวน์โหลดทีละไฟล์แบบเดียวกับหน้าคลิป (?download=ชื่อไฟล์) ไม่ต้องสร้าง ZIP
+  async function downloadEach(g: Group) {
+    if (busy) return;
+    setBusy(g.name);
+    setMsg(null);
+    const files = listFiles(g);
+    for (let i = 0; i < files.length; i++) {
+      setProgress(`สั่งดาวน์โหลด ${i + 1}/${files.length}`);
+      const a = document.createElement("a");
+      a.href = files[i].url + "?download=" + encodeURIComponent(files[i].name.replace("/", "_"));
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setBusy(null);
+    setProgress("");
+    setDone((d) => new Set(d).add(g.name));
+    setMsg(`สั่งดาวน์โหลด “${g.name}” ${files.length} รูปแล้ว — ถ้าเบราว์เซอร์ถามอนุญาตดาวน์โหลดหลายไฟล์ให้กดอนุญาต และตรวจจำนวนไฟล์ในโฟลเดอร์ดาวน์โหลดให้ครบก่อนกดลบ`);
+  }
+
   async function remove(g: Group) {
     if (busy || !done.has(g.name)) return;
     const targets = g.rows.filter((r) => r.proof_status !== "pending");
@@ -176,6 +197,9 @@ export default function AdminPhotosPage() {
           <div className="flex gap-2">
             <button onClick={() => download(g)} disabled={!!busy} className="rounded-full bg-us text-white text-xs font-semibold px-3 py-2 min-h-[36px] disabled:opacity-50">
               {done.has(g.name) ? "ดาวน์โหลดอีกครั้ง" : "⬇ ดาวน์โหลด ZIP"}
+            </button>
+            <button onClick={() => downloadEach(g)} disabled={!!busy} className="rounded-full border border-gray-200 text-gray-600 text-xs px-3 py-2 min-h-[36px] disabled:opacity-50">
+              ⬇ ทีละไฟล์
             </button>
             <button onClick={() => remove(g)} disabled={!!busy || !done.has(g.name)} className="rounded-full border border-red-200 text-red-400 text-xs px-3 py-2 min-h-[36px] disabled:opacity-40">
               🗑 ลบรูปภารกิจนี้
