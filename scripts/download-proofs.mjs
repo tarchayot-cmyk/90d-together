@@ -61,7 +61,7 @@ for (const r of rows) {
 }
 console.log(`พบรูป ${jobs.length} รูป ใน ${counter.size} ภารกิจ → โฟลเดอร์ ${path.resolve(OUT)}`);
 
-let ok = 0, skipped = 0;
+let ok = 0, skipped = 0, gone = 0;
 const failed = [];
 let next = 0;
 async function worker() {
@@ -74,6 +74,10 @@ async function worker() {
     } catch {}
     try {
       const res = await fetch(j.url);
+      if (res.status === 400 || res.status === 404) {
+        gone++; // ไฟล์ถูกลบไปจากระบบก่อนหน้านี้แล้ว ไม่ใช่ความผิดพลาด
+        continue;
+      }
       if (!res.ok) throw new Error(res.status);
       await mkdir(path.dirname(j.file), { recursive: true });
       await writeFile(j.file, Buffer.from(await res.arrayBuffer()));
@@ -81,11 +85,11 @@ async function worker() {
     } catch (e) {
       failed.push(j.url);
     }
-    if ((ok + skipped + failed.length) % 100 === 0) console.log(`  ${ok + skipped + failed.length}/${jobs.length}`);
+    if ((ok + skipped + gone + failed.length) % 100 === 0) console.log(`  ${ok + skipped + gone + failed.length}/${jobs.length}`);
   }
 }
 await Promise.all(Array.from({ length: 6 }, worker));
-console.log(`\nเสร็จ: ดาวน์โหลดใหม่ ${ok} · มีอยู่แล้ว ${skipped} · ล้มเหลว ${failed.length} จากทั้งหมด ${jobs.length}`);
+console.log(`\nเสร็จ: ดาวน์โหลดใหม่ ${ok} · มีอยู่แล้ว ${skipped} · ไฟล์ไม่มีในระบบแล้ว ${gone} · ล้มเหลวจริง ${failed.length} จากทั้งหมด ${jobs.length}`);
 if (failed.length) {
   await writeFile(path.join(OUT, "_failed.txt"), failed.join("\n"));
   console.log("รายการที่พลาดอยู่ใน _failed.txt — รันสคริปต์ซ้ำได้ (ข้ามไฟล์ที่มีแล้ว)");

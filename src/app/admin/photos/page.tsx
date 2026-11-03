@@ -95,6 +95,7 @@ export default function AdminPhotosPage() {
     const files = listFiles(g);
     const parts = Math.ceil(files.length / PART_SIZE);
     let failed = 0;
+    let missing = 0;
     try {
       for (let p = 0; p < parts; p++) {
         const slice = files.slice(p * PART_SIZE, (p + 1) * PART_SIZE);
@@ -103,6 +104,10 @@ export default function AdminPhotosPage() {
           setProgress(`ส่วนที่ ${p + 1}/${parts} · ดึงรูป ${i + 1}/${slice.length}`);
           try {
             const res = await fetch(slice[i].url);
+            if (res.status === 400 || res.status === 404) {
+              missing += 1; // ไฟล์ไม่อยู่ในระบบแล้ว (ลบไปก่อนหน้านี้) ไม่นับเป็นความผิดพลาด
+              continue;
+            }
             if (!res.ok) throw new Error(String(res.status));
             entries.push({ name: slice[i].name, data: new Uint8Array(await res.arrayBuffer()) });
           } catch {
@@ -125,7 +130,7 @@ export default function AdminPhotosPage() {
     }
     if (failed === 0) {
       setDone((s) => new Set(s).add(g.name));
-      setMsg(`ดาวน์โหลด “${g.name}” ครบ ${files.length} รูป (${parts} ไฟล์ ZIP) — ตรวจไฟล์ในเครื่องก่อน แล้วค่อยกดลบ`);
+      setMsg(`ดาวน์โหลด “${g.name}” ครบ ${files.length} รูป (${parts} ไฟล์ ZIP${missing ? ` · ไม่มีในระบบแล้ว ${missing} รูป` : ""}) — ตรวจไฟล์ในเครื่องก่อน แล้วค่อยกดลบ`);
     } else {
       setMsg(`ดาวน์โหลด “${g.name}” ไม่ครบ (พลาด ${failed} รูป) จึงยังไม่เปิดให้ลบ — กดดาวน์โหลดใหม่`);
     }
