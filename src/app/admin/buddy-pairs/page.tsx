@@ -32,6 +32,8 @@ export default function AdminBuddyPairsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [signups, setSignups] = useState<{ round_no: number | null; rows: SignupRow[]; not_signed: string[] } | null>(null);
 
+  const [optOuts, setOptOuts] = useState<{ employee_code: string; full_name: string; paused: boolean; no_gender: boolean }[]>([]);
+
   async function load() {
     const supabase = createClient();
     const [{ data: p }, { data: m }, { data: st }] = await Promise.all([
@@ -41,6 +43,8 @@ export default function AdminBuddyPairsPage() {
     ]);
     const { data: su } = await supabase.rpc("admin_list_buddy_signups");
     setSignups(su ?? null);
+    const { data: oo } = await supabase.rpc("admin_list_pair_opt_outs");
+    setOptOuts(oo ?? []);
     setPairs((p as Pair[]) ?? []);
     setMembers((m as Mem[]) ?? []);
     const nr = (p as Pair[] | null)?.[0]?.next_round ?? (st?.round_no ? Number(st.round_no) + 1 : null);
@@ -127,6 +131,19 @@ export default function AdminBuddyPairsPage() {
           {busy ? "กำลังบันทึก..." : "เพิ่มคู่"}
         </button>
         {msg && <p className="text-xs text-gray-500">{msg}</p>}
+      </div>
+
+      <div className="rounded-card bg-white shadow-soft p-3 space-y-1.5">
+        <p className="text-sm font-semibold text-gray-700">⏸ ไม่เข้าร่วมการจับคู่รอบถัดไป ({optOuts.length} คน)</p>
+        <p className="text-xs text-gray-500">คนที่กดพักจากการจับคู่ หรือไม่ได้ระบุเพศ (ระบบจะข้ามให้อัตโนมัติ)</p>
+        {optOuts.length === 0 && <p className="text-xs text-gray-400">ยังไม่มี</p>}
+        {optOuts.map((o) => (
+          <p key={o.employee_code} className="text-sm text-gray-700">
+            {o.full_name} <span className="text-xs text-gray-400">{o.employee_code}</span>{" "}
+            {o.paused && <span className="text-[10px] rounded-full bg-pastel-green text-us px-2 py-0.5">กดพัก</span>}{" "}
+            {o.no_gender && <span className="text-[10px] rounded-full bg-gray-100 text-gray-500 px-2 py-0.5">ไม่ระบุเพศ</span>}
+          </p>
+        ))}
       </div>
 
       {signups?.round_no != null && (

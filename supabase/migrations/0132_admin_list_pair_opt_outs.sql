@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: admin_list_pair_opt_outs() lists participants who paused pairing or have no gender
