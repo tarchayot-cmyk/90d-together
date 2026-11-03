@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: admin_clear_proof_urls now also clears check_ins with proof_status not_required

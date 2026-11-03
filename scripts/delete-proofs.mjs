@@ -1,4 +1,4 @@
-// ลบรูปหลักฐานที่ตรวจแล้ว (approved/rejected) ออกจาก Supabase Storage แล้วล้างลิงก์ในฐานข้อมูล
+// ลบรูปหลักฐานที่ตรวจแล้ว (approved/rejected/not_required) ออกจาก Supabase Storage แล้วล้างลิงก์ในฐานข้อมูล
 // ไม่ลบ: รูปที่ยังรอตรวจ, คลิปวิดีโอ · คะแนน/สติ๊กเกอร์ไม่กระทบ · กู้คืนไม่ได้
 // ใช้: node scripts/delete-proofs.mjs            (แสดงจำนวนที่จะลบเฉยๆ ยังไม่ลบ)
 //      node scripts/delete-proofs.mjs --confirm  (ลบจริง ต้องพิมพ์ยืนยันอีกครั้ง)
@@ -29,7 +29,7 @@ const H = { apikey: ANON, Authorization: `Bearer ${token}`, "Content-Type": "app
 
 const rows = [];
 for (let from = 0; ; from += 1000) {
-  const q = "select=id,proof_status,proof_urls&proof_urls=not.is.null&proof_status=in.(approved,rejected)&order=created_at.asc";
+  const q = "select=id,proof_status,proof_urls&proof_urls=not.is.null&proof_status=in.(approved,rejected,not_required)&order=created_at.asc";
   const r = await fetch(`${URL_BASE}/rest/v1/check_ins?${q}`, { headers: { ...H, Range: `${from}-${from + 999}` } });
   if (!r.ok) {
     console.error("ดึงรายการไม่สำเร็จ:", await r.text());
