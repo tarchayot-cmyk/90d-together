@@ -20,6 +20,7 @@ const TABS = [
   { href: "/admin/checkins", label: "✅ Check-ins" },
   { href: "/admin/clips", label: "🎬 คลิป Buddy" },
   { href: "/admin/shirts", label: "👕 ไซซ์เสื้อ" },
+  { href: "/admin/buddy-pairs", label: "🤝 กำหนดคู่" },
   { href: "/admin/reports", label: "📊 Reports" },
   { href: "/admin/campaign", label: "📅 Campaign" },
   { href: "/admin/audit", label: "📋 Audit" },

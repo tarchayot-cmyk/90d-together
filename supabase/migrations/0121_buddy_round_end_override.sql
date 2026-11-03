@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: buddy_round_overrides (round 4 locked_until = 2026-11-16 00:00 Bangkok); admin_confirm_buddy_round honors it; weekly group ranking picks round started before week_start+4d

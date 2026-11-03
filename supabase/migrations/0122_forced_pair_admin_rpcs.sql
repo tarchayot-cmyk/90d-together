@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: admin_list_forced_pairs(), admin_add_forced_pair(round,a,b)
