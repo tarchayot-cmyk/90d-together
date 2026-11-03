@@ -1,0 +1,1 @@
+-- no DB change: /admin/photos page (zip download per mission, then delete via storage.remove + admin_clear_proof_urls)

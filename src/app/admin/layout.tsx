@@ -19,6 +19,7 @@ const TABS = [
   { href: "/admin/proposals", label: "📢 Proposals" },
   { href: "/admin/checkins", label: "✅ Check-ins" },
   { href: "/admin/clips", label: "🎬 คลิป Buddy" },
+  { href: "/admin/photos", label: "🖼 ดาวน์โหลดรูป" },
   { href: "/admin/shirts", label: "👕 ไซซ์เสื้อ" },
   { href: "/admin/events", label: "🎉 กิจกรรมร่วม" },
   { href: "/admin/buddy-pairs", label: "🤝 กำหนดคู่" },
