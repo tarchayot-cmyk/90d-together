@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: get_my_buddy_options, get_buddy_flame, get_my_group_clip_status, complete_mission_with_buddy, buddy_walk_check_goal now only use a buddy group from the latest round (paused/unpaired members no longer see the previous round's buddy)
