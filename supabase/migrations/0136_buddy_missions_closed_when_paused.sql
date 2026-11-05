@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: buddy missions closed for paused members (complete_mission_with_buddy raises buddy_paused when no group; get_my_buddy_options returns paused)

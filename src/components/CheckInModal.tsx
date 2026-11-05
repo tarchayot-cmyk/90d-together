@@ -58,6 +58,7 @@ function friendlyError(raw: string): string {
   if (raw.includes("clip_already_submitted")) return "กลุ่มของคุณส่งคลิปในรอบนี้ไปแล้ว ✓ (1 คลิปต่อกลุ่มต่อรอบ)";
   if (raw.includes("clip_required")) return "ต้องแนบคลิปวิดีโอ 1 ไฟล์ก่อน Check-in";
   if (raw.includes("buddy_group_required")) return "ภารกิจนี้ใช้ได้เมื่อจับคู่ Buddy แล้วเท่านั้น";
+  if (raw.includes("buddy_paused")) return "คุณกำลังพักจากการจับคู่ จึงทำภารกิจกับ Buddy ไม่ได้ในรอบนี้ — ทำภารกิจอื่นแทนได้เลย 💚";
   if (raw.includes("buddy_required")) return "เลือกชื่อ Buddy ที่ทำกิจกรรมด้วยกันก่อน Check-in นะ";
   if (raw.includes("buddy_invalid")) return "Buddy ที่เลือกไม่ถูกต้อง กรุณาเลือกใหม่";
   if (raw.includes("not_authenticated")) return "กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
@@ -79,6 +80,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [buddyId, setBuddyId] = useState("");
   const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
   const [hasGroup, setHasGroup] = useState(true);
+  const [paused, setPaused] = useState(false);
   const [buddyLoading, setBuddyLoading] = useState(needsBuddy);
   const [clipStatus, setClipStatus] = useState<{ submitted?: boolean; by_name?: string; by_me?: boolean; status?: string } | null>(null);
 
@@ -107,6 +109,7 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
       const opts = (data?.options ?? []) as { id: string; name: string }[];
       setBuddyOptions(opts);
       setHasGroup(!!data?.has_group);
+      setPaused(!!data?.paused);
       if (opts.length === 1) setBuddyId(opts[0].id);
       setBuddyLoading(false);
     })();
@@ -317,7 +320,13 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className={clipBlocked ? "hidden" : "space-y-3"}>
+        {needsBuddy && !buddyLoading && paused && (
+          <p className="text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-3">
+            คุณกำลังพักจากการจับคู่ จึงทำภารกิจกับ Buddy ไม่ได้ในรอบนี้ — ทำภารกิจอื่นแทนได้เลย 💚 (ปิดการพักได้ที่หน้าโปรไฟล์)
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className={clipBlocked || (needsBuddy && paused) ? "hidden" : "space-y-3"}>
           {needsBuddy && (
             <div>
               <label className="text-xs font-medium text-gray-500">ทำกิจกรรมนี้กับ Buddy คนไหน</label>
