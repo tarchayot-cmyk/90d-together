@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: get_buddy_progress only uses a group from the latest round (home Buddy Walk card no longer shows the previous round's buddies for paused members)
