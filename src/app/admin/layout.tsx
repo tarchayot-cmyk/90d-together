@@ -21,7 +21,7 @@ const TABS = [
   { href: "/admin/clips", label: "🎬 คลิป Buddy" },
   { href: "/admin/photos", label: "🖼 ดาวน์โหลดรูป" },
   { href: "/admin/shirts", label: "👕 ไซซ์เสื้อ" },
-  { href: "/admin/events", label: "🎉 กิจกรรมร่วม" },
+  { href: "/admin/us-activities", label: "🌳 กิจกรรม US" },
   { href: "/admin/buddy-pairs", label: "🤝 กำหนดคู่" },
   { href: "/admin/reports", label: "📊 Reports" },
   { href: "/admin/campaign", label: "📅 Campaign" },

@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: us_activities, us_activity_logs, us_activity_participants + RPCs (get_us_activities, list_us_candidates, propose_us_activity, submit_us_activity, admin_review_us_log, admin_revoke_us_log, admin_list_us_activities, admin_save_us_activity, admin_list_us_logs); ranking by round extended to day 90 with US activity points; score-details label

@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: US groups: preview delegates to admin_preview_us_groups for round>=5 (5-6 per group, no gender cost, ignore pause); overrides round5=Nov28,round6=Dec13; pair_paused cleared; flags pair_pause/us_buddy_signup off
