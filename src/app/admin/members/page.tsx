@@ -34,7 +34,6 @@ export default function AdminMembersPage() {
   const [editTarget, setEditTarget] = useState<MemberRow | null>(null);
   const [resetPinTarget, setResetPinTarget] = useState<MemberRow | null>(null);
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-  const [assigning, setAssigning] = useState<"squad" | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
   const [buddyModalOpen, setBuddyModalOpen] = useState(false);
@@ -72,42 +71,6 @@ export default function AdminMembersPage() {
     loadReminders();
   }, []);
 
-  async function handleAssign(kind: "squad") {
-    setAssigning(kind);
-    setBanner(null);
-    const supabase = createClient();
-
-    const { data: campaign } = await supabase
-      .from("campaigns")
-      .select("id")
-      .eq("is_active", true)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!campaign) {
-      setBanner("ไม่พบ Campaign ที่ Active อยู่");
-      setAssigning(null);
-      return;
-    }
-
-    const [minSize, maxSize] = [4, 6];
-    const { data, error } = await supabase.rpc("assign_groups_randomly", {
-      p_campaign_id: campaign.id,
-      p_kind: kind,
-      p_min_size: minSize,
-      p_max_size: maxSize,
-    });
-
-    setAssigning(null);
-    if (error) {
-      setBanner(error.message.includes("not_authorized") ? "คุณไม่มีสิทธิ์ทำรายการนี้" : "เกิดข้อผิดพลาด กรุณาลองใหม่");
-      return;
-    }
-    setBanner(`สุ่มแบ่ง Squad สำเร็จ — สร้าง ${data.groups_created} กลุ่ม`);
-    loadReminders();
-  }
-
   async function toggleMemberActive(member: MemberRow) {
     const supabase = createClient();
     const { error } = await supabase.rpc("admin_set_member_active", {
@@ -135,31 +98,22 @@ export default function AdminMembersPage() {
 
   return (
     <div className="space-y-4">
-      {(reminders?.needs_buddy_assignment || reminders?.needs_squad_assignment) && (
+      {reminders?.needs_buddy_assignment && (
         <div className="rounded-card bg-amber-50 border border-amber-200 p-4 flex gap-3">
           <AlertCircle size={20} className="text-amber-500 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 space-y-0.5">
-            {reminders.needs_buddy_assignment && <p>ถึงเวลาจับคู่ Buddy รอบใหม่แล้ว (ช่วง WE) — กดปุ่มด้านล่างได้เลย</p>}
-            {reminders.needs_squad_assignment && <p>ถึงช่วง US แล้ว แต่ยังไม่ได้สุ่มจัดกลุ่ม Squad — กดปุ่มด้านล่างได้เลย</p>}
+            {reminders.needs_buddy_assignment && <p>ถึงเวลาจัดกลุ่มรอบใหม่แล้ว — กดปุ่ม "สุ่มแบ่งกลุ่ม" ด้านล่างได้เลย</p>}
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <button
           onClick={() => setBuddyModalOpen(true)}
           className="rounded-card bg-white shadow-soft p-3 flex items-center justify-center gap-2 text-sm font-semibold text-we disabled:opacity-50"
         >
           <Shuffle size={16} />
-          สุ่มจับคู่ Buddy รายสัปดาห์
-        </button>
-        <button
-          onClick={() => handleAssign("squad")}
-          disabled={assigning !== null}
-          className="rounded-card bg-white shadow-soft p-3 flex items-center justify-center gap-2 text-sm font-semibold text-us disabled:opacity-50"
-        >
-          <Shuffle size={16} />
-          {assigning === "squad" ? "กำลังสุ่ม..." : "สุ่มแบ่ง Squad"}
+          สุ่มแบ่งกลุ่ม (จับคู่ Buddy / กลุ่ม US) — พรีวิวก่อนยืนยัน
         </button>
       </div>
 

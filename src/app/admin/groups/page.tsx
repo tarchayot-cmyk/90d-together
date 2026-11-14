@@ -109,7 +109,7 @@ export default function AdminGroupsPage() {
         </h2>
         {squads.length === 0 && (
           <p className="text-sm text-gray-400 bg-white rounded-card p-4 shadow-soft">
-            ยังไม่มีการจัดกลุ่ม — ไปที่แท็บ Members กด "สุ่มแบ่ง Squad"
+            ยังไม่มีการจัดกลุ่ม Squad (ช่วง US ใช้กลุ่มจากปุ่ม "สุ่มแบ่งกลุ่ม" ในแท็บ Members)
           </p>
         )}
         <div className="space-y-2">

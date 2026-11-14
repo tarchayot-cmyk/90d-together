@@ -55,13 +55,12 @@ export default function AdminDashboardPage() {
         {overview?.campaign_name && <p className="text-xs text-gray-400 mt-0.5">แคมเปญ: {overview.campaign_name}</p>}
       </div>
 
-      {(reminders?.needs_buddy_assignment || reminders?.needs_squad_assignment) && (
+      {reminders?.needs_buddy_assignment && (
         <Link href="/admin/members" className="block rounded-card bg-amber-50 border border-amber-200 p-4">
           <div className="flex items-start gap-3">
             <AlertCircle size={20} className="text-amber-500 shrink-0 mt-0.5" />
             <div className="flex-1 text-sm text-amber-800">
-              {reminders.needs_buddy_assignment && <p>ถึงช่วง WE แล้ว ยังไม่ได้สุ่มจับคู่ Buddy</p>}
-              {reminders.needs_squad_assignment && <p>ถึงช่วง US แล้ว ยังไม่ได้สุ่มจัดกลุ่ม Squad</p>}
+              {reminders.needs_buddy_assignment && <p>ถึงเวลาจัดกลุ่มรอบใหม่แล้ว ยังไม่ได้กดสุ่มแบ่งกลุ่ม</p>}
             </div>
             <ChevronRight size={16} className="text-amber-400 shrink-0" />
           </div>
