@@ -65,6 +65,48 @@ function friendly(raw: string): string {
   return "ส่งไม่สำเร็จ กรุณาลองใหม่";
 }
 
+interface StepProg {
+  round_no: number | null;
+  has_group?: boolean;
+  group_size?: number;
+  target?: number;
+  total?: number;
+  reached?: boolean;
+  points?: number;
+  round_end?: string;
+  members?: { name: string; steps: number; me: boolean }[];
+}
+
+function StepProgressBlock() {
+  const { data } = useSWR("us-step-progress", async () => {
+    const { data } = await createClient().rpc("get_us_step_progress");
+    return data as StepProg | null;
+  }, { revalidateOnFocus: false });
+  if (!data || data.round_no == null || !data.has_group || !data.target) return null;
+  const total = data.total ?? 0;
+  const pct = Math.min(100, Math.round((total / data.target) * 100));
+  const endMs = data.round_end ? new Date(data.round_end).getTime() : 0;
+  const daysLeft = endMs ? Math.max(0, Math.ceil((endMs - Date.now()) / 86400000)) : null;
+  return (
+    <div className="rounded-xl bg-us/10 p-3 space-y-2">
+      <div className="flex items-center justify-between text-sm font-semibold text-gray-800">
+        <span>🚀 Big Step Challenge ของกลุ่ม</span>
+        <span className="text-xs text-us">{data.reached ? "ถึงเป้าแล้ว ✓" : `+${data.points ?? 300} คะแนนทุกคน`}</span>
+      </div>
+      <div className="h-3 rounded-full bg-white overflow-hidden">
+        <div className="h-full bg-us rounded-full" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-xs text-gray-600">
+        {total.toLocaleString()} / {data.target.toLocaleString()} ก้าว ({pct}%)
+        {daysLeft != null && ` · เหลือ ${daysLeft} วันในรอบนี้`}
+      </p>
+      <p className="text-[11px] text-gray-500">
+        {(data.members ?? []).map((m) => `${m.me ? "คุณ" : m.name} ${m.steps.toLocaleString()}`).join(" · ")}
+      </p>
+    </div>
+  );
+}
+
 export default function UsActivitiesCard() {
   const { data, mutate } = useSWR("us-activities", fetchUs, { revalidateOnFocus: false });
   const [openAct, setOpenAct] = useState<Activity | null>(null);
@@ -82,6 +124,8 @@ export default function UsActivitiesCard() {
           · แต่ละกิจกรรมได้คะแนนครั้งแรกของรอบเท่านั้น · เพดาน {THEME_CAP} ต่อธีมต่อรอบ
         </p>
       </div>
+
+      <StepProgressBlock />
 
       <div className="space-y-2">
         {data.activities.map((a) => {

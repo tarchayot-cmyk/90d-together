@@ -75,7 +75,8 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needsBuddy = !!mission.requires_buddy;
-  const isBuddyWalk = mission.category === "buddy_walk";
+  const isBigStep = mission.category === "big_step";
+  const isBuddyWalk = mission.category === "buddy_walk" || isBigStep;
   const isClip = mission.category === "buddy_clip";
   const [buddyId, setBuddyId] = useState("");
   const [buddyOptions, setBuddyOptions] = useState<{ id: string; name: string }[]>([]);
@@ -274,7 +275,11 @@ export default function CheckInModal({ mission, onClose, onSuccess }: Props) {
         )}
         {isBuddyWalk && (
           <p className="text-sm text-gray-400">
-            กรอกก้าวของ <b>วันนี้</b> ระบบรวมก้าวทั้งสัปดาห์ของทุกคนในกลุ่มให้เอง · เป้ากลุ่ม 2 คน 80,000 ก้าว / กลุ่ม 3 คน 110,000 ก้าว
+            {isBigStep ? (
+              <>กรอกก้าวของ <b>วันนี้</b> ระบบรวมก้าวของทุกคนในกลุ่ม US ตลอดรอบ 15 วันให้เอง · เป้ากลุ่ม = 80,000 ก้าว × จำนวนคนในกลุ่ม (กลุ่ม 5 คน 400,000 / กลุ่ม 6 คน 480,000)</>
+            ) : (
+              <>กรอกก้าวของ <b>วันนี้</b> ระบบรวมก้าวทั้งสัปดาห์ของทุกคนในกลุ่มให้เอง · เป้ากลุ่ม 2 คน 80,000 ก้าว / กลุ่ม 3 คน 110,000 ก้าว</>
+            )}
           </p>
         )}
 

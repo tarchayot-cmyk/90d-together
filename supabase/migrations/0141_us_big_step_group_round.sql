@@ -1,0 +1,2 @@
+-- Applied via MCP: Big Step Challenge pooled per US group per 15-day round (80,000 x group size, 300 pts).
+-- Adds us_step_window, us_step_check_goal, get_us_step_progress; patches complete_mission_with_buddy (big_step branch).
