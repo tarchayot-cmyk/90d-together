@@ -77,7 +77,9 @@ export default function MissionsPage() {
           .eq("member_id", member.id)
           .eq("campaign_week", week)
           .in("mission_id", missionRows.map((m) => m.id));
-        myCheckIns = checkins ?? [];
+        // สัปดาห์ 12–18 พ.ย. คาบเกี่ยวช่วง US: นับเช็กอินเพื่อจำกัด 1 ครั้ง/สัปดาห์ เฉพาะตั้งแต่ 14 พ.ย. 00:00 เป็นต้นไป (ต้องตรงกับ complete_mission ใน DB)
+        const LIMIT_RESET_FROM = new Date("2026-11-13T17:00:00Z").getTime();
+        myCheckIns = (checkins ?? []).filter((c) => !c.created_at || new Date(c.created_at).getTime() >= LIMIT_RESET_FROM);
 
         // Missions with a lifetime cap (max_total, e.g. "once during WE") must show as done
         // in later weeks too, so also pull their check-ins from every week.

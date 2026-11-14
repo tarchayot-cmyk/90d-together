@@ -1,0 +1,1 @@
+-- applied via Supabase MCP: complete_mission(_with_buddy) weekly-limit count only includes check-ins from 2026-11-14 00:00 Bangkok (week 12-18 Nov straddles US start)
