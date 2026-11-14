@@ -5,9 +5,7 @@ import Link from "next/link";
 import { HeartHandshake, Users, Megaphone, CheckCircle2, ChevronRight, Bell } from "lucide-react";
 import { useMember } from "@/hooks/useMember";
 import { createClient } from "@/lib/supabaseClient";
-import BuddyCard from "@/components/BuddyCard";
 import WeeklyGoalCard from "@/components/WeeklyGoalCard";
-import SquadCard from "@/components/SquadCard";
 import KindnessModal from "@/components/KindnessModal";
 import KindnessTicker from "@/components/KindnessTicker";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
@@ -235,8 +233,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {phaseInfo?.visible_levels?.includes("we") && <BuddyCard />}
-      {phaseInfo?.visible_levels?.includes("us") && <SquadCard />}
 
       {kindnessOpen && (
         <KindnessModal

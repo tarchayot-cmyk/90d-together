@@ -210,8 +210,9 @@ export default function MissionsPage() {
             endDate={phaseInfo.end_date}
           />
 
-          <div className="grid grid-cols-3 gap-2">
-            {(["me", "we", "us"] as const).map((t) => {
+          {/* ช่วง US (วันที่ 61+) ซ่อนแท็บ WE เพราะภารกิจ WE เป็นภารกิจ Buddy ทั้งหมดและปิดแล้ว */}
+          <div className={clsx("grid gap-2", phaseInfo.current_day > 60 ? "grid-cols-2" : "grid-cols-3")}>
+            {(phaseInfo.current_day > 60 ? (["me", "us"] as const) : (["me", "we", "us"] as const)).map((t) => {
               const meta = TAB_META[t];
               const active = tab === t;
               const disabled = !phaseInfo.visible_levels.includes(t);
