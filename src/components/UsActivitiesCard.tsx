@@ -81,7 +81,7 @@ function StepProgressBlock() {
   const { data } = useSWR("us-step-progress", async () => {
     const { data } = await createClient().rpc("get_us_step_progress");
     return data as StepProg | null;
-  }, { revalidateOnFocus: false });
+  }, { revalidateOnFocus: true, refreshInterval: 30000 });
   if (!data || data.round_no == null || !data.has_group || !data.target) return null;
   const total = data.total ?? 0;
   const pct = Math.min(100, Math.round((total / data.target) * 100));
