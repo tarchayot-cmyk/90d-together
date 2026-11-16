@@ -18,6 +18,7 @@ interface UsData {
   round_no: number | null;
   round_end: string | null;
   has_group: boolean;
+  my_group?: { name: string; members: { id: string; name: string; me: boolean; points: number }[] } | null;
   activities: Activity[];
   theme_used: Record<string, number>;
   my_proposals: { id: string; title: string; status: string }[];
@@ -124,6 +125,26 @@ export default function UsActivitiesCard() {
           · แต่ละกิจกรรมได้คะแนนครั้งแรกของรอบเท่านั้น · เพดาน {THEME_CAP} ต่อธีมต่อรอบ
         </p>
       </div>
+
+      {data.my_group && (
+        <div className="rounded-xl border border-us/20 bg-us/5 p-3 space-y-2">
+          <p className="text-sm font-semibold text-gray-800">
+            👥 กลุ่มของฉัน · {data.my_group.name.replace(/^Buddy\s*/, "กลุ่ม ")} ({data.my_group.members.length} คน)
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.my_group.members.map((m) => (
+              <span
+                key={m.id}
+                className={`text-xs rounded-full px-3 py-1 ${m.me ? "bg-us text-white font-semibold" : "bg-white text-gray-700 shadow-soft"}`}
+              >
+                {m.me ? "คุณ" : m.name}
+                {m.points > 0 && <span className="ml-1 opacity-70">· {m.points}</span>}
+              </span>
+            ))}
+          </div>
+          <p className="text-[11px] text-gray-500">ตัวเลขคือคะแนนกิจกรรมกลุ่มที่แต่ละคนได้ในรอบนี้</p>
+        </div>
+      )}
 
       <StepProgressBlock />
 
