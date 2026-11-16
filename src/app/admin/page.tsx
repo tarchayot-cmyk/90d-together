@@ -20,7 +20,7 @@ interface Overview {
 export default function AdminDashboardPage() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [reminders, setReminders] = useState<{ needs_buddy_assignment: boolean; needs_squad_assignment: boolean } | null>(null);
-  const [pendingCounts, setPendingCounts] = useState<{ pending_checkins: number; pending_proposals: number; open_feedback: number } | null>(null);
+  const [pendingCounts, setPendingCounts] = useState<{ pending_checkins: number; pending_proposals: number; open_feedback: number; pending_us?: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -118,6 +118,7 @@ export default function AdminDashboardPage() {
           { href: "/admin/members", label: "👥 สมาชิก", count: 0 },
           { href: "/admin/checkins", label: "✅ ตรวจ Check-in", count: pendingCounts?.pending_checkins ?? 0 },
           { href: "/admin/proposals", label: "📢 กิจกรรมที่สมาชิกเสนอ", count: pendingCounts?.pending_proposals ?? 0 },
+          { href: "/admin/us-activities", label: "🌳 ตรวจกิจกรรม US", count: pendingCounts?.pending_us ?? 0 },
           { href: "/admin/missions", label: "🎯 ภารกิจ", count: 0 },
           { href: "/admin/badges", label: "🏅 Badges", count: 0 },
           { href: "/admin/feedback", label: "💬 ข้อเสนอแนะ", count: pendingCounts?.open_feedback ?? 0 },
