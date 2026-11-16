@@ -1,0 +1,1 @@
+-- Applied via MCP: admin_review_us_log awards only the difference above the member's best approved score per activity per round (cap 300; theme cap 1000/round).

@@ -159,7 +159,7 @@ export default function UsActivitiesCard() {
         <h2 className="font-semibold text-gray-800 text-sm">🌳 กิจกรรมร่วม (ช่วง US) · รอบที่ {data.round_no}</h2>
         <p className="text-xs text-gray-500">
           ทำกิจกรรมกับเพื่อนอย่างน้อย 3 คน แล้วเช็กอินคนเดียว ติ๊กชื่อทุกคน แนบวิดีโอสั้นๆ · คนกลุ่มเดียวกันได้ 50 ต่อคน คนต่างกลุ่มได้ 20 ต่อคน (สูงสุด 300 ต่อครั้ง)
-          · แต่ละกิจกรรมได้คะแนนครั้งแรกของรอบเท่านั้น · เพดาน {THEME_CAP} ต่อธีมต่อรอบ
+          · แต่ละกิจกรรมนับคะแนนสูงสุดต่อรอบ (ทำซ้ำได้ ถ้าครั้งหลังได้มากกว่า จะเติมเฉพาะส่วนต่าง) · เพดาน {THEME_CAP} ต่อธีมต่อรอบ
         </p>
       </div>
 
@@ -199,7 +199,7 @@ export default function UsActivitiesCard() {
                 <button onClick={() => setOpenAct(a)} className="rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px]">
                   เช็กอินกิจกรรมนี้
                 </button>
-                {a.done_this_round && <span className="text-xs text-us">✓ ได้คะแนนแล้วในรอบนี้</span>}
+                {a.done_this_round && <span className="text-xs text-us">✓ ได้คะแนนแล้วในรอบนี้ (ทำซ้ำได้ ถ้าได้มากกว่าเดิมจะเติมส่วนต่าง)</span>}
                 {!a.done_this_round && a.pending_this_round && <span className="text-xs text-amber-600">⏳ รอแอดมินตรวจ</span>}
               </div>
             </div>
@@ -325,7 +325,7 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
             {THEME_LABEL[activity.theme]?.icon} {activity.title}
           </p>
           <p className="text-xs text-gray-500">
-            ติ๊กเพื่อนที่ทำกิจกรรมด้วยกัน (ไม่ต้องติ๊กตัวเอง) · ตอนนี้ {total} คน · คุณจะได้ประมาณ <b>{myEstimate}</b> คะแนน (ถ้าเป็นครั้งแรกของรอบ)
+            ติ๊กเพื่อนที่ทำกิจกรรมด้วยกัน (ไม่ต้องติ๊กตัวเอง) · ตอนนี้ {total} คน · คุณจะได้ประมาณ <b>{myEstimate}</b> คะแนน (ถ้าเคยได้คะแนนกิจกรรมนี้ในรอบนี้แล้ว จะได้เฉพาะส่วนที่เกินจากเดิม)
           </p>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ" className="w-full rounded-full border border-gray-200 px-3 py-2 text-sm" />
         </div>
