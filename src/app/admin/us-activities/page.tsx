@@ -26,7 +26,7 @@ interface Log {
   video_urls: string[];
   reject_reason: string | null;
   submitter: string;
-  participants: { name: string; points: number; group: string | null }[];
+  participants: { id: string; name: string; points: number; group: string | null }[];
 }
 
 const dateFmt = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });
@@ -41,6 +41,50 @@ export default function AdminUsActivitiesPage() {
   const [form, setForm] = useState(EMPTY);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [editLog, setEditLog] = useState<Log | null>(null);
+  const [cands, setCands] = useState<{ id: string; name: string; group: string | null }[]>([]);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [q, setQ] = useState("");
+
+  async function openEdit(l: Log) {
+    if (cands.length === 0) {
+      const { data } = await createClient().rpc("admin_list_us_candidates");
+      setCands((data as typeof cands) ?? []);
+    }
+    setPicked(new Set(l.participants.map((p) => p.id)));
+    setQ("");
+    setEditLog(l);
+  }
+
+  async function saveEdit() {
+    if (!editLog || busy) return;
+    if (picked.size < 3) return setMsg("ต้องมีผู้เข้าร่วมอย่างน้อย 3 คน");
+    setBusy(editLog.id);
+    const { data, error } = await createClient().rpc("admin_set_us_log_participants", { p_log: editLog.id, p_members: Array.from(picked) });
+    setBusy(null);
+    if (error) {
+      const m = error.message;
+      return setMsg(
+        m.includes("duplicate_participant")
+          ? "มีคนในรายชื่อที่ถูกติ๊กในกิจกรรมนี้ของวันเดียวกันแล้ว: " + m.split(":").slice(1).join(":").trim()
+          : m.includes("not_pending")
+            ? "รายการนี้ไม่ได้อยู่ในสถานะรอตรวจแล้ว กรุณารีเฟรช"
+            : "แก้ไขรายชื่อไม่สำเร็จ",
+      );
+    }
+    setMsg(`แก้ไขรายชื่อแล้ว ✓ (เพิ่ม ${data?.added ?? 0} · นำออก ${data?.removed ?? 0}) — กดอนุมัติเพื่อแจกคะแนนตามรายชื่อใหม่`);
+    setEditLog(null);
+    loadLogs();
+  }
+
+  async function reopen(l: Log) {
+    if (busy || !window.confirm(`ดึงคะแนนของ “${l.title}” คืนและเปิดกลับเป็น “รอตรวจ” เพื่อแก้รายชื่อ?`)) return;
+    setBusy(l.id);
+    const { error } = await createClient().rpc("admin_reopen_us_log", { p_log: l.id });
+    setBusy(null);
+    setMsg(error ? "เปิดกลับไม่สำเร็จ" : "ดึงคะแนนคืนและเปิดกลับเป็นรอตรวจแล้ว — ไปแท็บ “รอตรวจ” เพื่อแก้รายชื่อแล้วอนุมัติใหม่");
+    loadLogs();
+  }
 
   async function loadLogs(f = logFilter) {
     const { data } = await createClient().rpc("admin_list_us_logs", { p_status: f });
@@ -149,15 +193,23 @@ export default function AdminUsActivitiesPage() {
                   <button onClick={() => review(l, true)} disabled={busy === l.id} className="flex-1 rounded-full bg-us text-white text-sm font-semibold py-2 min-h-[40px] disabled:opacity-50">
                     ✓ อนุมัติและแจกคะแนน
                   </button>
+                  <button onClick={() => openEdit(l)} disabled={busy === l.id} className="rounded-full border border-gray-200 text-gray-600 text-sm px-4 min-h-[40px]">
+                    ✏️ แก้รายชื่อ
+                  </button>
                   <button onClick={() => review(l, false)} disabled={busy === l.id} className="rounded-full border border-red-200 text-red-400 text-sm px-4 min-h-[40px]">
                     ไม่ผ่าน
                   </button>
                 </div>
               )}
               {l.status === "approved" && (
-                <button onClick={() => revoke(l)} disabled={busy === l.id} className="rounded-full border border-red-200 text-red-400 text-xs px-3 py-2 min-h-[36px]">
-                  ยึดคะแนนคืน
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => reopen(l)} disabled={busy === l.id} className="rounded-full border border-gray-200 text-gray-600 text-xs px-3 py-2 min-h-[36px]">
+                    ✏️ เปิดกลับมาแก้รายชื่อ
+                  </button>
+                  <button onClick={() => revoke(l)} disabled={busy === l.id} className="rounded-full border border-red-200 text-red-400 text-xs px-3 py-2 min-h-[36px]">
+                    ยึดคะแนนคืน
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -236,6 +288,44 @@ export default function AdminUsActivitiesPage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {editLog && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={() => setEditLog(null)}>
+          <div className="w-full max-w-md rounded-t-card sm:rounded-card bg-white p-4 space-y-3 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-gray-800 text-sm">แก้รายชื่อผู้เข้าร่วม · {editLog.title}</p>
+            <p className="text-xs text-gray-500">เลือกแล้ว {picked.size} คน (ขั้นต่ำ 3) · ส่งโดย {editLog.submitter}</p>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
+            <div className="overflow-y-auto space-y-1 flex-1">
+              {cands
+                .filter((c) => !q.trim() || c.name.includes(q.trim()))
+                .map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={picked.has(c.id)}
+                      onChange={() => {
+                        const n = new Set(picked);
+                        if (n.has(c.id)) n.delete(c.id);
+                        else n.add(c.id);
+                        setPicked(n);
+                      }}
+                    />
+                    <span className="flex-1">{c.name}</span>
+                    {c.group && <span className="text-[10px] text-gray-400">{c.group.replace("Buddy ", "ก.")}</span>}
+                  </label>
+                ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveEdit} disabled={busy === editLog.id} className="flex-1 rounded-full bg-us text-white text-sm font-semibold min-h-[44px] disabled:opacity-50">
+                บันทึกรายชื่อ
+              </button>
+              <button onClick={() => setEditLog(null)} className="rounded-full border border-gray-200 text-gray-500 text-sm px-5 min-h-[44px]">
+                ยกเลิก
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,0 +1,1 @@
+-- Applied via MCP: admin_list_us_candidates, admin_set_us_log_participants (pending only), admin_reopen_us_log; admin_list_us_logs returns participant ids.
