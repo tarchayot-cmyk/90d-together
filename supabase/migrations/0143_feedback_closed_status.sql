@@ -1,0 +1,1 @@
+-- Applied via MCP: feedback_messages.status allows 'closed'; admin_close_feedback(p_feedback_id).

@@ -11,7 +11,7 @@ interface FeedbackRow {
   member_name: string;
   employee_code: string;
   message: string;
-  status: "open" | "replied";
+  status: "open" | "replied" | "closed";
   admin_reply: string | null;
   replied_at: string | null;
   created_at: string;
@@ -20,7 +20,7 @@ interface FeedbackRow {
 export default function AdminFeedbackPage() {
   const [items, setItems] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "open" | "replied">("open");
+  const [filter, setFilter] = useState<"all" | "open" | "replied" | "closed">("open");
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
@@ -57,6 +57,19 @@ export default function AdminFeedbackPage() {
     load();
   }
 
+  async function handleClose(f: FeedbackRow) {
+    setSendingId(f.id);
+    setBanner(null);
+    const { error } = await createClient().rpc("admin_close_feedback", { p_feedback_id: f.id });
+    setSendingId(null);
+    if (error) {
+      setBanner("ปิดการสนทนาไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+    setBanner(`ปิดการสนทนากับ ${f.member_name} แล้ว`);
+    load();
+  }
+
   const filtered = items.filter((f) => filter === "all" || f.status === filter);
 
   return (
@@ -68,7 +81,7 @@ export default function AdminFeedbackPage() {
       </div>
 
       <div className="flex gap-2">
-        {(["open", "replied", "all"] as const).map((f) => (
+        {(["open", "replied", "closed", "all"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -77,7 +90,7 @@ export default function AdminFeedbackPage() {
               filter === f ? "bg-us text-white" : "bg-white text-gray-500 border border-gray-200"
             )}
           >
-            {f === "open" ? "รอตอบ" : f === "replied" ? "ตอบแล้ว" : "ทั้งหมด"}
+            {f === "open" ? "รอตอบ" : f === "replied" ? "ตอบแล้ว" : f === "closed" ? "จบแล้ว" : "ทั้งหมด"}
           </button>
         ))}
       </div>
@@ -101,10 +114,10 @@ export default function AdminFeedbackPage() {
               <span
                 className={clsx(
                   "shrink-0 rounded-pill px-2 py-0.5 text-[10px] font-semibold",
-                  f.status === "replied" ? "bg-pastel-green text-us" : "bg-amber-50 text-amber-600"
+                  f.status === "replied" ? "bg-pastel-green text-us" : f.status === "closed" ? "bg-gray-100 text-gray-500" : "bg-amber-50 text-amber-600"
                 )}
               >
-                {f.status === "replied" ? "ตอบแล้ว" : "รอตอบ"}
+                {f.status === "replied" ? "ตอบแล้ว" : f.status === "closed" ? "จบแล้ว" : "รอตอบ"}
               </span>
             </div>
 
@@ -115,6 +128,16 @@ export default function AdminFeedbackPage() {
                 <p className="text-xs font-semibold text-us mb-0.5">คำตอบที่ส่งไปแล้ว</p>
                 <p className="text-sm text-gray-700">{f.admin_reply}</p>
               </div>
+            )}
+
+            {f.status !== "closed" && (
+              <button
+                onClick={() => handleClose(f)}
+                disabled={sendingId === f.id}
+                className="rounded-full border border-gray-200 text-gray-500 text-xs px-3 py-2 min-h-[36px] disabled:opacity-40"
+              >
+                ✓ จบการสนทนา (ไม่ต้องตอบ/ตอบจบแล้ว)
+              </button>
             )}
 
             <div className="flex gap-2">

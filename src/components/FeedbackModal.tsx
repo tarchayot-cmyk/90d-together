@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabaseClient";
 interface FeedbackRow {
   id: string;
   message: string;
-  status: "open" | "replied";
+  status: "open" | "replied" | "closed";
   admin_reply: string | null;
   replied_at: string | null;
   created_at: string;
@@ -117,10 +117,10 @@ export default function FeedbackModal({ onClose, highlightId }: { onClose: () =>
                   <span
                     className={clsx(
                       "shrink-0 rounded-pill px-2 py-0.5 text-[10px] font-semibold",
-                      f.status === "replied" ? "bg-pastel-green text-us" : "bg-gray-100 text-gray-400"
+                      f.status === "replied" || f.status === "closed" ? "bg-pastel-green text-us" : "bg-gray-100 text-gray-400"
                     )}
                   >
-                    {f.status === "replied" ? "ตอบแล้ว" : "รอตอบ"}
+                    {f.status === "closed" ? "จบแล้ว" : f.status === "replied" ? "ตอบแล้ว" : "รอตอบ"}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-300">{new Date(f.created_at).toLocaleDateString("th-TH")}</p>
