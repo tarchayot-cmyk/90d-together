@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { createClient } from "@/lib/supabaseClient";
 import { THEME_LABEL } from "@/lib/groupEvents";
+import CheckInModal from "@/components/CheckInModal";
+import RewardToast, { type RewardToastData } from "@/components/RewardToast";
+import type { Mission } from "@/lib/types";
 
 interface Activity {
   id: string;
@@ -79,7 +82,23 @@ interface StepProg {
 }
 
 function StepProgressBlock() {
-  const { data } = useSWR("us-step-progress", async () => {
+  const [stepMission, setStepMission] = useState<Mission | null>(null);
+  const [reward, setReward] = useState<RewardToastData | null>(null);
+  const [opening, setOpening] = useState(false);
+  async function openStepCheckin() {
+    setOpening(true);
+    const { data: m } = await createClient()
+      .from("missions")
+      .select("*")
+      .eq("category", "big_step")
+      .eq("level", "us")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    setOpening(false);
+    if (m) setStepMission(m as Mission);
+  }
+  const { data, mutate } = useSWR("us-step-progress", async () => {
     const { data } = await createClient().rpc("get_us_step_progress");
     return data as StepProg | null;
   }, { revalidateOnFocus: true, refreshInterval: 30000 });
@@ -104,6 +123,24 @@ function StepProgressBlock() {
       <p className="text-[11px] text-gray-500">
         {(data.members ?? []).map((m) => `${m.me ? "คุณ" : m.name} ${m.steps.toLocaleString()}`).join(" · ")}
       </p>
+      <button
+        onClick={openStepCheckin}
+        disabled={opening}
+        className="w-full rounded-full bg-us text-white text-sm font-semibold min-h-[44px] disabled:opacity-60"
+      >
+        👟 บันทึกก้าววันนี้
+      </button>
+      {stepMission && (
+        <CheckInModal
+          mission={stepMission}
+          onClose={() => setStepMission(null)}
+          onSuccess={(r) => {
+            setReward({ points: r.points, sticker: r.sticker, message: r.message });
+            mutate();
+          }}
+        />
+      )}
+      <RewardToast reward={reward} onClose={() => setReward(null)} />
     </div>
   );
 }
