@@ -184,9 +184,16 @@ export default function AdminUsActivitiesPage() {
               {l.note && <p className="text-xs text-gray-500">📝 {l.note}</p>}
               {l.reject_reason && <p className="text-xs text-red-400">เหตุผล: {l.reject_reason}</p>}
               <div className="grid grid-cols-1 gap-2">
-                {l.video_urls.map((u) => (
-                  <video key={u} src={u} controls preload="metadata" className="w-full rounded-lg bg-black max-h-64" />
-                ))}
+                {l.video_urls.map((u) =>
+                  /\.(jpe?g|png|webp|gif|heic|heif|avif)(\?|$)/i.test(u) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <a key={u} href={u} target="_blank" rel="noreferrer">
+                      <img src={u} alt="หลักฐาน" className="w-full rounded-lg bg-gray-50 max-h-72 object-contain" />
+                    </a>
+                  ) : (
+                    <video key={u} src={u} controls preload="metadata" className="w-full rounded-lg bg-black max-h-64" />
+                  ),
+                )}
               </div>
               {l.status === "pending" && (
                 <div className="flex gap-2">

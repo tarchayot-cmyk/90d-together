@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { createClient } from "@/lib/supabaseClient";
 import { THEME_LABEL } from "@/lib/groupEvents";
+import { compressImage } from "@/lib/compressImage";
 import CheckInModal from "@/components/CheckInModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import type { Mission } from "@/lib/types";
@@ -63,8 +64,8 @@ function readVideoDuration(file: File): Promise<number | null> {
 function friendly(raw: string): string {
   if (raw.includes("duplicate_participant")) return "มีคนในรายชื่อที่ถูกบันทึกกิจกรรมนี้ในวันนี้ไปแล้ว (" + (raw.split(":").pop() ?? "").trim() + ")";
   if (raw.includes("min_participants")) return "ต้องมีผู้ร่วมกิจกรรมอย่างน้อย 3 คน (รวมคุณ)";
-  if (raw.includes("videos_required")) return "ต้องแนบวิดีโออย่างน้อย 1 คลิป";
-  if (raw.includes("too_many_videos")) return "แนบวิดีโอได้ไม่เกิน 3 คลิป";
+  if (raw.includes("videos_required")) return "ต้องแนบรูปหรือวิดีโออย่างน้อย 1 ไฟล์";
+  if (raw.includes("too_many_videos")) return "แนบได้ไม่เกิน 3 ไฟล์ (รูป/วิดีโอรวมกัน)";
   if (raw.includes("us_not_started")) return "ช่วง US ยังไม่เริ่ม";
   return "ส่งไม่สำเร็จ กรุณาลองใหม่";
 }
@@ -158,7 +159,7 @@ export default function UsActivitiesCard() {
       <div>
         <h2 className="font-semibold text-gray-800 text-sm">🌳 กิจกรรมร่วม (ช่วง US) · รอบที่ {data.round_no}</h2>
         <p className="text-xs text-gray-500">
-          ทำกิจกรรมกับเพื่อนอย่างน้อย 3 คน แล้วเช็กอินคนเดียว ติ๊กชื่อทุกคน แนบวิดีโอสั้นๆ · คนกลุ่มเดียวกันได้ 50 ต่อคน คนต่างกลุ่มได้ 20 ต่อคน (สูงสุด 300 ต่อครั้ง)
+          ทำกิจกรรมกับเพื่อนอย่างน้อย 3 คน แล้วเช็กอินคนเดียว ติ๊กชื่อทุกคน แนบรูปหรือวิดีโอสั้นๆ · คนกลุ่มเดียวกันได้ 50 ต่อคน คนต่างกลุ่มได้ 20 ต่อคน (สูงสุด 300 ต่อครั้ง)
           · แต่ละกิจกรรมนับคะแนนสูงสุดต่อรอบ (ทำซ้ำได้ ถ้าครั้งหลังได้มากกว่า จะเติมเฉพาะส่วนต่าง) · เพดาน {THEME_CAP} ต่อธีมต่อรอบ
         </p>
       </div>
@@ -275,14 +276,23 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
     });
   }
 
-  async function addVideo(files: FileList | null) {
+  async function addMedia(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const f = files[0];
-    if (!f.type.startsWith("video/")) return setError("กรุณาเลือกไฟล์วิดีโอ");
-    if (f.size > MAX_CLIP_MB * 1024 * 1024) return setError(`ไฟล์ใหญ่เกิน ${MAX_CLIP_MB} MB — ถ่ายให้สั้นลงแล้วลองใหม่`);
-    const dur = await readVideoDuration(f);
-    if (dur !== null && dur > MAX_CLIP_SECONDS) return setError(`คลิปยาว ${Math.round(dur)} วินาที — ต้องไม่เกิน 10 วินาที`);
-    if (videos.length >= 3) return setError("แนบได้สูงสุด 3 คลิป");
+    let f = files[0];
+    if (videos.length >= 3) return setError("แนบได้สูงสุด 3 ไฟล์ (รูป/วิดีโอรวมกัน)");
+    if (f.type.startsWith("image/")) {
+      try {
+        f = await compressImage(f);
+      } catch {
+        /* ใช้ไฟล์เดิมถ้าบีบอัดไม่ได้ */
+      }
+    } else if (f.type.startsWith("video/")) {
+      if (f.size > MAX_CLIP_MB * 1024 * 1024) return setError(`ไฟล์ใหญ่เกิน ${MAX_CLIP_MB} MB — ถ่ายให้สั้นลงแล้วลองใหม่`);
+      const dur = await readVideoDuration(f);
+      if (dur !== null && dur > MAX_CLIP_SECONDS) return setError(`คลิปยาว ${Math.round(dur)} วินาที — ต้องไม่เกิน 10 วินาที`);
+    } else {
+      return setError("กรุณาเลือกรูปหรือวิดีโอ");
+    }
     setError(null);
     setVideos((v) => [...v, f]);
   }
@@ -290,7 +300,7 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
   async function submit() {
     if (busy) return;
     if (total < 3) return setError("ต้องติ๊กเพื่อนอย่างน้อย 2 คน (รวมคุณเป็น 3 คน)");
-    if (videos.length < 1) return setError("ต้องแนบวิดีโออย่างน้อย 1 คลิป");
+    if (videos.length < 1) return setError("ต้องแนบรูปหรือวิดีโออย่างน้อย 1 ไฟล์");
     setBusy(true);
     setError(null);
     const supabase = createClient();
@@ -302,12 +312,12 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
     }
     const urls: string[] = [];
     for (let i = 0; i < videos.length; i++) {
-      const ext = videos[i].name.split(".").pop() || "mp4";
+      const ext = videos[i].name.split(".").pop() || (videos[i].type.startsWith("image/") ? "jpg" : "mp4");
       const path = `${user.id}/us-${activity.id.slice(0, 8)}-${Date.now()}-${i}.${ext}`;
       const { error: upErr } = await supabase.storage.from("proofs").upload(path, videos[i], { cacheControl: "31536000", upsert: false });
       if (upErr) {
         setBusy(false);
-        return setError("อัปโหลดวิดีโอไม่สำเร็จ ตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่");
+        return setError("อัปโหลดไฟล์ไม่สำเร็จ ตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่");
       }
       urls.push(supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl);
     }
@@ -342,20 +352,26 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
             ))}
           </ul>
           <div className="p-4 space-y-2">
-            <p className="text-xs font-medium text-gray-500">วิดีโอ 10 วินาที (1–3 คลิป)</p>
+            <p className="text-xs font-medium text-gray-500">หลักฐาน 1–3 ไฟล์ — รูป วิดีโอ (ไม่เกิน 10 วินาที) หรือทั้งสองอย่าง</p>
             {videos.map((v, i) => (
               <div key={i} className="flex items-center justify-between text-xs text-gray-600">
-                <span className="truncate">🎬 {v.name}</span>
+                <span className="truncate">{v.type.startsWith("image/") ? "🖼️" : "🎬"} {v.name}</span>
                 <button onClick={() => setVideos((x) => x.filter((_, j) => j !== i))} className="text-red-400 px-2">
                   ลบ
                 </button>
               </div>
             ))}
             {videos.length < 3 && (
-              <label className="block rounded-xl border border-dashed border-gray-300 text-center text-sm text-gray-500 py-3 cursor-pointer">
-                + เพิ่มวิดีโอ
-                <input type="file" accept="video/*" className="hidden" onChange={(e) => { addVideo(e.target.files); e.target.value = ""; }} />
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block rounded-xl border border-dashed border-gray-300 text-center text-sm text-gray-500 py-3 cursor-pointer">
+                  + เพิ่มรูป
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { addMedia(e.target.files); e.target.value = ""; }} />
+                </label>
+                <label className="block rounded-xl border border-dashed border-gray-300 text-center text-sm text-gray-500 py-3 cursor-pointer">
+                  + เพิ่มวิดีโอ
+                  <input type="file" accept="video/*" className="hidden" onChange={(e) => { addMedia(e.target.files); e.target.value = ""; }} />
+                </label>
+              </div>
             )}
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="หมายเหตุ (ไม่บังคับ)" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
           </div>
