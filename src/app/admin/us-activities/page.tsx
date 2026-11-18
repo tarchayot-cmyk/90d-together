@@ -12,6 +12,7 @@ interface Act {
   source: string;
   status: "active" | "pending" | "rejected" | "archived";
   proposed_by: string | null;
+  proposers?: string[] | null;
   logs: number;
 }
 interface Log {
@@ -40,6 +41,7 @@ export default function AdminUsActivitiesPage() {
   const [acts, setActs] = useState<Act[]>([]);
   const [form, setForm] = useState(EMPTY);
   const [msg, setMsg] = useState<string | null>(null);
+  const [propFilter, setPropFilter] = useState<"pending" | "active" | "rejected">("pending");
   const [busy, setBusy] = useState<string | null>(null);
   const [editLog, setEditLog] = useState<Log | null>(null);
   const [cands, setCands] = useState<{ id: string; name: string; group: string | null }[]>([]);
@@ -225,27 +227,69 @@ export default function AdminUsActivitiesPage() {
 
       {tab === "acts" && (
         <div className="space-y-3">
-          {pendingActs.map((a) => (
-            <div key={a.id} className="rounded-card bg-amber-50 border border-amber-200 p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-800">💡 {a.title}</p>
-              <p className="text-xs text-gray-500">เสนอโดย {a.proposed_by}{a.description ? ` · ${a.description}` : ""} · ธีมที่เสนอ {THEME_LABEL[a.theme]?.icon}</p>
-              <div className="flex gap-2 items-center">
-                <select defaultValue={a.theme} onChange={(e) => (a.theme = e.target.value)} className="rounded border border-gray-200 px-2 py-2 text-sm bg-white">
-                  {Object.entries(THEME_LABEL).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.icon} {v.label}
-                    </option>
-                  ))}
-                </select>
-                <button onClick={() => saveAct("active", a)} className="rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px]">
-                  อนุมัติ
-                </button>
-                <button onClick={() => saveAct("rejected", a)} className="rounded-full border border-red-200 text-red-400 text-sm px-4 min-h-[40px]">
-                  ไม่อนุมัติ
-                </button>
-              </div>
+          <div className="rounded-card bg-white shadow-soft p-3 space-y-2">
+            <p className="text-sm font-semibold text-gray-700">💡 กิจกรรมที่สมาชิกเสนอ</p>
+            <div className="flex gap-2">
+              {([["pending", "รออนุมัติ"], ["active", "อนุมัติแล้ว"], ["rejected", "ไม่อนุมัติ"]] as const).map(([k, label]) => {
+                const n = acts.filter((a) => a.source === "member" && (k === "active" ? a.status === "active" || a.status === "archived" : a.status === k)).length;
+                return (
+                  <button key={k} onClick={() => setPropFilter(k)} className={`rounded-full px-3 py-1.5 text-xs ${propFilter === k ? "bg-us/10 text-us font-semibold" : "bg-gray-50 text-gray-500"}`}>
+                    {label} ({n})
+                  </button>
+                );
+              })}
             </div>
-          ))}
+            {acts
+              .filter((a) => a.source === "member" && (propFilter === "active" ? a.status === "active" || a.status === "archived" : a.status === propFilter))
+              .map((a) => (
+                <div key={a.id} className={`rounded-lg border p-3 space-y-2 ${a.status === "pending" ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"}`}>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {THEME_LABEL[a.theme]?.icon} {a.title}
+                    {a.status === "archived" && <span className="ml-1 text-[10px] text-gray-400">(ปิดแล้ว)</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    เสนอโดย {a.proposed_by}
+                    {a.proposers && a.proposers.length > 0 ? ` · ผู้ร่วมเสนอ ${a.proposers.length} คน: ${a.proposers.join(", ")}` : ""}
+                    {a.description ? ` · ${a.description}` : ""}
+                  </p>
+                  {a.status === "pending" && (
+                    <div className="flex gap-2 items-center">
+                      <select defaultValue={a.theme} onChange={(e) => (a.theme = e.target.value)} className="rounded border border-gray-200 px-2 py-2 text-sm bg-white">
+                        {Object.entries(THEME_LABEL).map(([k, v]) => (
+                          <option key={k} value={k}>
+                            {v.icon} {v.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button onClick={() => saveAct("active", a)} className="rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px]">
+                        อนุมัติ
+                      </button>
+                      <button onClick={() => saveAct("rejected", a)} className="rounded-full border border-red-200 text-red-400 text-sm px-4 min-h-[40px]">
+                        ไม่อนุมัติ
+                      </button>
+                    </div>
+                  )}
+                  {a.status === "rejected" && (
+                    <button onClick={() => saveAct("active", a)} className="rounded-full bg-us text-white text-xs font-semibold px-4 min-h-[36px]">
+                      อนุมัติย้อนหลัง
+                    </button>
+                  )}
+                  {a.status === "active" && (
+                    <button onClick={() => saveAct("archived", a)} className="rounded-full border border-gray-200 text-gray-500 text-xs px-4 min-h-[36px]">
+                      ปิดกิจกรรมนี้
+                    </button>
+                  )}
+                  {a.status === "archived" && (
+                    <button onClick={() => saveAct("active", a)} className="rounded-full bg-us text-white text-xs font-semibold px-4 min-h-[36px]">
+                      เปิดใช้อีกครั้ง
+                    </button>
+                  )}
+                </div>
+              ))}
+            {acts.filter((a) => a.source === "member" && (propFilter === "active" ? a.status === "active" || a.status === "archived" : a.status === propFilter)).length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-3">ไม่มีรายการ</p>
+            )}
+          </div>
 
           <div className="rounded-card bg-white shadow-soft p-3 space-y-2">
             <p className="text-sm font-semibold text-gray-700">{form.id ? "แก้ไขกิจกรรม" : "เพิ่มกิจกรรมใหม่"}</p>
@@ -276,7 +320,7 @@ export default function AdminUsActivitiesPage() {
             </div>
           </div>
 
-          {acts.filter((a) => a.status !== "pending").map((a) => (
+          {acts.filter((a) => a.source !== "member").map((a) => (
             <div key={a.id} className="rounded-card bg-white shadow-soft p-3 flex items-start justify-between gap-2">
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold text-gray-800">

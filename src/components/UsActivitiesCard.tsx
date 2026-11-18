@@ -150,6 +150,7 @@ export default function UsActivitiesCard() {
   const { data, mutate } = useSWR("us-activities", fetchUs, { revalidateOnFocus: false });
   const [openAct, setOpenAct] = useState<Activity | null>(null);
   const [showPropose, setShowPropose] = useState(false);
+  const [kind, setKind] = useState<"all" | "admin" | "member">("all");
 
   if (!data || data.round_no == null) return null;
   const used = data.theme_used ?? {};
@@ -186,8 +187,23 @@ export default function UsActivitiesCard() {
 
       <StepProgressBlock />
 
+      <div className="flex gap-2">
+        {([["all", "ทั้งหมด"], ["admin", "กิจกรรมที่มีอยู่"], ["member", "เพื่อนเสนอ"]] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setKind(k)}
+            className={`rounded-full px-3 py-1.5 text-xs min-h-[34px] ${kind === k ? "bg-us text-white font-semibold" : "bg-white text-gray-500 shadow-soft"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2">
-        {data.activities.map((a) => {
+        {data.activities.filter((a) => kind === "all" || a.source === kind).length === 0 && (
+          <p className="text-xs text-gray-400 text-center py-4">ยังไม่มีกิจกรรมในหมวดนี้</p>
+        )}
+        {data.activities.filter((a) => kind === "all" || a.source === kind).map((a) => {
           const t = THEME_LABEL[a.theme];
           return (
             <div key={a.id} className="rounded-xl border border-gray-100 p-3 space-y-1">
@@ -391,26 +407,42 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
 }
 
 function ProposeModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const { data: cands } = useSWR<Cand[]>("us-cands", async () => ((await createClient().rpc("list_us_candidates")).data as Cand[]) ?? [], { revalidateOnFocus: false });
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [theme, setTheme] = useState("connect");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const total = picked.size + 1;
+
+  function toggle(id: string) {
+    setPicked((p) => {
+      const n = new Set(p);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
 
   async function submit() {
     if (title.trim().length < 3) return setError("ใส่ชื่อกิจกรรมก่อน");
+    if (total < 3) return setError("ต้องติ๊กเพื่อนร่วมเสนออย่างน้อย 2 คน (รวมคุณเป็น 3 คน)");
     setBusy(true);
-    const { error: err } = await createClient().rpc("propose_us_activity", { p_title: title, p_description: desc, p_theme: theme });
+    const { error: err } = await createClient().rpc("propose_us_activity", { p_title: title, p_description: desc, p_theme: theme, p_members: Array.from(picked) });
     setBusy(false);
-    if (err) return setError("ส่งไม่สำเร็จ กรุณาลองใหม่");
+    if (err) return setError(err.message.includes("min_participants") ? "ต้องมีผู้ร่วมเสนออย่างน้อย 3 คน" : "ส่งไม่สำเร็จ กรุณาลองใหม่");
     onDone();
   }
 
+  const list = (cands ?? []).filter((c) => !q || c.name.toLowerCase().includes(q.toLowerCase()));
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-4 space-y-2 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <p className="font-semibold text-gray-800 text-sm">เสนอกิจกรรมใหม่</p>
-        <p className="text-xs text-gray-500">แอดมินจะตรวจและเลือกธีมให้ เมื่ออนุมัติแล้วทุกคนเช็กอินกิจกรรมนี้ได้ (ใช้สูตรคะแนนเดียวกัน)</p>
+        <p className="text-xs text-gray-500">รวมชื่อเพื่อนที่ร่วมเสนออย่างน้อยให้ครบ 3 คน (รวมคุณ) แล้วส่งให้แอดมินตรวจ เมื่ออนุมัติแล้วทุกคนเช็กอินกิจกรรมนี้ได้ (ใช้สูตรคะแนนเดียวกัน) · การเสนอยังไม่นับเป็นการเช็กอิน</p>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="ชื่อกิจกรรม เช่น เดินขึ้นดอยสุเทพ" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
         <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="รายละเอียด (ไม่บังคับ)" rows={2} className="w-full rounded border border-gray-200 px-3 py-2 text-sm" />
         <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full rounded border border-gray-200 px-2 py-2.5 text-sm bg-white">
@@ -420,9 +452,22 @@ function ProposeModal({ onClose, onDone }: { onClose: () => void; onDone: () => 
             </option>
           ))}
         </select>
+        <p className="text-xs font-medium text-gray-600">ผู้ร่วมเสนอ: เลือกแล้ว {total}/3 คน (รวมคุณ)</p>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
+        <ul className="max-h-48 overflow-y-auto divide-y divide-gray-50 rounded border border-gray-100">
+          {list.map((c) => (
+            <li key={c.id}>
+              <label className="flex items-center gap-2 px-3 py-2.5 cursor-pointer">
+                <input type="checkbox" checked={picked.has(c.id)} onChange={() => toggle(c.id)} />
+                <span className="flex-1 text-sm text-gray-800">{c.name}</span>
+                {c.same_group && <span className="text-[10px] rounded-full bg-pastel-green text-us px-2 py-0.5">กลุ่มเดียวกัน</span>}
+              </label>
+            </li>
+          ))}
+        </ul>
         {error && <p className="text-xs text-red-500">{error}</p>}
         <div className="flex gap-2">
-          <button onClick={submit} disabled={busy} className="flex-1 rounded-full bg-us text-white font-semibold py-2.5 min-h-[44px] disabled:opacity-50">
+          <button onClick={submit} disabled={busy || total < 3} className="flex-1 rounded-full bg-us text-white font-semibold py-2.5 min-h-[44px] disabled:opacity-50">
             ส่งให้แอดมิน
           </button>
           <button onClick={onClose} className="rounded-full bg-white text-gray-500 px-4 min-h-[44px] shadow-soft text-sm">

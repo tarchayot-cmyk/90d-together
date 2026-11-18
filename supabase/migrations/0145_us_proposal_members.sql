@@ -1,0 +1,1 @@
+-- Applied via MCP: us_activity_proposers table; propose_us_activity(title, desc, theme, members[]) requires >=3 people; old 3-arg version now refuses; admin_list_us_activities returns proposers.
