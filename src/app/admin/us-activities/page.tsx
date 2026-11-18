@@ -252,6 +252,15 @@ export default function AdminUsActivitiesPage() {
                     {a.proposers && a.proposers.length > 0 ? ` · ผู้ร่วมเสนอ ${a.proposers.length} คน: ${a.proposers.join(", ")}` : ""}
                     {a.description ? ` · ${a.description}` : ""}
                   </p>
+                  <button
+                    onClick={() => {
+                      setForm({ id: a.id, title: a.title, description: a.description ?? "", theme: a.theme, status: a.status });
+                      document.getElementById("us-act-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="rounded-full border border-gray-200 text-gray-600 text-xs px-3 min-h-[34px]"
+                  >
+                    ✏️ แก้ไขชื่อ/รายละเอียด/ธีม
+                  </button>
                   {a.status === "pending" && (
                     <div className="flex gap-2 items-center">
                       <select defaultValue={a.theme} onChange={(e) => (a.theme = e.target.value)} className="rounded border border-gray-200 px-2 py-2 text-sm bg-white">
@@ -291,7 +300,7 @@ export default function AdminUsActivitiesPage() {
             )}
           </div>
 
-          <div className="rounded-card bg-white shadow-soft p-3 space-y-2">
+          <div id="us-act-form" className="rounded-card bg-white shadow-soft p-3 space-y-2">
             <p className="text-sm font-semibold text-gray-700">{form.id ? "แก้ไขกิจกรรม" : "เพิ่มกิจกรรมใหม่"}</p>
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="ชื่อกิจกรรม" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="รายละเอียด" rows={2} className="w-full rounded border border-gray-200 px-3 py-2 text-sm" />
@@ -306,6 +315,8 @@ export default function AdminUsActivitiesPage() {
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Act["status"] })} className="rounded border border-gray-200 px-2 py-2.5 text-sm bg-white">
                 <option value="active">เปิดใช้</option>
                 <option value="archived">ปิด</option>
+                {form.id && <option value="pending">รออนุมัติ</option>}
+                {form.id && <option value="rejected">ไม่อนุมัติ</option>}
               </select>
             </div>
             <div className="flex gap-2">
@@ -332,7 +343,7 @@ export default function AdminUsActivitiesPage() {
                 </p>
               </div>
               <button
-                onClick={() => { setForm({ id: a.id, title: a.title, description: a.description ?? "", theme: a.theme, status: a.status === "archived" ? "archived" : "active" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onClick={() => { setForm({ id: a.id, title: a.title, description: a.description ?? "", theme: a.theme, status: a.status === "archived" ? "archived" : "active" }); document.getElementById("us-act-form")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                 className="rounded-full border border-gray-200 text-gray-500 text-xs px-3 py-2 min-h-[36px] shrink-0"
               >
                 แก้ไข
