@@ -1,0 +1,1 @@
+-- Applied via MCP: us_activities.note_hint/note_required; get_us_activities returns them; submit_us_activity enforces note_required. Colorful Plate set to require colour list.

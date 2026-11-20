@@ -15,6 +15,8 @@ interface Activity {
   description: string | null;
   theme: string;
   source: string;
+  note_hint?: string | null;
+  note_required?: boolean;
   my_points?: number;
   done_this_round: boolean;
   pending_this_round: boolean;
@@ -68,6 +70,7 @@ function friendly(raw: string): string {
   if (raw.includes("min_participants")) return "ต้องมีผู้ร่วมกิจกรรมอย่างน้อย 3 คน (รวมคุณ)";
   if (raw.includes("videos_required")) return "ต้องแนบรูปหรือวิดีโออย่างน้อย 1 ไฟล์";
   if (raw.includes("too_many_videos")) return "แนบได้ไม่เกิน 3 ไฟล์ (รูป/วิดีโอรวมกัน)";
+  if (raw.includes("note_required")) return "กิจกรรมนี้ต้องกรอกหมายเหตุ (ดูคำแนะนำในช่องหมายเหตุ)";
   if (raw.includes("us_not_started")) return "ช่วง US ยังไม่เริ่ม";
   return "ส่งไม่สำเร็จ กรุณาลองใหม่";
 }
@@ -336,6 +339,7 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
   async function submit() {
     if (busy) return;
     if (total < 3) return setError("ต้องติ๊กเพื่อนอย่างน้อย 2 คน (รวมคุณเป็น 3 คน)");
+    if (activity.note_required && note.trim().length < 3) return setError("กิจกรรมนี้ต้องกรอกหมายเหตุ — " + (activity.note_hint ?? ""));
     if (videos.length < 1) return setError("ต้องแนบรูปหรือวิดีโออย่างน้อย 1 ไฟล์");
     setBusy(true);
     setError(null);
@@ -409,7 +413,19 @@ function CheckinModal({ activity, onClose, onDone }: { activity: Activity; onClo
                 </label>
               </div>
             )}
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="หมายเหตุ (ไม่บังคับ)" className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm" />
+            {activity.note_hint && (
+              <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                📝 {activity.note_required ? "หมายเหตุ (จำเป็น): " : "หมายเหตุ: "}
+                {activity.note_hint}
+              </p>
+            )}
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={activity.note_required ? "หมายเหตุ (จำเป็น)" : "หมายเหตุ (ไม่บังคับ)"}
+              rows={activity.note_hint ? 3 : 1}
+              className="w-full rounded border border-gray-200 px-3 py-2.5 text-sm"
+            />
           </div>
         </div>
         {error && <p className="px-4 pb-2 text-xs text-red-500">{error}</p>}
