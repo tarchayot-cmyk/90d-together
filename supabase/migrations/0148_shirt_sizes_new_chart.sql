@@ -1,0 +1,1 @@
+-- Applied via MCP: shirt sizes follow JPT chart (SS..8XL; 5XL+ special +30/60/90/120 THB). Existing choices converted by chest: M->L, L->XL, XL->3XL, XXL->5XL. Backup: shirt_orders_backup_20261120.

@@ -13,7 +13,7 @@ interface Row {
   chosen_at: string | null;
 }
 
-const ORDER = ["SS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
+const ORDER = ["SS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "7XL", "8XL"];
 
 export default function AdminShirtsPage() {
   const [rows, setRows] = useState<Row[]>([]);

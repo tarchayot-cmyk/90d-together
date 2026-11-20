@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabaseClient";
 
-const SIZES: { size: string; chest: number; length: number }[] = [
+const SIZES: { size: string; chest: number; length: number; extra?: number }[] = [
   { size: "SS", chest: 34, length: 24 },
-  { size: "S", chest: 36, length: 25.5 },
-  { size: "M", chest: 40, length: 27 },
-  { size: "L", chest: 43, length: 28.5 },
-  { size: "XL", chest: 46, length: 30 },
-  { size: "XXL", chest: 50, length: 32 },
-  { size: "3XL", chest: 54, length: 33 },
-  { size: "4XL", chest: 58, length: 34 },
-  { size: "5XL", chest: 62, length: 35 },
+  { size: "S", chest: 36, length: 25 },
+  { size: "M", chest: 38, length: 26 },
+  { size: "L", chest: 40, length: 27 },
+  { size: "XL", chest: 42, length: 28 },
+  { size: "XXL", chest: 44, length: 29 },
+  { size: "3XL", chest: 46, length: 30 },
+  { size: "4XL", chest: 48, length: 31 },
+  { size: "5XL", chest: 50, length: 32, extra: 30 },
+  { size: "6XL", chest: 52, length: 33, extra: 60 },
+  { size: "7XL", chest: 54, length: 33, extra: 90 },
+  { size: "8XL", chest: 56, length: 33, extra: 120 },
 ];
 
 export default function ShirtRewardCard() {
@@ -81,21 +84,21 @@ export default function ShirtRewardCard() {
           </div>
           {info ? (
             <p className="text-xs text-gray-600">
-              ไซซ์ {info.size}: รอบอก {info.chest} นิ้ว · ความยาว {info.length} นิ้ว
+              ไซซ์ {info.size}: รอบอก {info.chest} นิ้ว · ความยาว {info.length} นิ้ว{info.extra ? ` · ไซซ์พิเศษ +${info.extra} บาท` : ""}
             </p>
           ) : (
             <p className="text-xs text-gray-400">แตะไซซ์เพื่อดูรอบอกและความยาว</p>
           )}
           <details className="text-xs text-gray-500">
             <summary className="cursor-pointer">ดูตารางไซซ์ทั้งหมด</summary>
-            <p className="mt-1">รอบอกวัดจากใต้รักแร้ ซ้าย-ขวา แล้วคูณสอง · ความยาววัดจากไหล่บริเวณฐานคอถึงชายเสื้อ (หน่วยนิ้ว)</p>
+            <p className="mt-1">รอบอกวัดจากใต้รักแร้ ซ้าย-ขวา แล้วคูณสอง · ความยาววัดจากไหล่บริเวณฐานคอถึงชายเสื้อ (หน่วยนิ้ว) · ขนาดจริงอาจ บวก/ลบ ไม่เกิน 1 นิ้ว · ไซซ์ 5XL ขึ้นไปเป็นไซซ์พิเศษ มีค่าใช้จ่ายเพิ่ม</p>
             <div className="overflow-x-auto mt-2">
               <table className="w-full text-center">
                 <thead>
                   <tr>
                     <th className="p-1"></th>
                     {SIZES.map((s) => (
-                      <th key={s.size} className="p-1">{s.size}</th>
+                      <th key={s.size} className="p-1">{s.size}{s.extra ? <span className="block text-[9px] text-red-500">+{s.extra}฿</span> : null}</th>
                     ))}
                   </tr>
                 </thead>
