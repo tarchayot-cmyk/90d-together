@@ -15,6 +15,7 @@ interface Activity {
   description: string | null;
   theme: string;
   source: string;
+  my_points?: number;
   done_this_round: boolean;
   pending_this_round: boolean;
 }
@@ -36,6 +37,7 @@ interface Cand {
 }
 
 const THEME_CAP = 1000;
+const ACT_CAP = 300;
 const MAX_CLIP_MB = 40;
 const MAX_CLIP_SECONDS = 12;
 const STATUS_TH: Record<string, string> = { pending: "รอแอดมินตรวจ", approved: "อนุมัติแล้ว", rejected: "ไม่ผ่าน" };
@@ -212,12 +214,30 @@ export default function UsActivitiesCard() {
                 {a.source === "member" && <span className="ml-1 text-[10px] text-gray-400">(เพื่อนเสนอ)</span>}
               </p>
               {a.description && <p className="text-xs text-gray-500">{a.description}</p>}
+              {(() => {
+                const pts = Math.min(a.my_points ?? 0, ACT_CAP);
+                const full = pts >= ACT_CAP;
+                const themeFull = (used[a.theme] ?? 0) >= THEME_CAP;
+                return (
+                  <div className="pt-1 space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-gray-500">
+                      <span>คะแนนกิจกรรมนี้ในรอบนี้ของคุณ</span>
+                      <span className={full ? "text-us font-semibold" : ""}>{pts}/{ACT_CAP}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className={`h-full rounded-full ${full ? "bg-us" : "bg-us/60"}`} style={{ width: `${Math.round((pts / ACT_CAP) * 100)}%` }} />
+                    </div>
+                    {full && <p className="text-[11px] text-us">✓ ครบ {ACT_CAP} คะแนนแล้ว ไม่ต้องทำซ้ำเพื่อคะแนนในรอบนี้</p>}
+                    {!full && pts > 0 && <p className="text-[11px] text-gray-500">ทำซ้ำได้ ถ้าครั้งใหม่ได้มากกว่า {pts} จะเติมเฉพาะส่วนต่าง (สูงสุด {ACT_CAP})</p>}
+                    {themeFull && !full && <p className="text-[11px] text-amber-600">ธีมนี้ครบเพดาน {THEME_CAP} คะแนนของรอบนี้แล้ว</p>}
+                    {a.pending_this_round && <p className="text-[11px] text-amber-600">⏳ มีรายการรอแอดมินตรวจ</p>}
+                  </div>
+                );
+              })()}
               <div className="flex items-center gap-2 pt-1">
                 <button onClick={() => setOpenAct(a)} className="rounded-full bg-us text-white text-sm font-semibold px-4 min-h-[40px]">
                   เช็กอินกิจกรรมนี้
                 </button>
-                {a.done_this_round && <span className="text-xs text-us">✓ ได้คะแนนแล้วในรอบนี้ (ทำซ้ำได้ ถ้าได้มากกว่าเดิมจะเติมส่วนต่าง)</span>}
-                {!a.done_this_round && a.pending_this_round && <span className="text-xs text-amber-600">⏳ รอแอดมินตรวจ</span>}
               </div>
             </div>
           );

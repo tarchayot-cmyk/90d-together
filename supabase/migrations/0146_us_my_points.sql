@@ -1,0 +1,1 @@
+-- Applied via MCP: get_us_activities returns per-activity my_points (approved points this round).
