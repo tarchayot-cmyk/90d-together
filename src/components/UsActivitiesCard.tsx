@@ -9,6 +9,24 @@ import CheckInModal from "@/components/CheckInModal";
 import RewardToast, { type RewardToastData } from "@/components/RewardToast";
 import type { Mission } from "@/lib/types";
 
+// แปลงลิงก์ในข้อความให้กดได้
+function Linkify({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s)]+)/gi);
+  return (
+    <>
+      {parts.map((p, i) =>
+        /^https?:\/\//i.test(p) ? (
+          <a key={i} href={p} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all">
+            {p}
+          </a>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </>
+  );
+}
+
 interface Activity {
   id: string;
   title: string;
@@ -216,7 +234,7 @@ export default function UsActivitiesCard() {
                 {t?.icon} {a.title}
                 {a.source === "member" && <span className="ml-1 text-[10px] text-gray-400">(เพื่อนเสนอ)</span>}
               </p>
-              {a.description && <p className="text-xs text-gray-500 whitespace-pre-line">{a.description}</p>}
+              {a.description && <p className="text-xs text-gray-500 whitespace-pre-line"><Linkify text={a.description} /></p>}
               {(() => {
                 const pts = Math.min(a.my_points ?? 0, ACT_CAP);
                 const full = pts >= ACT_CAP;
