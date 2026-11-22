@@ -216,7 +216,7 @@ export default function UsActivitiesCard() {
                 {t?.icon} {a.title}
                 {a.source === "member" && <span className="ml-1 text-[10px] text-gray-400">(เพื่อนเสนอ)</span>}
               </p>
-              {a.description && <p className="text-xs text-gray-500">{a.description}</p>}
+              {a.description && <p className="text-xs text-gray-500 whitespace-pre-line">{a.description}</p>}
               {(() => {
                 const pts = Math.min(a.my_points ?? 0, ACT_CAP);
                 const full = pts >= ACT_CAP;
