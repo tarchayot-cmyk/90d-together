@@ -33,6 +33,16 @@ interface Status {
   groups?: { name: string; members: { id: string; full_name: string }[] }[];
 }
 
+interface Scheduled {
+  id: string;
+  status: "pending" | "done" | "failed";
+  run_at: string;
+  scheduled_by: string;
+  result?: { error?: string; round_no?: number } | null;
+  groups: { name: string; members: { id: string }[] }[];
+  names: Record<string, string>;
+}
+
 function fmt(iso?: string) {
   if (!iso) return "";
   return new Date(iso).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -43,12 +53,19 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scheduled, setScheduled] = useState<Scheduled | null>(null);
+  const [lockedMode, setLockedMode] = useState(false);
 
-  const roll = useCallback(async () => {
+  const loadScheduled = useCallback(async () => {
+    const { data } = await createClient().rpc("admin_get_scheduled_round");
+    setScheduled((data as Scheduled | null) ?? null);
+  }, []);
+
+  const roll = useCallback(async (forSchedule = false) => {
     setBusy(true);
     setError(null);
     const supabase = createClient();
-    const { data, error: err } = await supabase.rpc("admin_preview_buddy_round");
+    const { data, error: err } = await supabase.rpc(forSchedule ? "admin_preview_next_us_groups" : "admin_preview_buddy_round");
     setBusy(false);
     if (err) {
       setError(err.message.includes("round_locked") ? "รอบนี้ถูกล็อกอยู่ ยังสุ่มใหม่ไม่ได้" : "สุ่มไม่สำเร็จ กรุณาลองใหม่");
@@ -63,10 +80,33 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
       const { data } = await supabase.rpc("admin_buddy_round_status");
       const s = data as Status;
       setStatus(s);
+      await loadScheduled();
       if (!s?.locked) roll();
     }
     init();
-  }, [roll]);
+  }, [roll, loadScheduled]);
+
+  async function schedule() {
+    if (!preview) return;
+    setBusy(true);
+    setError(null);
+    const { error: err } = await createClient().rpc("admin_schedule_buddy_round", { p_groups: preview.groups });
+    setBusy(false);
+    if (err) {
+      setError("ตั้งเวลาไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
+    setLockedMode(false);
+    setPreview(null);
+    await loadScheduled();
+  }
+
+  async function cancelSchedule() {
+    setBusy(true);
+    await createClient().rpc("admin_cancel_scheduled_round");
+    setBusy(false);
+    await loadScheduled();
+  }
 
   async function confirm() {
     if (!preview) return;
@@ -107,6 +147,64 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
             </div>
           )}
 
+          {locked && scheduled?.status === "pending" && (
+            <div className="rounded-card bg-green-50 border border-green-200 p-3 text-sm text-green-800 space-y-2">
+              <p className="font-semibold">⏰ ตั้งเวลาไว้แล้ว — ระบบจะเริ่มกลุ่มใหม่ให้เองตอน {fmt(scheduled.run_at)} (ตั้งโดย {scheduled.scheduled_by})</p>
+              <ul className="text-xs space-y-1">
+                {scheduled.groups.map((g) => (
+                  <li key={g.name}>
+                    <b>{g.name}:</b> {g.members.map((m) => scheduled.names[m.id] ?? "?").join(", ")}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={cancelSchedule} disabled={busy} className="text-xs underline text-red-600">
+                ยกเลิกการตั้งเวลา
+              </button>
+            </div>
+          )}
+
+          {locked && scheduled?.status === "failed" && (
+            <p className="rounded-card bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+              ระบบเริ่มกลุ่มใหม่อัตโนมัติไม่สำเร็จ ({scheduled.result?.error ?? "ไม่ทราบสาเหตุ"}) — กรุณาสุ่มและยืนยันด้วยตัวเอง
+            </p>
+          )}
+
+          {locked && scheduled?.status !== "pending" && !lockedMode && (
+            <button
+              onClick={() => {
+                setLockedMode(true);
+                roll(true);
+              }}
+              className="w-full rounded-full bg-us text-white py-3 text-sm font-semibold min-h-[44px]"
+            >
+              ⏰ สุ่มกลุ่มรอบใหม่ไว้ล่วงหน้า (เริ่มเองตอนรอบนี้จบ)
+            </button>
+          )}
+
+          {locked && lockedMode && preview && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">
+                สุ่มแล้วกด "ตั้งเวลา" ระบบจะยืนยันกลุ่มนี้ให้เองตอน {fmt(status?.locked_until)} และส่งแจ้งเตือนสมาชิกทุกคน
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => roll(true)}
+                  disabled={busy}
+                  className="rounded-full bg-white shadow-soft py-3 text-sm font-semibold text-we flex items-center justify-center gap-1.5 disabled:opacity-50 min-h-[44px]"
+                >
+                  <Shuffle size={16} /> สุ่มใหม่
+                </button>
+                <button
+                  onClick={schedule}
+                  disabled={busy}
+                  className="rounded-full bg-us text-white py-3 text-sm font-semibold disabled:opacity-50 min-h-[44px]"
+                >
+                  ⏰ ตั้งเวลา
+                </button>
+              </div>
+            </div>
+          )}
+
           {!locked && preview && (
             <div className="text-xs text-gray-500 space-y-1">
               <p>
@@ -129,7 +227,7 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
 
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-          {(locked ? status?.groups : preview?.groups)?.map((g) => (
+          {(locked && !lockedMode ? status?.groups : preview?.groups)?.map((g) => (
             <div key={g.name} className="rounded-card bg-white shadow-soft p-3">
               <p className="text-xs font-semibold text-we mb-1">{g.name}</p>
               <ul className="text-sm text-gray-700 space-y-0.5">
@@ -155,7 +253,7 @@ export default function BuddyRoundModal({ onClose, onDone }: { onClose: () => vo
         {!locked && (
           <div className="grid grid-cols-2 gap-2 p-4 border-t border-gray-100">
             <button
-              onClick={roll}
+              onClick={() => roll()}
               disabled={busy}
               className="rounded-full bg-white shadow-soft py-3 text-sm font-semibold text-we flex items-center justify-center gap-1.5 disabled:opacity-50 min-h-[44px]"
             >
